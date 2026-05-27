@@ -1,0 +1,139 @@
+import { CurrentUser } from '@/common/decorators';
+import { JwtAuthGuard } from '@/common/guards';
+import { UserDto } from '@/dto';
+import { Body, Controller, Ip, Post, Req, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Request } from 'express';
+import { AuthService } from '../auth.service';
+import {
+  ChangePasswordDto,
+  CheckPhoneAndEmailDto,
+  FacebookLoginDto,
+  ForgotPasswordCustomerDto,
+  GoogleLoginDto,
+  RefreshTokenDto,
+  RegisterDto,
+  SendOtpCustomerDto,
+  SendOtpVerifyDto,
+  UpdatePasswordDto,
+  UserLoginDto,
+  VerifyLoginOtpDto,
+} from '../dto';
+
+@ApiBearerAuth()
+@ApiTags('Auth')
+@Controller('auth')
+export class AuthUserController {
+  constructor(private readonly service: AuthService) {}
+
+  @Post('login')
+  async login(
+    @Body() data: UserLoginDto,
+    @Req() req: Request,
+    @Ip() ipAddress: string,
+  ) {
+    return await this.service.login(data, req.headers['user-agent'], ipAddress);
+  }
+
+  @Post('login/google')
+  async loginWithGoogle(
+    @Body() data: GoogleLoginDto,
+    @Req() req: Request,
+    @Ip() ipAddress: string,
+  ) {
+    return await this.service.loginWithGoogle(
+      data,
+      req.headers['user-agent'],
+      ipAddress,
+    );
+  }
+
+  @Post('login/facebook')
+  async loginWithFacebook(
+    @Body() data: FacebookLoginDto,
+    @Req() req: Request,
+    @Ip() ipAddress: string,
+  ) {
+    return await this.service.loginWithFacebook(
+      data,
+      req.headers['user-agent'],
+      ipAddress,
+    );
+  }
+
+  @Post('check-phone-email')
+  async checkPhoneAndEmail(@Body() data: CheckPhoneAndEmailDto) {
+    return await this.service.checkPhoneAndEmail(data);
+  }
+
+  @Post('send-otp')
+  async sendOtpCustomer(@Body() data: SendOtpCustomerDto) {
+    return await this.service.sendOtpEmailCustomer(data);
+  }
+
+  @Post('send-otp-verify')
+  async sendOtpVerify(@Body() data: SendOtpVerifyDto) {
+    return await this.service.sendOtpVerify(data);
+  }
+
+  @Post('register')
+  async register(@Body() data: RegisterDto) {
+    return await this.service.register(data);
+  }
+
+  @Post('forgot-password')
+  async forgotPassword(@Body() data: ForgotPasswordCustomerDto) {
+    return await this.service.forgotPassword(data);
+  }
+
+  @Post('verify-otp')
+  async verifyLoginOtp(
+    @Body() data: VerifyLoginOtpDto,
+    @Req() req: Request,
+    @Ip() ipAddress: string,
+  ) {
+    return await this.service.verifyLoginOtp(
+      data,
+      req.headers['user-agent'],
+      ipAddress,
+    );
+  }
+
+  @Post('refresh-token')
+  async refreshToken(@Body() data: RefreshTokenDto) {
+    return await this.service.refreshToken(data);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('update-password')
+  async updatePassword(
+    @Body() info: UpdatePasswordDto,
+    @CurrentUser() user: UserDto,
+  ) {
+    return await this.service.updatePassword(info, user);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('change-password')
+  async changePassword(
+    @Body() info: ChangePasswordDto,
+    @CurrentUser() user: UserDto,
+  ) {
+    return await this.service.changePassword(info, user);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('me')
+  async getUserInfo(@CurrentUser() user: UserDto) {
+    return await this.service.getUserInfo(user);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('logout')
+  async logout(
+    @CurrentUser() user: UserDto,
+    @Body() data: { refreshToken?: string },
+  ) {
+    return await this.service.logout(user, data?.refreshToken);
+  }
+}
