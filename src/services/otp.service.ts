@@ -20,7 +20,7 @@ export class OtpService {
     otpEntity.expiresAt = expiresAt;
     otpEntity.isVerified = false;
     otpEntity.createdAt = new Date();
-    otpEntity.createdBy = 'system';
+    otpEntity.createdBy = undefined;
 
     await this.verifyOtpRepo.save(otpEntity);
 

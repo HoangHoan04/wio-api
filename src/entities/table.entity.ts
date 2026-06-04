@@ -1,42 +1,63 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity, Index } from 'typeorm';
+import {
+  Column,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+} from 'typeorm';
 import { BaseEntity } from './base.entity';
+import { GuestEntity } from './guest.entity';
+import { WeddingEntity } from './wedding.entity';
 
-// Bàn ăn trong tiệc cưới - hỗ trợ sơ đồ kéo thả trên Admin Portal
+// ==================== TABLES (Sơ đồ bàn tiệc) ====================
 @Entity('tables')
 export class TableEntity extends BaseEntity {
-  @ApiProperty({ description: 'ID Đám cưới' })
   @Column({ type: 'uuid', nullable: false })
-  @Index()
+  @ApiProperty({ description: 'ID đám cưới' })
   weddingId: string;
 
-  @ApiProperty({ description: 'Tên bàn (Bàn 1, Bàn VIP...)' })
+  // Tên
   @Column({ type: 'varchar', length: 50, nullable: false })
+  @ApiProperty({ description: 'Tên' })
   name: string;
 
-  @ApiProperty({ description: 'Số chỗ tối đa' })
+  // Max Seats
   @Column({ type: 'smallint', default: 10, nullable: false })
+  @ApiProperty({ description: 'Max Seats' })
   maxSeats: number;
 
-  @ApiProperty({ description: 'Số chỗ hiện tại' })
+  // Current Seats
   @Column({ type: 'smallint', default: 0, nullable: false })
+  @ApiProperty({ description: 'Current Seats' })
   currentSeats: number;
 
-  @ApiProperty({ description: 'Mô tả', required: false })
+  // Mô tả
   @Column({ type: 'varchar', length: 255, nullable: true })
+  @ApiProperty({ description: 'Mô tả' })
   description: string;
 
-  @ApiProperty({
-    description: 'Tọa độ X trên sơ đồ kéo thả (px)',
-    required: false,
-  })
+  // Position X
   @Column({ type: 'int', nullable: true })
+  @ApiProperty({ description: 'Position X' })
   positionX: number;
 
-  @ApiProperty({
-    description: 'Tọa độ Y trên sơ đồ kéo thả (px)',
-    required: false,
-  })
+  // Position Y
   @Column({ type: 'int', nullable: true })
+  @ApiProperty({ description: 'Position Y' })
   positionY: number;
+
+  // Wedding
+  @ManyToOne(() => WeddingEntity, (wedding) => wedding.tables, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'weddingId' })
+  @ApiProperty({ description: 'Wedding' })
+  wedding: WeddingEntity;
+
+  // Guests
+  @OneToMany(() => GuestEntity, (guest) => guest.table)
+  @ApiProperty({ description: 'Guests' })
+  guests: GuestEntity[];
 }

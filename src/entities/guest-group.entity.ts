@@ -1,31 +1,38 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity, Index } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from './base.entity';
+import { WeddingEntity } from './wedding.entity';
 
-// Nhóm phân loại khách mời - tự định nghĩa theo từng đám cưới
+// ==================== GUEST GROUPS ====================
 @Entity('guest_groups')
 export class GuestGroupEntity extends BaseEntity {
-  @ApiProperty({ description: 'ID Đám cưới' })
   @Column({ type: 'uuid', nullable: false })
-  @Index()
+  @ApiProperty({ description: 'ID đám cưới' })
   weddingId: string;
 
-  @ApiProperty({ description: 'Tên nhóm (Họ hàng, Bạn thân...)' })
+  // Tên
   @Column({ type: 'varchar', length: 100, nullable: false })
+  @ApiProperty({ description: 'Tên' })
   name: string;
 
-  @ApiProperty({
-    description: 'Mã màu HEX để hiển thị trên UI',
-    required: false,
-  })
+  // Color Label
   @Column({ type: 'varchar', length: 7, nullable: true })
+  @ApiProperty({ description: 'Color Label' })
   colorLabel: string;
 
-  @ApiProperty({ description: 'Mô tả', required: false })
+  // Mô tả
   @Column({ type: 'varchar', length: 255, nullable: true })
+  @ApiProperty({ description: 'Mô tả' })
   description: string;
 
-  @ApiProperty({ description: 'Thứ tự sắp xếp' })
+  // Thứ tự sắp xếp
   @Column({ type: 'int', default: 0, nullable: false })
+  @ApiProperty({ description: 'Thứ tự sắp xếp' })
   sortOrder: number;
+
+  // Wedding
+  @ManyToOne(() => WeddingEntity, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'weddingId' })
+  @ApiProperty({ description: 'Wedding' })
+  wedding: WeddingEntity;
 }

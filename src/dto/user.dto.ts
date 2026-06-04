@@ -15,9 +15,9 @@ export class UserDto {
   id: string;
 
   @ApiProperty({ description: 'Email' })
-  @IsOptional()
   @IsEmail()
-  email?: string;
+  @IsNotEmpty()
+  email: string;
 
   @ApiProperty({ description: 'Số điện thoại' })
   @IsOptional()

@@ -1,11 +1,12 @@
 import {
-  AiSuggestionEntity,
   CustomerEntity,
   GuestEntity,
   GuestGroupEntity,
+  MusicBackgroundEntity,
   NotificationEntity,
   PhotoWallEntity,
   ServicePlanEntity,
+  SlugHistoryEntity,
   SubscriptionEntity,
   TableEntity,
   TemplateEntity,
@@ -15,7 +16,6 @@ import {
   WeddingEntity,
   WeddingPhotoEntity,
   WishEntity,
-  SlugHistoryEntity,
 } from '@/entities';
 import { CustomRepository } from '@/typeorm';
 import { Repository } from 'typeorm';
@@ -50,9 +50,6 @@ export class PhotoWallRepository extends Repository<PhotoWallEntity> {}
 @CustomRepository(NotificationEntity)
 export class NotificationRepository extends Repository<NotificationEntity> {}
 
-@CustomRepository(AiSuggestionEntity)
-export class AiSuggestionRepository extends Repository<AiSuggestionEntity> {}
-
 @CustomRepository(ServicePlanEntity)
 export class ServicePlanRepository extends Repository<ServicePlanEntity> {}
 
@@ -70,3 +67,7 @@ export class VerifyOtpRepository extends Repository<VerifyOtpEntity> {}
 
 @CustomRepository(SlugHistoryEntity)
 export class SlugHistoryRepository extends Repository<SlugHistoryEntity> {}
+
+
+@CustomRepository(MusicBackgroundEntity)
+export class MusicBackgroundRepository extends Repository<MusicBackgroundEntity> {}

@@ -4,6 +4,9 @@ import {
   RsvpStatus,
   SlugHistoryEntity,
   WeddingEntity,
+  WeddingEventEntity,
+  WeddingTimelineEntity,
+  WeddingPhotoEntity,
   WeddingStatus,
 } from '@/entities';
 import {
@@ -96,14 +99,7 @@ export class WeddingService {
     if (where.musicType !== undefined) whereCon.musicType = where.musicType;
     if (where.musicAutoplay !== undefined)
       whereCon.musicAutoplay = where.musicAutoplay;
-    if (where.bankAccountNumber !== undefined)
-      whereCon.bankAccountNumber = where.bankAccountNumber;
-    if (where.bankName !== undefined) whereCon.bankName = where.bankName;
-    if (where.bankAccountName !== undefined)
-      whereCon.bankAccountName = where.bankAccountName;
-    if (where.bankTransferNote !== undefined)
-      whereCon.bankTransferNote = where.bankTransferNote;
-    if (where.vietqrUrl !== undefined) whereCon.vietqrUrl = where.vietqrUrl;
+
     if (where.status !== undefined) whereCon.status = where.status;
     if (where.publishedAt !== undefined)
       whereCon.publishedAt = where.publishedAt;
@@ -122,6 +118,7 @@ export class WeddingService {
   async findById(data: IdDto) {
     const item = await this.repo.findOne({
       where: { id: data.id, isDeleted: false } as any,
+      relations: ['events', 'timelines', 'photos'],
     });
     if (!item) throw new NotFoundException('Không tìm thấy bản ghi');
     return { message: 'Thành công', data: item };
@@ -143,66 +140,58 @@ export class WeddingService {
       entity.slug = dto.slug;
     }
 
-    if (dto.groomName !== undefined) entity.groomName = dto.groomName;
-    if (dto.groomDob !== undefined) entity.groomDob = dto.groomDob;
-    if (dto.groomFatherName !== undefined)
-      entity.groomFatherName = dto.groomFatherName;
-    if (dto.groomMotherName !== undefined)
-      entity.groomMotherName = dto.groomMotherName;
-    if (dto.groomPhotoUrl !== undefined)
-      entity.groomPhotoUrl = dto.groomPhotoUrl;
-    if (dto.brideName !== undefined) entity.brideName = dto.brideName;
-    if (dto.brideDob !== undefined) entity.brideDob = dto.brideDob;
-    if (dto.brideFatherName !== undefined)
-      entity.brideFatherName = dto.brideFatherName;
-    if (dto.brideMotherName !== undefined)
-      entity.brideMotherName = dto.brideMotherName;
-    if (dto.bridePhotoUrl !== undefined)
-      entity.bridePhotoUrl = dto.bridePhotoUrl;
-    if (dto.engagementAt !== undefined) entity.engagementAt = dto.engagementAt;
-    if (dto.engagementVenue !== undefined)
-      entity.engagementVenue = dto.engagementVenue;
-    if (dto.engagementAddress !== undefined)
-      entity.engagementAddress = dto.engagementAddress;
-    if (dto.engagementMapsUrl !== undefined)
-      entity.engagementMapsUrl = dto.engagementMapsUrl;
-    if (dto.ceremonyAt !== undefined) entity.ceremonyAt = dto.ceremonyAt;
-    if (dto.ceremonyVenue !== undefined)
-      entity.ceremonyVenue = dto.ceremonyVenue;
-    if (dto.ceremonyAddress !== undefined)
-      entity.ceremonyAddress = dto.ceremonyAddress;
-    if (dto.ceremonyMapsUrl !== undefined)
-      entity.ceremonyMapsUrl = dto.ceremonyMapsUrl;
-    if (dto.ceremonyLat !== undefined) entity.ceremonyLat = dto.ceremonyLat;
-    if (dto.ceremonyLng !== undefined) entity.ceremonyLng = dto.ceremonyLng;
-    if (dto.receptionAt !== undefined) entity.receptionAt = dto.receptionAt;
-    if (dto.receptionVenue !== undefined)
-      entity.receptionVenue = dto.receptionVenue;
-    if (dto.receptionAddress !== undefined)
-      entity.receptionAddress = dto.receptionAddress;
-    if (dto.receptionMapsUrl !== undefined)
-      entity.receptionMapsUrl = dto.receptionMapsUrl;
-    if (dto.receptionLat !== undefined) entity.receptionLat = dto.receptionLat;
-    if (dto.receptionLng !== undefined) entity.receptionLng = dto.receptionLng;
-    if (dto.invitationText !== undefined)
-      entity.invitationText = dto.invitationText;
-    if (dto.loveStory !== undefined) entity.loveStory = dto.loveStory;
-    if (dto.hashtag !== undefined) entity.hashtag = dto.hashtag;
-    if (dto.musicUrl !== undefined) entity.musicUrl = dto.musicUrl;
-    if (dto.musicType !== undefined) entity.musicType = dto.musicType;
-    if (dto.musicAutoplay !== undefined)
-      entity.musicAutoplay = dto.musicAutoplay;
-    if (dto.bankAccountNumber !== undefined)
-      entity.bankAccountNumber = dto.bankAccountNumber;
-    if (dto.bankName !== undefined) entity.bankName = dto.bankName;
-    if (dto.bankAccountName !== undefined)
-      entity.bankAccountName = dto.bankAccountName;
-    if (dto.bankTransferNote !== undefined)
-      entity.bankTransferNote = dto.bankTransferNote;
-    if (dto.vietqrUrl !== undefined) entity.vietqrUrl = dto.vietqrUrl;
-    if (dto.status !== undefined) entity.status = dto.status;
-    if (dto.publishedAt !== undefined) entity.publishedAt = dto.publishedAt;
-    if (dto.expiresAt !== undefined) entity.expiresAt = dto.expiresAt;
+    // Automatically map scalar fields
+    const excludedFields = [
+      'events',
+      'timelines',
+      'gallery',
+      'userId',
+      'templateId',
+      'slug',
+    ];
+    for (const [key, value] of Object.entries(dto)) {
+      if (!excludedFields.includes(key) && value !== undefined) {
+        (entity as any)[key] = value;
+      }
+    }
+
+    if (dto.events !== undefined) {
+      // Clear old events
+      await this.repo.manager.delete(WeddingEventEntity, { weddingId: entity.id });
+    }
+    if (dto.timelines !== undefined) {
+      await this.repo.manager.delete(WeddingTimelineEntity, { weddingId: entity.id });
+    }
+    if (dto.gallery !== undefined) {
+      await this.repo.manager.delete(WeddingPhotoEntity, { weddingId: entity.id });
+    }
+
+    if (dto.events && Array.isArray(dto.events)) {
+      entity.events = dto.events.map((e, idx) => {
+        const ev = new WeddingEventEntity();
+        Object.assign(ev, e);
+        ev.sortOrder = idx;
+        return ev;
+      });
+    }
+
+    if (dto.timelines && Array.isArray(dto.timelines)) {
+      entity.timelines = dto.timelines.map((t, idx) => {
+        const tm = new WeddingTimelineEntity();
+        Object.assign(tm, t);
+        tm.sortOrder = idx;
+        return tm;
+      });
+    }
+
+    if (dto.gallery && Array.isArray(dto.gallery)) {
+      entity.photos = dto.gallery.map((url, idx) => {
+        const p = new WeddingPhotoEntity();
+        p.url = url;
+        p.sortOrder = idx;
+        return p;
+      });
+    }
 
     const saved = await this.repo.save(entity);
     return { message: 'Tạo thành công', data: saved };
@@ -216,6 +205,10 @@ export class WeddingService {
 
     if (!user.isAdmin && entity.userId !== user.id) {
       throw new ForbiddenException('Bạn không có quyền chỉnh sửa đám cưới này');
+    }
+
+    if (entity.status === WeddingStatus.PUBLISHED) {
+      throw new ForbiddenException('Thiệp đã xuất bản không thể chỉnh sửa');
     }
 
     entity.updatedBy = user.id;
@@ -242,66 +235,58 @@ export class WeddingService {
       entity.slug = dto.slug;
     }
 
-    if (dto.groomName !== undefined) entity.groomName = dto.groomName;
-    if (dto.groomDob !== undefined) entity.groomDob = dto.groomDob;
-    if (dto.groomFatherName !== undefined)
-      entity.groomFatherName = dto.groomFatherName;
-    if (dto.groomMotherName !== undefined)
-      entity.groomMotherName = dto.groomMotherName;
-    if (dto.groomPhotoUrl !== undefined)
-      entity.groomPhotoUrl = dto.groomPhotoUrl;
-    if (dto.brideName !== undefined) entity.brideName = dto.brideName;
-    if (dto.brideDob !== undefined) entity.brideDob = dto.brideDob;
-    if (dto.brideFatherName !== undefined)
-      entity.brideFatherName = dto.brideFatherName;
-    if (dto.brideMotherName !== undefined)
-      entity.brideMotherName = dto.brideMotherName;
-    if (dto.bridePhotoUrl !== undefined)
-      entity.bridePhotoUrl = dto.bridePhotoUrl;
-    if (dto.engagementAt !== undefined) entity.engagementAt = dto.engagementAt;
-    if (dto.engagementVenue !== undefined)
-      entity.engagementVenue = dto.engagementVenue;
-    if (dto.engagementAddress !== undefined)
-      entity.engagementAddress = dto.engagementAddress;
-    if (dto.engagementMapsUrl !== undefined)
-      entity.engagementMapsUrl = dto.engagementMapsUrl;
-    if (dto.ceremonyAt !== undefined) entity.ceremonyAt = dto.ceremonyAt;
-    if (dto.ceremonyVenue !== undefined)
-      entity.ceremonyVenue = dto.ceremonyVenue;
-    if (dto.ceremonyAddress !== undefined)
-      entity.ceremonyAddress = dto.ceremonyAddress;
-    if (dto.ceremonyMapsUrl !== undefined)
-      entity.ceremonyMapsUrl = dto.ceremonyMapsUrl;
-    if (dto.ceremonyLat !== undefined) entity.ceremonyLat = dto.ceremonyLat;
-    if (dto.ceremonyLng !== undefined) entity.ceremonyLng = dto.ceremonyLng;
-    if (dto.receptionAt !== undefined) entity.receptionAt = dto.receptionAt;
-    if (dto.receptionVenue !== undefined)
-      entity.receptionVenue = dto.receptionVenue;
-    if (dto.receptionAddress !== undefined)
-      entity.receptionAddress = dto.receptionAddress;
-    if (dto.receptionMapsUrl !== undefined)
-      entity.receptionMapsUrl = dto.receptionMapsUrl;
-    if (dto.receptionLat !== undefined) entity.receptionLat = dto.receptionLat;
-    if (dto.receptionLng !== undefined) entity.receptionLng = dto.receptionLng;
-    if (dto.invitationText !== undefined)
-      entity.invitationText = dto.invitationText;
-    if (dto.loveStory !== undefined) entity.loveStory = dto.loveStory;
-    if (dto.hashtag !== undefined) entity.hashtag = dto.hashtag;
-    if (dto.musicUrl !== undefined) entity.musicUrl = dto.musicUrl;
-    if (dto.musicType !== undefined) entity.musicType = dto.musicType;
-    if (dto.musicAutoplay !== undefined)
-      entity.musicAutoplay = dto.musicAutoplay;
-    if (dto.bankAccountNumber !== undefined)
-      entity.bankAccountNumber = dto.bankAccountNumber;
-    if (dto.bankName !== undefined) entity.bankName = dto.bankName;
-    if (dto.bankAccountName !== undefined)
-      entity.bankAccountName = dto.bankAccountName;
-    if (dto.bankTransferNote !== undefined)
-      entity.bankTransferNote = dto.bankTransferNote;
-    if (dto.vietqrUrl !== undefined) entity.vietqrUrl = dto.vietqrUrl;
-    if (dto.status !== undefined) entity.status = dto.status;
-    if (dto.publishedAt !== undefined) entity.publishedAt = dto.publishedAt;
-    if (dto.expiresAt !== undefined) entity.expiresAt = dto.expiresAt;
+    // Automatically map scalar fields
+    const excludedFields = [
+      'events',
+      'timelines',
+      'gallery',
+      'userId',
+      'templateId',
+      'slug',
+    ];
+    for (const [key, value] of Object.entries(dto)) {
+      if (!excludedFields.includes(key) && value !== undefined) {
+        (entity as any)[key] = value;
+      }
+    }
+
+    if (dto.events !== undefined) {
+      // Clear old events
+      await this.repo.manager.delete(WeddingEventEntity, { weddingId: entity.id });
+    }
+    if (dto.timelines !== undefined) {
+      await this.repo.manager.delete(WeddingTimelineEntity, { weddingId: entity.id });
+    }
+    if (dto.gallery !== undefined) {
+      await this.repo.manager.delete(WeddingPhotoEntity, { weddingId: entity.id });
+    }
+
+    if (dto.events && Array.isArray(dto.events)) {
+      entity.events = dto.events.map((e, idx) => {
+        const ev = new WeddingEventEntity();
+        Object.assign(ev, e);
+        ev.sortOrder = idx;
+        return ev;
+      });
+    }
+
+    if (dto.timelines && Array.isArray(dto.timelines)) {
+      entity.timelines = dto.timelines.map((t, idx) => {
+        const tm = new WeddingTimelineEntity();
+        Object.assign(tm, t);
+        tm.sortOrder = idx;
+        return tm;
+      });
+    }
+
+    if (dto.gallery && Array.isArray(dto.gallery)) {
+      entity.photos = dto.gallery.map((url, idx) => {
+        const p = new WeddingPhotoEntity();
+        p.url = url;
+        p.sortOrder = idx;
+        return p;
+      });
+    }
 
     const saved = await this.repo.save(entity);
     return { message: 'Cập nhật thành công', data: saved };
@@ -310,6 +295,7 @@ export class WeddingService {
   async delete(data: IdDto, user: UserDto) {
     const entity = await this.repo.findOne({
       where: { id: data.id, isDeleted: false } as any,
+      relations: ['events', 'timelines', 'photos'],
     });
     if (!entity) throw new NotFoundException('Không tìm thấy bản ghi');
 
@@ -375,6 +361,7 @@ export class WeddingService {
   async findBySlug(slug: string): Promise<WeddingEntity> {
     const item = await this.repo.findOne({
       where: { slug, isDeleted: false } as any,
+      relations: ['events', 'timelines', 'photos'],
     });
     if (!item) throw new NotFoundException('Không tìm thấy thiệp cưới');
     return item;

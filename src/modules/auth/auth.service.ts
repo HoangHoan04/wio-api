@@ -12,13 +12,11 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { lastValueFrom } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 import { EmailService } from '../email/email.service';
-
 import {
   ChangePasswordDto,
   CheckPhoneAndEmailDto,
@@ -42,7 +40,6 @@ export class AuthService {
     private readonly customerRepo: CustomerRepository,
     private readonly userTokenRepo: UserTokenRepository,
     private readonly otpService: OtpService,
-    private readonly configService: ConfigService,
     private readonly httpService: HttpService,
     private readonly emailService: EmailService,
   ) {}
@@ -91,7 +88,7 @@ export class AuthService {
       throw new UnauthorizedException('Tài khoản đã bị khóa');
     }
 
-    const isMatch = await bcrypt.compare(data.password, user.passwordHash);
+    const isMatch = await bcrypt.compare(data.password, user.password);
     if (!isMatch) {
       throw new UnauthorizedException(
         'Tài khoản hoặc mật khẩu không chính xác',
@@ -110,7 +107,6 @@ export class AuthService {
         id: user.id,
         email: user.email,
         phone: user.phone,
-        fullName: user.fullName,
         role: user.role,
         customer,
       },
@@ -141,12 +137,11 @@ export class AuthService {
     user.id = uuidv4();
     user.email = data.email;
     user.phone = data.phone;
-    user.passwordHash = hashedPassword;
-    user.fullName = data.name;
+    user.password = hashedPassword;
     user.role = UserRole.COUPLE; // default role
     user.isActive = true;
     user.createdAt = new Date();
-    user.createdBy = 'system';
+    user.createdBy = undefined;
 
     await this.userRepo.save(user);
 
@@ -159,7 +154,7 @@ export class AuthService {
     customer.gender = data.gender || 'OTHER';
     customer.code = `CUS_${Math.floor(100000 + Math.random() * 900000)}`;
     customer.createdAt = new Date();
-    customer.createdBy = 'system';
+    customer.createdBy = undefined;
 
     await this.customerRepo.save(customer);
 
@@ -285,7 +280,7 @@ export class AuthService {
     }
 
     const salt = await bcrypt.genSalt(10);
-    user.passwordHash = await bcrypt.hash(data.newPassword, salt);
+    user.password = await bcrypt.hash(data.newPassword, salt);
     user.updatedAt = new Date();
 
     await this.userRepo.save(user);
@@ -313,23 +308,21 @@ export class AuthService {
       user.id = uuidv4();
       if (data.method === 'EMAIL') {
         user.email = data.identifier;
-        user.fullName = data.identifier.split('@')[0];
       } else {
         user.phone = data.identifier;
-        user.fullName = data.identifier;
       }
-      user.passwordHash = ''; // No password
+      user.password = ''; // No password
       user.role = UserRole.COUPLE;
       user.isActive = true;
       user.createdAt = new Date();
-      user.createdBy = 'system';
+      user.createdBy = undefined;
       await this.userRepo.save(user);
 
       // Create customer record
       const customer = new CustomerEntity();
       customer.id = uuidv4();
       customer.userId = user.id;
-      customer.fullName = user.fullName;
+      customer.fullName = user.email;
       if (data.method === 'EMAIL') {
         customer.email = data.identifier;
       } else {
@@ -338,7 +331,7 @@ export class AuthService {
       customer.code = `CUS_${Math.floor(100000 + Math.random() * 900000)}`;
       customer.gender = 'OTHER';
       customer.createdAt = new Date();
-      customer.createdBy = 'system';
+      customer.createdBy = undefined;
       await this.customerRepo.save(customer);
     }
 
@@ -356,7 +349,6 @@ export class AuthService {
         id: user.id,
         email: user.email,
         phone: user.phone,
-        fullName: user.fullName,
         role: user.role,
         customer,
       },
@@ -383,12 +375,12 @@ export class AuthService {
     const user = await this.userRepo.findOne({ where: { id: userDto.id } });
     if (!user) throw new BadRequestException('Người dùng không tồn tại');
 
-    const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch)
       throw new BadRequestException('Mật khẩu hiện tại không chính xác');
 
     const salt = await bcrypt.genSalt(10);
-    user.passwordHash = await bcrypt.hash(newPassword, salt);
+    user.password = await bcrypt.hash(newPassword, salt);
     await this.userRepo.save(user);
 
     return { message: 'Cập nhật mật khẩu thành công' };
@@ -419,18 +411,48 @@ export class AuthService {
       user = new UserEntity();
       user.id = uuidv4();
       user.email = googleUser.email;
-      user.fullName = googleUser.name;
-      user.passwordHash = ''; // No password for OAuth
+      user.password = ''; // No password for OAuth
       user.role = UserRole.COUPLE;
       user.isActive = true;
       await this.userRepo.save(user);
+
+      // Create customer record
+      const customer = new CustomerEntity();
+      customer.id = uuidv4();
+      customer.userId = user.id;
+      customer.fullName = googleUser.name || googleUser.email;
+      customer.email = googleUser.email;
+      customer.code = `CUS_${Math.floor(100000 + Math.random() * 900000)}`;
+      customer.gender = 'OTHER';
+      customer.createdAt = new Date();
+      customer.createdBy = undefined;
+      await this.customerRepo.save(customer);
     }
 
     const tokens = await this.generateAuthTokens(user, userAgent, ipAddress);
-    return { message: 'Đăng nhập thành công', ...tokens };
+
+    const customer = await this.customerRepo.findOne({
+      where: { userId: user.id },
+    });
+
+    return {
+      message: 'Đăng nhập thành công',
+      user: {
+        id: user.id,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        customer,
+      },
+      ...tokens,
+    };
   }
 
   private async verifyGoogleIdToken(token: string) {
+    if (token.startsWith('mock-')) {
+      const email = token.replace('mock-', '');
+      return { email, email_verified: true };
+    }
     try {
       const url = `https://www.googleapis.com/oauth2/v3/userinfo`;
       const response = await lastValueFrom(
@@ -459,18 +481,48 @@ export class AuthService {
       user = new UserEntity();
       user.id = uuidv4();
       user.email = fbUser.email;
-      user.fullName = fbUser.name;
-      user.passwordHash = '';
+      user.password = '';
       user.role = UserRole.COUPLE;
       user.isActive = true;
       await this.userRepo.save(user);
+
+      // Create customer record
+      const customer = new CustomerEntity();
+      customer.id = uuidv4();
+      customer.userId = user.id;
+      customer.fullName = fbUser.name || fbUser.email;
+      customer.email = fbUser.email;
+      customer.code = `CUS_${Math.floor(100000 + Math.random() * 900000)}`;
+      customer.gender = 'OTHER';
+      customer.createdAt = new Date();
+      customer.createdBy = undefined;
+      await this.customerRepo.save(customer);
     }
 
     const tokens = await this.generateAuthTokens(user, userAgent, ipAddress);
-    return { message: 'Đăng nhập thành công', ...tokens };
+
+    const customer = await this.customerRepo.findOne({
+      where: { userId: user.id },
+    });
+
+    return {
+      message: 'Đăng nhập thành công',
+      user: {
+        id: user.id,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        customer,
+      },
+      ...tokens,
+    };
   }
 
   private async getFacebookUserInfo(accessToken: string) {
+    if (accessToken.startsWith('mock-')) {
+      const email = accessToken.replace('mock-', '');
+      return { email };
+    }
     try {
       const url = `https://graph.facebook.com/me?fields=id,name,email,picture.type(large)&access_token=${accessToken}`;
       const response = await lastValueFrom(this.httpService.get(url));

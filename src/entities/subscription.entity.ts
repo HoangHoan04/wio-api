@@ -1,56 +1,83 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity, Index } from 'typeorm';
+import { Entity, Index, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { SubStatus } from './enums';
+import { ServicePlanEntity } from './service-plan.entity';
+import { UserEntity } from './user.entity';
+import { WeddingEntity } from './wedding.entity';
 
-// Gói dịch vụ đã đăng ký - liên kết user, wedding và plan
+// ==================== SUBSCRIPTIONS ====================
 @Entity('subscriptions')
 @Index(['status', 'expiresAt'])
 export class SubscriptionEntity extends BaseEntity {
-  @ApiProperty({ description: 'ID User đăng ký' })
   @Column({ type: 'uuid', nullable: false })
-  @Index()
+  @ApiProperty({ description: 'ID người dùng' })
   userId: string;
 
-  @ApiProperty({ description: 'ID Đám cưới sử dụng gói' })
+  // ID đám cưới
   @Column({ type: 'uuid', nullable: false })
-  @Index()
+  @ApiProperty({ description: 'ID đám cưới' })
   weddingId: string;
 
-  @ApiProperty({ description: 'ID Gói dịch vụ' })
+  // Plan Id
   @Column({ type: 'uuid', nullable: false })
+  @ApiProperty({ description: 'Plan Id' })
   planId: string;
 
-  @ApiProperty({ description: 'Trạng thái gói', enum: SubStatus })
+  // Trạng thái
   @Column({
     type: 'enum',
     enum: SubStatus,
     default: SubStatus.ACTIVE,
     nullable: false,
   })
+  @ApiProperty({ description: 'Trạng thái' })
   status: SubStatus;
 
-  @ApiProperty({ description: 'Ngày bắt đầu' })
+  // Started At
   @Column({
     type: 'timestamptz',
     default: () => 'CURRENT_TIMESTAMP',
     nullable: false,
   })
+  @ApiProperty({ description: 'Started At' })
   startedAt: Date;
 
-  @ApiProperty({ description: 'Ngày hết hạn' })
+  // Ngày hết hạn
   @Column({ type: 'timestamptz', nullable: false })
+  @ApiProperty({ description: 'Ngày hết hạn' })
   expiresAt: Date;
 
-  @ApiProperty({ description: 'Số tiền đã thanh toán', required: false })
+  // Paid Amount Vnd
   @Column({ type: 'bigint', nullable: true })
+  @ApiProperty({ description: 'Paid Amount Vnd' })
   paidAmountVnd: number;
 
-  @ApiProperty({ description: 'Phương thức thanh toán', required: false })
+  // Payment Method
   @Column({ type: 'varchar', length: 50, nullable: true })
+  @ApiProperty({ description: 'Payment Method' })
   paymentMethod: string;
 
-  @ApiProperty({ description: 'Mã giao dịch', required: false })
+  // Payment Ref
   @Column({ type: 'varchar', length: 255, nullable: true })
+  @ApiProperty({ description: 'Payment Ref' })
   paymentRef: string;
+
+  // User
+  @ManyToOne(() => UserEntity, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'userId' })
+  @ApiProperty({ description: 'User' })
+  user: UserEntity;
+
+  // Wedding
+  @ManyToOne(() => WeddingEntity, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'weddingId' })
+  @ApiProperty({ description: 'Wedding' })
+  wedding: WeddingEntity;
+
+  // Plan
+  @ManyToOne(() => ServicePlanEntity, { onDelete: 'RESTRICT' })
+  @JoinColumn({ name: 'planId' })
+  @ApiProperty({ description: 'Plan' })
+  plan: ServicePlanEntity;
 }

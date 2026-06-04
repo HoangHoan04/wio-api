@@ -1,4 +1,5 @@
 import * as allModules from '@/modules';
+import { BullModule } from '@nestjs/bull';
 import { CacheModule } from '@nestjs/cache-manager';
 import {
   MiddlewareConsumer,
@@ -37,6 +38,15 @@ const globalModules = [
       limit: Number(process.env.LIMIT_RQ_PER_MINUTE_PER_IP) || 100,
     },
   ]),
+
+  BullModule.forRootAsync({
+    useFactory: () => ({
+      redis: {
+        host: process.env.REDIS_HOST || 'localhost',
+        port: Number(process.env.REDIS_PORT) || 6379,
+      },
+    }),
+  })
 ];
 
 const modules = Object.values(allModules);

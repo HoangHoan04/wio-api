@@ -19,28 +19,10 @@ import { WeddingService } from '../wedding.service';
 export class WeddingAdminController {
   constructor(private readonly service: WeddingService) {}
 
-  @ApiOperation({ summary: 'Tạo đám cưới mới (Admin)' })
-  @Post('create')
-  async create(@Body() data: CreateWeddingDto, @CurrentUser() user: UserDto) {
-    return await this.service.create(user, data);
-  }
-
   @Post('pagination')
   @ApiOperation({ summary: 'Danh sách đám cưới toàn hệ thống (có bộ lọc)' })
   async pagination(@Body() body: PaginationDto<FilterWeddingDto>) {
     return await this.service.pagination(body);
-  }
-
-  @ApiOperation({ summary: 'Cập nhật thông tin đám cưới (Admin)' })
-  @Post('update')
-  async update(@Body() data: UpdateWeddingDto, @CurrentUser() user: UserDto) {
-    return await this.service.update(data, user);
-  }
-
-  @ApiOperation({ summary: 'Xóa mềm đám cưới (Admin)' })
-  @Post('delete')
-  async delete(@Body() body: IdDto, @CurrentUser() user: UserDto) {
-    return await this.service.delete(body, user);
   }
 
   @ApiOperation({ summary: 'Chi tiết đám cưới' })

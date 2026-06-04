@@ -1,12 +1,8 @@
 import { ChildModule } from '@/common/decorators';
 import { MiddlewareConsumer, NestModule } from '@nestjs/common';
-import { PREFIX_MODULE } from '../config-module';
-
-// Existing
-import { AiSuggestionModule } from '../ai-suggestion/ai-suggestion.module';
-import { AiSuggestionUserController } from '../ai-suggestion/controllers/ai-suggestion-user.controller';
 import { AuthModule } from '../auth/auth.module';
 import { AuthUserController } from '../auth/controller/auth-user.controller';
+import { PREFIX_MODULE } from '../config-module';
 import { GuestGroupUserController } from '../guest-group/controllers/guest-group-user.controller';
 import { GuestGroupModule } from '../guest-group/guest-group.module';
 import { GuestUserController } from '../guest/controllers/guest-user.controller';
@@ -21,7 +17,6 @@ import { SubscriptionUserController } from '../subscription/controllers/subscrip
 import { SubscriptionModule } from '../subscription/subscription.module';
 import { TableUserController } from '../table/controllers/table-user.controller';
 import { TableModule } from '../table/table.module';
-import { TemplateUserController } from '../template/controllers/template-user.controller';
 import { TemplateModule } from '../template/template.module';
 import { WeddingPhotoUserController } from '../wedding-photo/controllers/wedding-photo-user.controller';
 import { WeddingPhotoModule } from '../wedding-photo/wedding-photo.module';
@@ -29,6 +24,9 @@ import { WeddingUserController } from '../wedding/controllers/wedding-user.contr
 import { WeddingModule } from '../wedding/wedding.module';
 import { WishUserController } from '../wish/controllers/wish-user.controller';
 import { WishModule } from '../wish/wish.module';
+import { TemplateUserController } from '../template/controllers/template-user.controller';
+import { MusicBackgroundModule } from '../music-background/music-background.module';
+import { MusicBackgroundUserController } from '../music-background/controllers/music-background-user.controller';
 
 @ChildModule({
   prefix: PREFIX_MODULE.user,
@@ -43,9 +41,9 @@ import { WishModule } from '../wish/wish.module';
     WishUserController,
     PhotoWallUserController,
     NotificationUserController,
-    AiSuggestionUserController,
     ServicePlanUserController,
     SubscriptionUserController,
+    MusicBackgroundUserController,
   ],
   imports: [
     AuthModule,
@@ -58,9 +56,9 @@ import { WishModule } from '../wish/wish.module';
     WishModule,
     PhotoWallModule,
     NotificationModule,
-    AiSuggestionModule,
     ServicePlanModule,
     SubscriptionModule,
+    MusicBackgroundModule
   ],
   exports: [],
 })

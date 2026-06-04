@@ -1,47 +1,56 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity } from 'typeorm';
+import { Entity, Column } from 'typeorm';
 import { BaseEntity } from './base.entity';
 
-// Các gói dịch vụ - admin quản lý
+// ==================== SERVICE PLANS ====================
 @Entity('service_plans')
 export class ServicePlanEntity extends BaseEntity {
-  @ApiProperty({ description: 'Tên gói (Free, Basic, Premium...)' })
   @Column({ type: 'varchar', length: 50, nullable: false })
+  @ApiProperty({ description: 'Tên' })
   name: string;
 
-  @ApiProperty({ description: 'Số lượng khách tối đa' })
+  // Max Guests
   @Column({ type: 'int', nullable: false })
+  @ApiProperty({ description: 'Max Guests' })
   maxGuests: number;
 
-  @ApiProperty({ description: 'Số lượng ảnh tối đa' })
+  // Số ảnh tối đa
   @Column({ type: 'int', nullable: false })
+  @ApiProperty({ description: 'Số ảnh tối đa' })
   maxPhotos: number;
 
-  @ApiProperty({ description: 'Số lượng template tối đa' })
+  // Max Templates
   @Column({ type: 'int', nullable: false })
+  @ApiProperty({ description: 'Max Templates' })
   maxTemplates: number;
 
-  @ApiProperty({ description: 'Có tính năng AI?' })
+  // Has Ai
   @Column({ type: 'boolean', default: false, nullable: false })
+  @ApiProperty({ description: 'Has Ai' })
   hasAi: boolean;
 
-  @ApiProperty({ description: 'Có tính năng thống kê?' })
+  // Has Analytics
   @Column({ type: 'boolean', default: false, nullable: false })
+  @ApiProperty({ description: 'Has Analytics' })
   hasAnalytics: boolean;
 
-  @ApiProperty({ description: 'Có slug tùy chỉnh?' })
+  // Has Custom Slug
   @Column({ type: 'boolean', default: false, nullable: false })
+  @ApiProperty({ description: 'Has Custom Slug' })
   hasCustomSlug: boolean;
 
-  @ApiProperty({ description: 'Thời hạn (ngày)' })
+  // Số ngày hiệu lực
   @Column({ type: 'int', nullable: false })
+  @ApiProperty({ description: 'Số ngày hiệu lực' })
   durationDays: number;
 
-  @ApiProperty({ description: 'Giá (VND)' })
+  // Price Vnd
   @Column({ type: 'bigint', nullable: false })
+  @ApiProperty({ description: 'Price Vnd' })
   priceVnd: number;
 
-  @ApiProperty({ description: 'Trạng thái hoạt động' })
+  // Is Active
   @Column({ type: 'boolean', default: true, nullable: false })
+  @ApiProperty({ description: 'Is Active' })
   isActive: boolean;
 }

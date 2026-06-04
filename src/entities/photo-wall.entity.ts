@@ -1,43 +1,54 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity, Index } from 'typeorm';
+import { Entity, Index, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from './base.entity';
+import { WeddingEntity } from './wedding.entity';
 
-// Ảnh do khách chụp tại tiệc và upload - Wedding Photo Wall
+// ==================== PHOTO WALL ====================
 @Entity('photo_wall')
 @Index(['weddingId', 'isApproved'])
 export class PhotoWallEntity extends BaseEntity {
-  @ApiProperty({ description: 'ID Đám cưới' })
   @Column({ type: 'uuid', nullable: false })
+  @ApiProperty({ description: 'ID đám cưới' })
   weddingId: string;
 
-  @ApiProperty({
-    description: 'ID Khách mời (Null nếu upload ẩn danh)',
-    required: false,
-  })
+  // Guest Id
   @Column({ type: 'uuid', nullable: true })
+  @ApiProperty({ description: 'Guest Id' })
   guestId: string;
 
-  @ApiProperty({ description: 'Tên người upload' })
+  // Uploader Name
   @Column({ type: 'varchar', length: 100, nullable: false })
+  @ApiProperty({ description: 'Uploader Name' })
   uploaderName: string;
 
-  @ApiProperty({ description: 'Đường dẫn ảnh' })
+  // Đường dẫn URL
   @Column({ type: 'text', nullable: false })
+  @ApiProperty({ description: 'Đường dẫn URL' })
   url: string;
 
-  @ApiProperty({ description: 'Key lưu trữ', required: false })
+  // Storage Key
   @Column({ type: 'varchar', length: 500, nullable: true })
+  @ApiProperty({ description: 'Storage Key' })
   storageKey: string;
 
-  @ApiProperty({ description: 'Chú thích ảnh', required: false })
+  // Caption
   @Column({ type: 'varchar', length: 255, nullable: true })
+  @ApiProperty({ description: 'Caption' })
   caption: string;
 
-  @ApiProperty({ description: 'Đã duyệt?' })
+  // Is Approved
   @Column({ type: 'boolean', default: true, nullable: false })
+  @ApiProperty({ description: 'Is Approved' })
   isApproved: boolean;
 
-  @ApiProperty({ description: 'Thời gian duyệt', required: false })
+  // Approved At
   @Column({ type: 'timestamptz', nullable: true })
+  @ApiProperty({ description: 'Approved At' })
   approvedAt: Date;
+
+  // Wedding
+  @ManyToOne(() => WeddingEntity, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'weddingId' })
+  @ApiProperty({ description: 'Wedding' })
+  wedding: WeddingEntity;
 }

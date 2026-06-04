@@ -1,39 +1,46 @@
 import { ApiProperty } from '@nestjs/swagger';
+// ==================== SLUG HISTORY ====================
 import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { BaseEntity } from './base.entity';
+import { WeddingEntity } from './wedding.entity';
 
-// Lưu lịch sử thay đổi slug của đám cưới
 @Entity('slug_history')
-export class SlugHistoryEntity {
-  @ApiProperty({ description: 'ID khóa chính' })
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
-  @ApiProperty({ description: 'ID Đám cưới' })
+export class SlugHistoryEntity extends BaseEntity {
+  // ID đám cưới
   @Column({ type: 'uuid', nullable: false })
+  @ApiProperty({ description: 'ID đám cưới' })
   weddingId: string;
 
-  @ApiProperty({ description: 'Slug cũ' })
+  // Đường dẫn cũ
   @Column({ type: 'varchar', length: 100, nullable: false })
+  @ApiProperty({ description: 'Đường dẫn cũ' })
   oldSlug: string;
 
-  @ApiProperty({ description: 'Slug mới' })
+  // Đường dẫn mới
   @Column({ type: 'varchar', length: 100, nullable: false })
+  @ApiProperty({ description: 'Đường dẫn mới' })
   newSlug: string;
 
-  @ApiProperty({ description: 'Người thực hiện thay đổi (User/Admin ID)' })
+  // Người thay đổi
   @Column({ type: 'uuid', nullable: false })
+  @ApiProperty({ description: 'Người thay đổi' })
   changedBy: string;
 
-  @ApiProperty({ description: 'Lý do thay đổi' })
+  // Lý do
   @Column({ type: 'text', nullable: false })
+  @ApiProperty({ description: 'Lý do' })
   reason: string;
 
-  @ApiProperty({ description: 'Thời điểm thay đổi' })
-  @CreateDateColumn({ type: 'timestamptz', nullable: false })
-  createdAt: Date;
+  // Wedding
+  @ManyToOne(() => WeddingEntity, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'weddingId' })
+  @ApiProperty({ description: 'Wedding' })
+  wedding: WeddingEntity;
 }

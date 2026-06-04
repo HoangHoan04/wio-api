@@ -54,20 +54,6 @@ export enum NotifStatus {
   CANCELLED = 'cancelled',
 }
 
-export enum AiTarget {
-  FAMILY = 'family',
-  FRIEND = 'friend',
-  COLLEAGUE = 'colleague',
-  GENERAL = 'general',
-}
-
-export enum AiTone {
-  FORMAL = 'formal',
-  WARM = 'warm',
-  FUN = 'fun',
-  POETIC = 'poetic',
-}
-
 export enum SubStatus {
   ACTIVE = 'active',
   EXPIRED = 'expired',

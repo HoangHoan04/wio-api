@@ -1,8 +1,10 @@
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 import {
+  IsArray,
   IsBoolean,
   IsNotEmpty,
   IsNumber,
+  IsObject,
   IsOptional,
   IsString,
   IsUUID,
@@ -14,49 +16,62 @@ export class CreateTemplateDto {
   @IsString()
   name: string;
 
+  @ApiProperty({ description: 'Mô tả ngắn' })
+  @IsNotEmpty()
+  @IsString()
+  description: string;
+
+  @ApiProperty({
+    description: 'Tags phong cách',
+    type: [String],
+    required: false,
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  tags?: string[];
+
+  @ApiProperty({ description: 'Cấu hình tính năng dạng JSON', required: false })
+  @IsOptional()
+  @IsObject()
+  features?: any;
+
   @ApiProperty({ description: 'Đường dẫn ảnh thu nhỏ', required: false })
   @IsOptional()
   @IsString()
   thumbnailUrl?: string;
 
-  @ApiProperty({
-    description: 'Cấu hình màu sắc, font, layout dạng JSON',
-    required: false,
-  })
-  @IsOptional()
-  cssConfig?: any;
-
-  @ApiProperty({ description: 'Đường dẫn xem trước mẫu', required: false })
-  @IsOptional()
+  @ApiProperty({ description: 'Mã giao diện (Frontend Component Mapping)' })
+  @IsNotEmpty()
   @IsString()
-  previewUrl?: string;
+  themeCode: string;
 
-  @ApiProperty({ description: 'Trạng thái hoạt động' })
+  @ApiProperty({ description: 'Trạng thái hiển thị', default: true })
   @IsNotEmpty()
   @IsBoolean()
-  isActive: boolean;
+  isShow: boolean;
 
-  @ApiProperty({ description: 'Giao diện trả phí?' })
+  @ApiProperty({ description: 'Giao diện trả phí?', default: false })
   @IsNotEmpty()
   @IsBoolean()
   isPremium: boolean;
 
   @ApiProperty({
     description: 'Gói tối thiểu để sử dụng (free | basic | premium)',
-    required: false,
+    default: 'free',
   })
-  @IsOptional()
+  @IsNotEmpty()
   @IsString()
-  minPlan?: string;
+  minPlan: string;
 
-  @ApiProperty({ description: 'Thứ tự sắp xếp' })
+  @ApiProperty({ description: 'Số ngày dùng thử', default: 3 })
   @IsNotEmpty()
   @IsNumber()
-  sortOrder: number;
+  trialDays: number;
 }
 
 export class UpdateTemplateDto extends PartialType(CreateTemplateDto) {
-  @ApiProperty({ description: 'ID' })
+  @ApiProperty({ description: 'ID mẫu giao diện' })
   @IsUUID()
   @IsNotEmpty()
   id: string;
@@ -80,27 +95,15 @@ export class FilterTemplateDto {
   @IsString()
   name?: string;
 
-  @ApiProperty({ description: 'Đường dẫn ảnh thu nhỏ', required: false })
+  @ApiProperty({ description: 'Mã giao diện', required: false })
   @IsOptional()
   @IsString()
-  thumbnailUrl?: string;
+  themeCode?: string;
 
-  @ApiProperty({
-    description: 'Cấu hình màu sắc, font, layout dạng JSON',
-    required: false,
-  })
-  @IsOptional()
-  cssConfig?: any;
-
-  @ApiProperty({ description: 'Đường dẫn xem trước mẫu', required: false })
-  @IsOptional()
-  @IsString()
-  previewUrl?: string;
-
-  @ApiProperty({ description: 'Trạng thái hoạt động', required: false })
+  @ApiProperty({ description: 'Trạng thái hiển thị', required: false })
   @IsOptional()
   @IsBoolean()
-  isActive?: boolean;
+  isShow?: boolean;
 
   @ApiProperty({ description: 'Giao diện trả phí?', required: false })
   @IsOptional()
@@ -114,9 +117,4 @@ export class FilterTemplateDto {
   @IsOptional()
   @IsString()
   minPlan?: string;
-
-  @ApiProperty({ description: 'Thứ tự sắp xếp', required: false })
-  @IsOptional()
-  @IsNumber()
-  sortOrder?: number;
 }

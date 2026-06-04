@@ -164,7 +164,7 @@ export class EmailService {
             <p style="color: rgba(245, 230, 211, 0.7); font-size: 12px; line-height: 1.6;">
               <strong>HỆ THỐNG THIỆP CƯỚI TRỰC TUYẾN — TIỆM CƯỚI TÂN THỜI</strong><br>
               📞 Hotline: 1900 123 456 | 📧 Email: support@wedding.vn<br>
-              🌐 Website: <a href="http://localhost:5173" style="color: #f5c842; text-decoration: none;">www.wedding.vn</a>
+              🌐 Website: <a href="http://localhost:3011" style="color: #f5c842; text-decoration: none;">www.wedding.vn</a>
             </p>
 
             <p style="color: rgba(245, 230, 211, 0.4); font-size: 11px; margin-top: 20px;">
@@ -234,7 +234,7 @@ export class EmailService {
             <p style="color: rgba(245, 230, 211, 0.7); font-size: 12px; line-height: 1.6;">
               <strong>HỆ THỐNG THIỆP CƯỚI TRỰC TUYẾN — TIỆM CƯỚI TÂN THỜI</strong><br>
               📞 Hotline: 1900 123 456 | 📧 Email: support@wedding.vn<br>
-              🌐 Website: <a href="http://localhost:5173" style="color: #f5c842; text-decoration: none;">www.wedding.vn</a>
+              🌐 Website: <a href="http://localhost:3011" style="color: #f5c842; text-decoration: none;">www.wedding.vn</a>
             </p>
             <p style="color: rgba(245, 230, 211, 0.4); font-size: 11px; margin-top: 20px;">
               © ${currentYear} Tiệm Cưới Tân Thời. All rights reserved.
@@ -249,7 +249,7 @@ export class EmailService {
 
   private getLoginOtpTemplate(email: string, otpCode: string): string {
     const currentYear = new Date().getFullYear();
-    const loginLink = `http://localhost:5173/login-otp?email=${encodeURIComponent(email)}&otp=${otpCode}`;
+    const loginLink = `http://localhost:3011/login-otp?email=${encodeURIComponent(email)}&otp=${otpCode}`;
     return `
       <!DOCTYPE html>
       <html>
@@ -310,7 +310,7 @@ export class EmailService {
             <p style="color: rgba(245, 230, 211, 0.7); font-size: 12px; line-height: 1.6;">
               <strong>HỆ THỐNG THIỆP CƯỚI TRỰC TUYẾN — TIỆM CƯỚI TÂN THỜI</strong><br>
               📞 Hotline: 1900 123 456 | 📧 Email: support@wedding.vn<br>
-              🌐 Website: <a href="http://localhost:5173" style="color: #f5c842; text-decoration: none;">www.wedding.vn</a>
+              🌐 Website: <a href="http://localhost:3011" style="color: #f5c842; text-decoration: none;">www.wedding.vn</a>
             </p>
             <p style="color: rgba(245, 230, 211, 0.4); font-size: 11px; margin-top: 20px;">
               © ${currentYear} Tiệm Cưới Tân Thời. All rights reserved.

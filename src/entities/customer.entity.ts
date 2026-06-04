@@ -1,34 +1,47 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, OneToOne } from 'typeorm';
 import { BaseEntity } from './base.entity';
+import { UserEntity } from './user.entity';
 
+// ==================== CUSTOMERS ====================
 @Entity('customers')
 export class CustomerEntity extends BaseEntity {
+  @Column({ type: 'uuid', nullable: false })
   @ApiProperty({ description: 'ID của user liên kết' })
-  @Column({ type: 'varchar', length: 36, nullable: false })
   userId: string;
 
-  @ApiProperty({ description: 'Mã khách hàng' })
+  // Mã
   @Column({ type: 'varchar', length: 50, nullable: true })
+  @ApiProperty({ description: 'Mã khách hàng' })
   code: string;
 
-  @ApiProperty({ description: 'Họ và tên khách hàng' })
+  // Họ và tên
   @Column({ type: 'varchar', length: 100, nullable: false })
+  @ApiProperty({ description: 'Họ và tên khách hàng' })
   fullName: string;
 
-  @ApiProperty({ description: 'Email khách hàng' })
+  // Email
   @Column({ type: 'varchar', length: 255, nullable: true })
+  @ApiProperty({ description: 'Email khách hàng' })
   email: string;
 
-  @ApiProperty({ description: 'Số điện thoại khách hàng' })
+  // Số điện thoại
   @Column({ type: 'varchar', length: 20, nullable: true })
+  @ApiProperty({ description: 'Số điện thoại khách hàng' })
   phone: string;
 
-  @ApiProperty({ description: 'Giới tính' })
+  // Giới tính
   @Column({ type: 'varchar', length: 20, nullable: true })
+  @ApiProperty({ description: 'Giới tính' })
   gender: string;
 
-  @ApiProperty({ description: 'Ngày sinh' })
+  // Ngày sinh
   @Column({ type: 'timestamptz', nullable: true })
+  @ApiProperty({ description: 'Ngày sinh' })
   dateOfBirth: Date;
+
+  // User
+  @OneToOne(() => UserEntity, (user) => user.customer)
+  @ApiProperty({ description: 'User' })
+  user: Promise<UserEntity>;
 }

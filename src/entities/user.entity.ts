@@ -1,37 +1,97 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity } from 'typeorm';
+import * as bcrypt from 'bcrypt';
+import {
+  BeforeInsert,
+  BeforeUpdate,
+  Column,
+  Entity,
+  JoinColumn,
+  OneToOne,
+  OneToMany,
+} from 'typeorm';
 import { BaseEntity } from './base.entity';
+import { CustomerEntity } from './customer.entity';
+import { WeddingEntity } from './wedding.entity';
 import { UserRole } from './enums';
 
-// Tài khoản đăng nhập: cặp đôi hoặc admin hệ thống
 @Entity('users')
 export class UserEntity extends BaseEntity {
-  @ApiProperty({ description: 'Địa chỉ email (Unique)' })
+  // Password
+  @Column({ type: 'varchar', length: 255, nullable: false })
+  @ApiProperty({ description: 'Mật khẩu đã mã hóa' })
+  password: string;
+
+  // Email
   @Column({ type: 'varchar', length: 255, unique: true, nullable: false })
+  @ApiProperty({ description: 'Địa chỉ email (Dùng để đăng nhập)' })
   email: string;
 
-  @ApiProperty({ description: 'Mật khẩu đã được hash' })
-  @Column({ type: 'varchar', length: 255, nullable: false })
-  passwordHash: string;
+  // Customer Id
+  @Column({ type: 'uuid', nullable: true })
+  @ApiProperty({ description: 'Mã khách hàng (nếu user là khách hàng)' })
+  customerId: string;
 
-  @ApiProperty({ description: 'Họ và tên' })
-  @Column({ type: 'varchar', length: 100, nullable: false })
-  fullName: string;
+  // Is Admin
+  @Column({ type: 'boolean', default: false })
+  @ApiProperty({ description: 'Tài khoản có là admin không' })
+  isAdmin: boolean;
 
-  @ApiProperty({ description: 'Số điện thoại', required: false })
+  // Refresh Token
+  @Column({ type: 'text', nullable: true })
+  @ApiProperty({ description: 'Refresh token đã mã hóa' })
+  refreshToken: string;
+
+  // Last Login
+  @Column({ type: 'timestamptz', nullable: true })
+  @ApiProperty({ description: 'Lần đăng nhập gần nhất' })
+  lastLogin: Date;
+
+  // Số điện thoại
   @Column({ type: 'varchar', length: 20, nullable: true })
+  @ApiProperty({ description: 'Số điện thoại', required: false })
   phone: string;
 
-  @ApiProperty({ description: 'Quyền: couple | admin', enum: UserRole })
+  // Vai trò
   @Column({
     type: 'enum',
     enum: UserRole,
     default: UserRole.COUPLE,
     nullable: false,
   })
+  @ApiProperty({ description: 'Quyền: couple | admin', enum: UserRole })
   role: UserRole;
 
-  @ApiProperty({ description: 'Trạng thái hoạt động' })
+  // Is Active
   @Column({ type: 'boolean', default: true, nullable: false })
+  @ApiProperty({ description: 'Trạng thái hoạt động' })
   isActive: boolean;
+
+  // Setup Mối quan hệ vật lý
+  @OneToOne(() => CustomerEntity, (customer) => customer.user, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'customerId' })
+  @ApiProperty({ description: 'Customer' })
+  customer: Promise<CustomerEntity>;
+
+  // Weddings
+  @OneToMany(() => WeddingEntity, (wedding) => wedding.user)
+  @ApiProperty({ description: 'Weddings' })
+  weddings: WeddingEntity[];
+
+  @BeforeInsert()
+  async hashPasswordBeforeInsert() {
+    if (this.password) this.password = await bcrypt.hash(this.password, 10);
+  }
+
+  @BeforeUpdate()
+  async hashPasswordBeforeUpdate() {
+    if (this.password && this.password.length < 60) {
+      this.password = await bcrypt.hash(this.password, 10);
+    }
+  }
+
+  async comparePassword(plainPassword: string): Promise<boolean> {
+    return await bcrypt.compare(plainPassword, this.password);
+  }
 }

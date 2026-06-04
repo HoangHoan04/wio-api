@@ -1,111 +1,149 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity, Index } from 'typeorm';
+import { Entity, Index, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from './base.entity';
-import { DietaryPref, GuestSide, RsvpStatus } from './enums';
+import { GuestSide, RsvpStatus, DietaryPref } from './enums';
+import { GuestGroupEntity } from './guest-group.entity';
+import { TableEntity } from './table.entity';
+import { WeddingEntity } from './wedding.entity';
 
-// Danh sách khách mời - có thể import từ Excel, có mã QR cá nhân hóa
+// ==================== GUESTS ====================
 @Entity('guests')
 @Index(['weddingId', 'rsvpStatus'])
 @Index(['weddingId', 'tableId'])
 export class GuestEntity extends BaseEntity {
-  @ApiProperty({ description: 'ID Đám cưới' })
   @Column({ type: 'uuid', nullable: false })
+  @ApiProperty({ description: 'ID đám cưới' })
   weddingId: string;
 
-  @ApiProperty({ description: 'ID Nhóm khách mời', required: false })
+  // Group Id
   @Column({ type: 'uuid', nullable: true })
+  @ApiProperty({ description: 'Group Id' })
   groupId: string;
 
-  @ApiProperty({
-    description: 'ID Bàn tiệc (Null nếu chưa xếp)',
-    required: false,
-  })
+  // Table Id
   @Column({ type: 'uuid', nullable: true })
+  @ApiProperty({ description: 'Table Id' })
   tableId: string;
 
-  @ApiProperty({ description: 'Họ và tên khách mời' })
+  // Họ và tên
   @Column({ type: 'varchar', length: 100, nullable: false })
+  @ApiProperty({ description: 'Họ và tên' })
   fullName: string;
 
-  @ApiProperty({ description: 'Số điện thoại', required: false })
+  // Số điện thoại
   @Column({ type: 'varchar', length: 20, nullable: true })
+  @ApiProperty({ description: 'Số điện thoại' })
   phone: string;
 
-  @ApiProperty({ description: 'Email', required: false })
+  // Email
   @Column({ type: 'varchar', length: 255, nullable: true })
+  @ApiProperty({ description: 'Email' })
   email: string;
 
-  @ApiProperty({ description: 'Danh xưng (Anh, Chị, Bác...)', required: false })
+  // Salutation
   @Column({ type: 'varchar', length: 20, nullable: true })
+  @ApiProperty({ description: 'Salutation' })
   salutation: string;
 
-  @ApiProperty({ description: 'Khách của ai', enum: GuestSide })
+  // Nhà trai/Nhà gái
   @Column({
     type: 'enum',
     enum: GuestSide,
     default: GuestSide.BOTH,
     nullable: false,
   })
+  @ApiProperty({ description: 'Nhà trai/Nhà gái' })
   side: GuestSide;
 
-  @ApiProperty({ description: 'Khách VIP?' })
+  // Is Vip
   @Column({ type: 'boolean', default: false, nullable: false })
+  @ApiProperty({ description: 'Is Vip' })
   isVip: boolean;
 
-  @ApiProperty({ description: 'Mã mời cá nhân hóa (Unique)' })
+  // Invitation Code
   @Column({ type: 'varchar', length: 32, unique: true, nullable: false })
+  @ApiProperty({ description: 'Invitation Code' })
   invitationCode: string;
 
-  @ApiProperty({ description: 'URL ảnh QR Code cá nhân', required: false })
+  // Qr Code Url
   @Column({ type: 'text', nullable: true })
+  @ApiProperty({ description: 'Qr Code Url' })
   qrCodeUrl: string;
 
-  @ApiProperty({ description: 'Trạng thái RSVP', enum: RsvpStatus })
+  // Trạng thái RSVP
   @Column({
     type: 'enum',
     enum: RsvpStatus,
     default: RsvpStatus.PENDING,
     nullable: false,
   })
+  @ApiProperty({ description: 'Trạng thái RSVP' })
   rsvpStatus: RsvpStatus;
 
-  @ApiProperty({ description: 'Số người đi kèm (+1, +2...)' })
+  // Số người tham dự
   @Column({ type: 'smallint', default: 1, nullable: false })
+  @ApiProperty({ description: 'Số người tham dự' })
   attendingCount: number;
 
-  @ApiProperty({ description: 'Chế độ ăn', enum: DietaryPref })
+  // Chế độ ăn
   @Column({
     type: 'enum',
     enum: DietaryPref,
     default: DietaryPref.NORMAL,
     nullable: false,
   })
+  @ApiProperty({ description: 'Chế độ ăn' })
   dietary: DietaryPref;
 
-  @ApiProperty({ description: 'Ghi chú chế độ ăn', required: false })
+  // Dietary Note
   @Column({ type: 'varchar', length: 255, nullable: true })
+  @ApiProperty({ description: 'Dietary Note' })
   dietaryNote: string;
 
-  @ApiProperty({ description: 'Cần phương tiện di chuyển?' })
+  // Cần đưa đón
   @Column({ type: 'boolean', default: false, nullable: false })
+  @ApiProperty({ description: 'Cần đưa đón' })
   needsTransport: boolean;
 
-  @ApiProperty({ description: 'Lời nhắn khi RSVP', required: false })
+  // Rsvp Note
   @Column({ type: 'text', nullable: true })
+  @ApiProperty({ description: 'Rsvp Note' })
   rsvpNote: string;
 
-  @ApiProperty({ description: 'Thời gian RSVP', required: false })
+  // Ngày RSVP
   @Column({ type: 'timestamptz', nullable: true })
+  @ApiProperty({ description: 'Ngày RSVP' })
   rsvpAt: Date;
 
-  @ApiProperty({
-    description: 'Thời điểm link thiệp được gửi đi',
-    required: false,
-  })
+  // Invited At
   @Column({ type: 'timestamptz', nullable: true })
+  @ApiProperty({ description: 'Invited At' })
   invitedAt: Date;
 
-  @ApiProperty({ description: 'Lần đầu khách mở thiệp', required: false })
+  // Invitation Viewed At
   @Column({ type: 'timestamptz', nullable: true })
+  @ApiProperty({ description: 'Invitation Viewed At' })
   invitationViewedAt: Date;
+
+  // Wedding
+  @ManyToOne(() => WeddingEntity, (wedding) => wedding.guests, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'weddingId' })
+  @ApiProperty({ description: 'Wedding' })
+  wedding: WeddingEntity;
+
+  // Table
+  @ManyToOne(() => TableEntity, (table) => table.guests, {
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'tableId' })
+  @ApiProperty({ description: 'Table' })
+  table: TableEntity;
+
+  // Group
+  @ManyToOne(() => GuestGroupEntity, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'groupId' })
+  @ApiProperty({ description: 'Group' })
+  group: GuestGroupEntity;
 }

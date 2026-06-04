@@ -1,34 +1,40 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
-  BaseEntity as Base,
+  BaseEntity as TypeOrmBase,
   Column,
   CreateDateColumn,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 
-export abstract class BaseEntity extends Base {
+export abstract class BaseEntity extends TypeOrmBase {
+  // Id
   @ApiProperty({ description: 'Id khóa chính' })
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  // Ngày tạo
+  @CreateDateColumn({ type: 'timestamptz', nullable: false })
   @ApiProperty({ description: 'Ngày tạo' })
-  @CreateDateColumn({ nullable: false })
   createdAt: Date;
 
+  // Người tạo
+  @Column({ type: 'uuid', nullable: true })
   @ApiProperty({ description: 'Người tạo, lưu user.id' })
-  @Column({ type: 'varchar', length: 36, nullable: false })
-  createdBy: string;
+  createdBy?: string;
 
+  // Ngày cập nhật
+  @UpdateDateColumn({ type: 'timestamptz', nullable: true })
   @ApiProperty({ description: 'Ngày sửa cuối' })
-  @UpdateDateColumn({ nullable: true })
   updatedAt?: Date;
 
+  // Người cập nhật
+  @Column({ type: 'uuid', nullable: true })
   @ApiProperty({ description: 'Người sửa cuối, lưu user.id' })
-  @Column({ type: 'varchar', length: 36, nullable: true })
   updatedBy?: string;
 
+  // Đã xóa
+  @Column({ name: 'isDeleted', type: 'boolean', default: false })
   @ApiProperty({ description: 'Xóa mềm?' })
-  @Column({ name: 'isDeleted', default: false })
   isDeleted: boolean;
 }

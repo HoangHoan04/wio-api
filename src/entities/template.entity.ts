@@ -9,25 +9,45 @@ export class TemplateEntity extends BaseEntity {
   @Column({ type: 'varchar', length: 100, nullable: false })
   name: string;
 
+  // Mô tả
+  @ApiProperty({ description: 'Mô tả ngắn' })
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  description: string;
+
+  // Tags
+  @ApiProperty({ description: 'Tags' })
+  @Column({ type: 'simple-array', nullable: true })
+  tags: string[];
+
+  // Tính năng
+  @ApiProperty({ description: 'Cấu hình tính năng' })
+  @Column({ type: 'json', nullable: true })
+  features: any;
+
+  // Ảnh đại diện
   @ApiProperty({ description: 'Đường dẫn ảnh thu nhỏ', required: false })
   @Column({ type: 'text', nullable: true })
-  thumbnailUrl: string;
+  thumbnailUrl?: string | null;
 
   @ApiProperty({
-    description: 'Cấu hình màu sắc, font, layout dạng JSON',
-    required: false,
+    description: 'Mã giao diện',
+    required: true,
   })
-  @Column({ type: 'jsonb', nullable: true })
-  cssConfig: any;
+  @Column({
+    type: 'varchar',
+    length: 100,
+    nullable: false,
+  })
+  // Theme Code
+  @ApiProperty({ description: 'Theme Code' })
+  themeCode: string;
 
-  @ApiProperty({ description: 'Đường dẫn xem trước mẫu', required: false })
-  @Column({ type: 'text', nullable: true })
-  previewUrl: string;
-
-  @ApiProperty({ description: 'Trạng thái hoạt động' })
+  // Is Show
+  @ApiProperty({ description: 'Trạng thái hiển thị' })
   @Column({ type: 'boolean', default: true, nullable: false })
-  isActive: boolean;
+  isShow: boolean;
 
+  // Là giao diện Premium
   @ApiProperty({ description: 'Giao diện trả phí?' })
   @Column({ type: 'boolean', default: false, nullable: false })
   isPremium: boolean;
@@ -35,10 +55,13 @@ export class TemplateEntity extends BaseEntity {
   @ApiProperty({
     description: 'Gói tối thiểu để sử dụng (free | basic | premium)',
   })
+  // Min Plan
   @Column({ type: 'varchar', length: 20, default: 'free', nullable: false })
+  @ApiProperty({ description: 'Min Plan' })
   minPlan: string;
 
-  @ApiProperty({ description: 'Thứ tự sắp xếp' })
-  @Column({ type: 'int', default: 0, nullable: false })
-  sortOrder: number;
+  // Trial Days
+  @ApiProperty({ description: 'Số ngày dùng thử' })
+  @Column({ type: 'int', default: 3, nullable: false })
+  trialDays: number;
 }
