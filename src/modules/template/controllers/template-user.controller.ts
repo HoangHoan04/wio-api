@@ -13,7 +13,6 @@ export class TemplateUserController {
   @Post('pagination')
   @ApiOperation({ summary: 'Lấy danh sách template' })
   async pagination(@Body() body: PaginationDto<FilterTemplateDto>) {
-    // Ép buộc chỉ lấy các template đang hoạt động cho user/khách vãng lai
     if (!body.where) {
       body.where = {};
     }

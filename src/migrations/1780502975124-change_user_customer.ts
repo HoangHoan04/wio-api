@@ -4,12 +4,10 @@ export class ChangeUserCustomer1780502975124 implements MigrationInterface {
   name = 'ChangeUserCustomer1780502975124';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    // 1. Đổi tên cột từ passwordHash sang password
     await queryRunner.query(
       `ALTER TABLE "users" RENAME COLUMN "passwordHash" TO "password"`,
     );
 
-    // 2. CHUYỂN PASSWORD THÀNH CÓ THỂ NULL (DROP NOT NULL)
     await queryRunner.query(
       `ALTER TABLE "users" ALTER COLUMN "password" DROP NOT NULL`,
     );
@@ -41,17 +39,14 @@ export class ChangeUserCustomer1780502975124 implements MigrationInterface {
     );
     await queryRunner.query(`ALTER TABLE "users" DROP COLUMN "customerId"`);
 
-    // Trước khi trả password về NOT NULL, cần lấp đầy các ô NULL (nếu có phát sinh) để tránh lỗi crash khi rollback
     await queryRunner.query(
       `UPDATE "users" SET "password" = 'temp_fallback_password' WHERE "password" IS NULL`,
     );
 
-    // Khôi phục lại trạng thái ban đầu (Đưa password về lại NOT NULL)
     await queryRunner.query(
       `ALTER TABLE "users" ALTER COLUMN "password" SET NOT NULL`,
     );
 
-    // Hoàn tác RENAME ở hàm down
     await queryRunner.query(
       `ALTER TABLE "users" RENAME COLUMN "password" TO "passwordHash"`,
     );

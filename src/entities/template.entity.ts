@@ -2,7 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Column, Entity } from 'typeorm';
 import { BaseEntity } from './base.entity';
 
-// Giao diện thiệp cưới - quản lý bởi admin
 @Entity('templates')
 export class TemplateEntity extends BaseEntity {
   @ApiProperty({ description: 'Tên mẫu giao diện' })

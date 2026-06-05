@@ -28,7 +28,6 @@ export class WeddingUserController {
   @ApiOperation({ summary: 'Tạo đám cưới mới' })
   @Post('create')
   async create(@Body() data: CreateWeddingDto, @CurrentUser() user: UserDto) {
-    // Ép buộc userId là ID của user đang đăng nhập
     data.userId = user.id;
     return await this.service.create(user, data);
   }

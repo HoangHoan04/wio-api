@@ -13,8 +13,8 @@ import { GuestEntity } from './guest.entity';
 import { TableEntity } from './table.entity';
 import { TemplateEntity } from './template.entity';
 import { UserEntity } from './user.entity';
-import { WeddingPhotoEntity } from './wedding-photo.entity';
 import { WeddingEventEntity } from './wedding-event.entity';
+import { WeddingPhotoEntity } from './wedding-photo.entity';
 import { WeddingTimelineEntity } from './wedding-timeline.entity';
 import { WishEntity } from './wish.entity';
 
@@ -153,7 +153,7 @@ export class WeddingEntity extends BaseEntity {
   @ApiProperty({ description: 'Nội dung lời cảm ơn' })
   thankYouText: string;
 
-  // --- Thông tin cô dâu chú rể ---
+  // Thông tin cô dâu chú rể
   @Column({ type: 'varchar', length: 100, nullable: false })
   @ApiProperty({ description: 'Tên chú rể' })
   groomName: string;
@@ -177,6 +177,11 @@ export class WeddingEntity extends BaseEntity {
   @Column({ type: 'timestamptz', nullable: true })
   @ApiProperty({ description: 'Ngày sinh chú rể', required: false })
   groomDob: Date;
+
+  // Danh xưng nhà trai
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  @ApiProperty({ description: 'Danh xưng nhà trai', required: false })
+  groomFamilyTitle: string;
 
   // Tên bố chú rể
   @Column({ type: 'varchar', length: 100, nullable: true })
@@ -218,6 +223,11 @@ export class WeddingEntity extends BaseEntity {
   @ApiProperty({ description: 'Ngày sinh cô dâu', required: false })
   brideDob: Date;
 
+  // Danh xưng nhà gái
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  @ApiProperty({ description: 'Danh xưng nhà gái', required: false })
+  brideFamilyTitle: string;
+
   // Tên bố cô dâu
   @Column({ type: 'varchar', length: 100, nullable: true })
   @ApiProperty({ description: 'Tên bố cô dâu', required: false })
@@ -233,7 +243,7 @@ export class WeddingEntity extends BaseEntity {
   @ApiProperty({ description: 'Ảnh cô dâu', required: false })
   bridePhotoUrl: string;
 
-  // --- Lễ ăn hỏi ---
+  // Lễ ăn hỏi
   @Column({ type: 'timestamptz', nullable: true })
   @ApiProperty({ description: 'Thời gian lễ ăn hỏi', required: false })
   engagementAt: Date;
@@ -253,7 +263,7 @@ export class WeddingEntity extends BaseEntity {
   @ApiProperty({ description: 'Đường dẫn bản đồ lễ ăn hỏi', required: false })
   engagementMapsUrl: string;
 
-  // --- Lễ cưới ---
+  // Lễ cưới
   @Column({ type: 'timestamptz', nullable: false })
   @ApiProperty({ description: 'Thời gian lễ cưới' })
   ceremonyAt: Date;
@@ -283,7 +293,7 @@ export class WeddingEntity extends BaseEntity {
   @ApiProperty({ description: 'Kinh độ lễ cưới', required: false })
   ceremonyLng: number;
 
-  // --- Tiệc cưới ---
+  // Tiệc cưới
   @Column({ type: 'timestamptz', nullable: true })
   @ApiProperty({ description: 'Thời gian tiệc cưới', required: false })
   receptionAt: Date;
@@ -313,7 +323,7 @@ export class WeddingEntity extends BaseEntity {
   @ApiProperty({ description: 'Kinh độ tiệc cưới', required: false })
   receptionLng: number;
 
-  // --- Nội dung thiệp ---
+  // Nội dung thiệp
   @Column({ type: 'text', nullable: true })
   @ApiProperty({
     description: 'Lời mời viết tay hoặc AI sinh',
@@ -337,7 +347,7 @@ export class WeddingEntity extends BaseEntity {
   @ApiProperty({ description: 'Hashtag đám cưới', required: false })
   hashtag: string;
 
-  // --- Nhạc nền ---
+  // Nhạc nền
   @Column({ type: 'text', nullable: true })
   @ApiProperty({ description: 'Đường dẫn nhạc nền', required: false })
   musicUrl: string;
@@ -357,7 +367,7 @@ export class WeddingEntity extends BaseEntity {
   @ApiProperty({ description: 'Tên bài hát' })
   musicName: string;
 
-  // --- Thanh toán / Mừng cưới ---
+  // Thanh toán / Mừng cưới
   @Column({ type: 'varchar', length: 50, nullable: true })
   @ApiProperty({ description: 'Số tài khoản chú rể' })
   groomBankAccount: string;
@@ -397,7 +407,7 @@ export class WeddingEntity extends BaseEntity {
   @ApiProperty({ description: 'Ảnh QR cô dâu' })
   brideQrUrl: string;
 
-  // --- Trạng thái ---
+  // Trạng thái
   @Column({
     type: 'enum',
     enum: WeddingStatus,

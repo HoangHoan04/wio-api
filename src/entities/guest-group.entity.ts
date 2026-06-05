@@ -1,11 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { WeddingEntity } from './wedding.entity';
 
-// ==================== GUEST GROUPS ====================
 @Entity('guest_groups')
 export class GuestGroupEntity extends BaseEntity {
+  // ID đám cưới
   @Column({ type: 'uuid', nullable: false })
   @ApiProperty({ description: 'ID đám cưới' })
   weddingId: string;
@@ -15,9 +15,9 @@ export class GuestGroupEntity extends BaseEntity {
   @ApiProperty({ description: 'Tên' })
   name: string;
 
-  // Color Label
+  // Màu sắc nhãn
   @Column({ type: 'varchar', length: 7, nullable: true })
-  @ApiProperty({ description: 'Color Label' })
+  @ApiProperty({ description: 'Màu sắc nhãn' })
   colorLabel: string;
 
   // Mô tả

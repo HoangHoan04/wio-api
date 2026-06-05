@@ -19,9 +19,7 @@ export class TemplateService {
     const { skip = 0, take = 10, where = {} } = data;
     const whereCon: FindOptionsWhere<TemplateEntity> = { isDeleted: false };
 
-    // Tìm kiếm tương đối theo tên nếu có
     if (where.name !== undefined) whereCon.name = ILike(`%${where.name}%`);
-
     if (where.themeCode !== undefined) whereCon.themeCode = where.themeCode;
     if (where.isShow !== undefined) whereCon.isShow = where.isShow;
     if (where.isPremium !== undefined) whereCon.isPremium = where.isPremium;
@@ -50,7 +48,6 @@ export class TemplateService {
     entity.id = uuidv4();
     entity.createdBy = user.id;
 
-    // Map chuẩn các trường từ dto sang entity
     entity.name = dto.name;
     entity.description = dto.description;
     entity.tags = dto.tags ?? [];
@@ -74,7 +71,6 @@ export class TemplateService {
 
     entity.updatedBy = user.id;
 
-    // Cập nhật các trường nếu có truyền lên (bảo vệ các giá trị cũ)
     if (dto.name !== undefined) entity.name = dto.name;
     if (dto.description !== undefined) entity.description = dto.description;
     if (dto.tags !== undefined) entity.tags = dto.tags;
@@ -108,7 +104,7 @@ export class TemplateService {
     });
     if (!entity) throw new NotFoundException('Không tìm thấy mẫu giao diện');
 
-    entity.isShow = true; // Sửa đổi từ isActive thành isShow theo đúng Entity
+    entity.isShow = true; 
     entity.updatedBy = user.id;
     const saved = await this.repo.save(entity);
     return { message: 'Hiển thị mẫu giao diện thành công', data: saved };
@@ -120,7 +116,7 @@ export class TemplateService {
     });
     if (!entity) throw new NotFoundException('Không tìm thấy mẫu giao diện');
 
-    entity.isShow = false; // Sửa đổi từ isActive thành isShow theo đúng Entity
+    entity.isShow = false; 
     entity.updatedBy = user.id;
     const saved = await this.repo.save(entity);
     return { message: 'Ẩn mẫu giao diện thành công', data: saved };

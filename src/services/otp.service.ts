@@ -10,7 +10,7 @@ export class OtpService {
   async createOtp(identifier: string, method: string): Promise<string> {
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + 5); // 5 minutes expiry
+    expiresAt.setMinutes(expiresAt.getMinutes() + 5); 
 
     const otpEntity = new VerifyOtpEntity();
     otpEntity.id = uuidv4();

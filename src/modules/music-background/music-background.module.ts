@@ -1,11 +1,11 @@
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { BullModule } from '@nestjs/bull';
-import { UploadFileModule } from '../upload-file/upload-file.module';
-import { MusicBackgroundService } from './music-background.service';
 import { MusicBackgroundRepository } from '@/repositories';
-import { MusicQueueProcessor } from './music-queue.processor';
 import { TypeOrmExModule } from '@/typeorm';
+import { BullModule } from '@nestjs/bull';
+import { Module } from '@nestjs/common';
+import { UploadFileModule } from '../upload-file/upload-file.module';
+import { MusicBackgroundUserController } from './controllers/music-background-user.controller';
+import { MusicBackgroundService } from './music-background.service';
+import { MusicQueueProcessor } from './music-queue.processor';
 
 @Module({
   imports: [
@@ -15,6 +15,7 @@ import { TypeOrmExModule } from '@/typeorm';
     }),
     UploadFileModule,
   ],
+  controllers: [MusicBackgroundUserController],
   providers: [MusicBackgroundService, MusicQueueProcessor],
   exports: [MusicBackgroundService],
 })

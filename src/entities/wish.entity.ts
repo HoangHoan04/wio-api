@@ -1,9 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Entity, Index, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { WeddingEntity } from './wedding.entity';
+import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from './base.entity';
+import { WeddingEntity } from './wedding.entity';
 
-// ==================== WISHES ====================
 @Entity('wishes')
 @Index(['weddingId', 'isApproved'])
 export class WishEntity extends BaseEntity {

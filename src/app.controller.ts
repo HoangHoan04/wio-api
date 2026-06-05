@@ -1,5 +1,6 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Post, Body } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import axios from 'axios';
 
 @ApiTags('Root')
 @Controller()
@@ -27,5 +28,22 @@ export class AppController {
   @Get('api/health')
   apiHealth() {
     return this.health();
+  }
+
+  @Post('resolve-map-url')
+  async resolveMapUrl(@Body() body: { url: string }) {
+    if (!body.url) {
+      return { message: 'Đường dẫn trống', data: { url: '' } };
+    }
+    try {
+      const res = await fetch(body.url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+      });
+      return { message: 'Thành công', data: { url: res.url } };
+    } catch (e) {
+      return { message: 'Lỗi', data: { url: body.url } };
+    }
   }
 }

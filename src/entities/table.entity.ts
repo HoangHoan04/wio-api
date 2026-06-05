@@ -1,17 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  Column,
-  Entity,
-  Index,
-  JoinColumn,
-  ManyToOne,
-  OneToMany,
-} from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { GuestEntity } from './guest.entity';
 import { WeddingEntity } from './wedding.entity';
 
-// ==================== TABLES (Sơ đồ bàn tiệc) ====================
 @Entity('tables')
 export class TableEntity extends BaseEntity {
   @Column({ type: 'uuid', nullable: false })

@@ -22,7 +22,6 @@ import { RequireRoles } from '@/common/decorators';
 export class MusicBackgroundAdminController {
   constructor(private readonly musicService: MusicBackgroundService) {}
 
-  // ─── POST pattern (dùng cho wio-admin service) ───────────────────────────
 
   @Post('pagination')
   @ApiOperation({ summary: 'Lấy danh sách nhạc nền (có phân trang)' })
@@ -58,26 +57,6 @@ export class MusicBackgroundAdminController {
   @Post('delete')
   @ApiOperation({ summary: 'Xóa nhạc nền' })
   remove(@Body('id') id: string) {
-    return this.musicService.remove(id);
-  }
-
-  // ─── REST routes (giữ lại để backwards compat) ───────────────────────────
-
-  @Get()
-  @ApiOperation({ summary: 'Lấy danh sách nhạc nền (REST)' })
-  findAll(@Query() query: any) {
-    return this.musicService.pagination(query);
-  }
-
-  @Get(':id')
-  @ApiOperation({ summary: 'Lấy chi tiết nhạc nền (REST)' })
-  findOne(@Param('id') id: string) {
-    return this.musicService.findOne(id);
-  }
-
-  @Delete(':id')
-  @ApiOperation({ summary: 'Xóa nhạc nền (REST)' })
-  removeRest(@Param('id') id: string) {
     return this.musicService.remove(id);
   }
 }

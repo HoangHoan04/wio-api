@@ -1,12 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Entity, Index, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from './base.entity';
-import { GuestSide, RsvpStatus, DietaryPref } from './enums';
+import { DietaryPref, GuestSide, RsvpStatus } from './enums';
 import { GuestGroupEntity } from './guest-group.entity';
 import { TableEntity } from './table.entity';
 import { WeddingEntity } from './wedding.entity';
 
-// ==================== GUESTS ====================
 @Entity('guests')
 @Index(['weddingId', 'rsvpStatus'])
 @Index(['weddingId', 'tableId'])
@@ -15,14 +14,14 @@ export class GuestEntity extends BaseEntity {
   @ApiProperty({ description: 'ID đám cưới' })
   weddingId: string;
 
-  // Group Id
+  // Nhóm khách
   @Column({ type: 'uuid', nullable: true })
-  @ApiProperty({ description: 'Group Id' })
+  @ApiProperty({ description: 'Nhóm khách' })
   groupId: string;
 
-  // Table Id
+  // Bàn tiệc
   @Column({ type: 'uuid', nullable: true })
-  @ApiProperty({ description: 'Table Id' })
+  @ApiProperty({ description: 'Bàn tiệc' })
   tableId: string;
 
   // Họ và tên

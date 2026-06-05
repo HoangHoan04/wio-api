@@ -39,6 +39,11 @@ export class CreateWeddingDto {
   @IsDate()
   groomDob?: Date;
 
+  @ApiProperty({ description: 'Danh xưng nhà trai', required: false })
+  @IsOptional()
+  @IsString()
+  groomFamilyTitle?: string;
+
   @ApiProperty({ description: 'Tên bố chú rể', required: false })
   @IsOptional()
   @IsString()
@@ -64,6 +69,11 @@ export class CreateWeddingDto {
   @Type(() => Date)
   @IsDate()
   brideDob?: Date;
+
+  @ApiProperty({ description: 'Danh xưng nhà gái', required: false })
+  @IsOptional()
+  @IsString()
+  brideFamilyTitle?: string;
 
   @ApiProperty({ description: 'Tên bố cô dâu', required: false })
   @IsOptional()
@@ -242,6 +252,8 @@ export class CreateWeddingDto {
   @IsOptional()
   @Type(() => Date)
   @IsDate()
+  expiresAt?: Date;
+
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
@@ -437,8 +449,6 @@ export class CreateWeddingDto {
   @ApiProperty({ required: false })
   @IsOptional()
   gallery?: string[];
-
-  expiresAt?: Date;
 }
 
 export class UpdateWeddingDto extends PartialType(CreateWeddingDto) {
@@ -690,6 +700,8 @@ export class FilterWeddingDto {
   @IsOptional()
   @Type(() => Date)
   @IsDate()
+  expiresAt?: Date;
+
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
@@ -885,11 +897,8 @@ export class FilterWeddingDto {
   @ApiProperty({ required: false })
   @IsOptional()
   gallery?: string[];
-
-  expiresAt?: Date;
 }
 
-// --- Admin specific DTOs ---
 
 export class AdminForceResetSlugDto {
   @ApiProperty({ description: 'ID đám cưới cần reset slug' })

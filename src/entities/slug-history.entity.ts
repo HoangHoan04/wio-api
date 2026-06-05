@@ -1,13 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-// ==================== SLUG HISTORY ====================
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { WeddingEntity } from './wedding.entity';
 

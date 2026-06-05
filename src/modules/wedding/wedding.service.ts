@@ -140,7 +140,6 @@ export class WeddingService {
       entity.slug = dto.slug;
     }
 
-    // Automatically map scalar fields
     const excludedFields = [
       'events',
       'timelines',
@@ -156,7 +155,6 @@ export class WeddingService {
     }
 
     if (dto.events !== undefined) {
-      // Clear old events
       await this.repo.manager.delete(WeddingEventEntity, { weddingId: entity.id });
     }
     if (dto.timelines !== undefined) {
@@ -222,7 +220,6 @@ export class WeddingService {
         throw new ConflictException('Slug đã tồn tại hoặc không hợp lệ');
       }
 
-      // Save to slug history
       const history = new SlugHistoryEntity();
       history.id = uuidv4();
       history.weddingId = entity.id;
@@ -235,7 +232,6 @@ export class WeddingService {
       entity.slug = dto.slug;
     }
 
-    // Automatically map scalar fields
     const excludedFields = [
       'events',
       'timelines',
@@ -251,7 +247,6 @@ export class WeddingService {
     }
 
     if (dto.events !== undefined) {
-      // Clear old events
       await this.repo.manager.delete(WeddingEventEntity, { weddingId: entity.id });
     }
     if (dto.timelines !== undefined) {
@@ -540,12 +535,8 @@ export class WeddingService {
     };
   }
 
-  // ─── Admin-only operations ────────────────────────────────────────────────
 
-  /**
-   * Admin force-reset slug của wedding (vi phạm hoặc hỗ trợ kỹ thuật).
-   * Tạo slug_history entry và cập nhật share_url mới.
-   */
+
   async adminForceResetSlug(
     dto: { weddingId: string; newSlug: string; reason: string },
     user: UserDto,
@@ -562,7 +553,6 @@ export class WeddingService {
       );
     }
 
-    // Audit log
     const history = new SlugHistoryEntity();
     history.id = uuidv4();
     history.weddingId = entity.id;
@@ -575,7 +565,6 @@ export class WeddingService {
     const oldSlug = entity.slug;
     entity.slug = dto.newSlug;
 
-    // Cập nhật share_url nếu đã publish
     if (entity.shareUrl) {
       entity.shareUrl = `https://wedding.vn/thiep/${dto.newSlug}`;
       try {

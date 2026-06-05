@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
-  BaseEntity as TypeOrmBase,
   Column,
   CreateDateColumn,
   PrimaryGeneratedColumn,
+  BaseEntity as TypeOrmBase,
   UpdateDateColumn,
 } from 'typeorm';
 
@@ -33,7 +33,7 @@ export abstract class BaseEntity extends TypeOrmBase {
   @ApiProperty({ description: 'Người sửa cuối, lưu user.id' })
   updatedBy?: string;
 
-  // Đã xóa
+  // Đã xóa mềm
   @Column({ name: 'isDeleted', type: 'boolean', default: false })
   @ApiProperty({ description: 'Xóa mềm?' })
   isDeleted: boolean;

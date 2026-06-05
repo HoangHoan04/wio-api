@@ -63,7 +63,7 @@ export class AuthService {
     tokenEntity.ipAddress = ipAddress || '';
 
     const expires = new Date();
-    expires.setDate(expires.getDate() + 7); // 7 days refresh token
+    expires.setDate(expires.getDate() + 7); 
     tokenEntity.expiresAt = expires;
     tokenEntity.createdAt = new Date();
     tokenEntity.createdBy = user.id;
@@ -138,7 +138,7 @@ export class AuthService {
     user.email = data.email;
     user.phone = data.phone;
     user.password = hashedPassword;
-    user.role = UserRole.COUPLE; // default role
+    user.role = UserRole.COUPLE;
     user.isActive = true;
     user.createdAt = new Date();
     user.createdBy = undefined;
@@ -195,7 +195,6 @@ export class AuthService {
       tokenRecord.ipAddress,
     );
 
-    // Revoke old token
     tokenRecord.isRevoked = true;
     await this.userTokenRepo.save(tokenRecord);
 
@@ -249,7 +248,7 @@ export class AuthService {
       await this.emailService.sendEmailVerify({ email: identifier, otpCode });
     }
 
-    return { message: 'Gửi mã OTP thành công', otpCode }; // Return OTP for testing
+    return { message: 'Gửi mã OTP thành công', otpCode };
   }
 
   async sendOtpVerify(data: SendOtpVerifyDto) {
@@ -262,7 +261,7 @@ export class AuthService {
       await this.emailService.sendLoginOtp({ email: data.identifier, otpCode });
     }
 
-    return { message: 'Gửi mã xác nhận thành công', otpCode }; // Return OTP for testing
+    return { message: 'Gửi mã xác nhận thành công', otpCode };
   }
 
   async forgotPassword(data: ForgotPasswordCustomerDto) {
@@ -303,7 +302,6 @@ export class AuthService {
     });
 
     if (!user) {
-      // Automatically register user if they do not exist
       user = new UserEntity();
       user.id = uuidv4();
       if (data.method === 'EMAIL') {
@@ -311,14 +309,13 @@ export class AuthService {
       } else {
         user.phone = data.identifier;
       }
-      user.password = ''; // No password
+      user.password = '';
       user.role = UserRole.COUPLE;
       user.isActive = true;
       user.createdAt = new Date();
       user.createdBy = undefined;
       await this.userRepo.save(user);
 
-      // Create customer record
       const customer = new CustomerEntity();
       customer.id = uuidv4();
       customer.userId = user.id;
@@ -411,12 +408,11 @@ export class AuthService {
       user = new UserEntity();
       user.id = uuidv4();
       user.email = googleUser.email;
-      user.password = ''; // No password for OAuth
+      user.password = ''; 
       user.role = UserRole.COUPLE;
       user.isActive = true;
       await this.userRepo.save(user);
 
-      // Create customer record
       const customer = new CustomerEntity();
       customer.id = uuidv4();
       customer.userId = user.id;
@@ -486,7 +482,6 @@ export class AuthService {
       user.isActive = true;
       await this.userRepo.save(user);
 
-      // Create customer record
       const customer = new CustomerEntity();
       customer.id = uuidv4();
       customer.userId = user.id;

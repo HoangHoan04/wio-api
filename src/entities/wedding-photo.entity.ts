@@ -1,9 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { WeddingEntity } from './wedding.entity';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from './base.entity';
+import { WeddingEntity } from './wedding.entity';
 
-// ==================== WEDDING PHOTOS ====================
 @Entity('wedding_photos')
 export class WeddingPhotoEntity extends BaseEntity {
   @Column({ type: 'uuid', nullable: false })

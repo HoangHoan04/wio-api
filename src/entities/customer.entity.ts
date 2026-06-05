@@ -3,14 +3,14 @@ import { Column, Entity, OneToOne } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { UserEntity } from './user.entity';
 
-// ==================== CUSTOMERS ====================
 @Entity('customers')
 export class CustomerEntity extends BaseEntity {
+  // ID của user liên kết
   @Column({ type: 'uuid', nullable: false })
   @ApiProperty({ description: 'ID của user liên kết' })
   userId: string;
 
-  // Mã
+  // Mã khách hàng
   @Column({ type: 'varchar', length: 50, nullable: true })
   @ApiProperty({ description: 'Mã khách hàng' })
   code: string;
@@ -40,7 +40,7 @@ export class CustomerEntity extends BaseEntity {
   @ApiProperty({ description: 'Ngày sinh' })
   dateOfBirth: Date;
 
-  // User
+  // User liên kết với khách hàng
   @OneToOne(() => UserEntity, (user) => user.customer)
   @ApiProperty({ description: 'User' })
   user: Promise<UserEntity>;

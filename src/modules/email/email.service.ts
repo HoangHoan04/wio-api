@@ -380,12 +380,10 @@ export class EmailService {
         
         <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
           
-          <!-- Header -->
           <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px 20px; text-align: center;">
             <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 700;">📧 Liên hệ mới từ học viên</h1>
           </div>
 
-          <!-- Content -->
           <div style="padding: 30px;">
             
             <div style="background-color: #f9fafb; border-left: 4px solid #667eea; padding: 20px; margin-bottom: 25px; border-radius: 4px;">
@@ -426,7 +424,6 @@ export class EmailService {
 
           </div>
 
-          <!-- Footer -->
           <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
             <p style="color: #6b7280; font-size: 12px; margin: 0;">
               Email tự động từ hệ thống HimLamTourist<br>
@@ -455,12 +452,10 @@ export class EmailService {
         
         <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
           
-          <!-- Logo -->
           <div style="text-align: center; padding: 30px 0; background-color: #ffffff;">
             <img src="https://via.placeholder.com/150x40?text=HimLamTourist" alt="HimLamTourist Logo" style="width: 120px; height: auto;">
           </div>
 
-          <!-- Header -->
           <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px 20px; text-align: center; border-radius: 20px 20px 0 0; margin: 0 20px;">
             <div style="background-color: rgba(255,255,255,0.2); width: 60px; height: 60px; border-radius: 50%; margin: 0 auto 15px auto; line-height: 60px;">
               <span style="font-size: 30px;">✅</span>
@@ -468,7 +463,6 @@ export class EmailService {
             <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 700;">Đã nhận tin nhắn của bạn!</h1>
           </div>
 
-          <!-- Content -->
           <div style="padding: 40px 30px; margin: 0 20px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 20px 20px; background-color: #ffffff; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);">
             
             <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
@@ -509,7 +503,6 @@ export class EmailService {
             </p>
           </div>
 
-          <!-- Footer -->
           <div style="padding: 30px 20px; text-align: center;">
             <p style="color: #6b7280; font-size: 12px; line-height: 1.6;">
               <strong>CÔNG TY TNHH HimLamTourist VIỆT NAM</strong><br>
@@ -560,7 +553,6 @@ export class EmailService {
         
         <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);">
           
-          <!-- Header -->
           <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px 20px; text-align: center;">
             <div style="background-color: rgba(255,255,255,0.2); width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 20px auto; line-height: 80px;">
               <span style="font-size: 40px;">🎉</span>
@@ -569,7 +561,6 @@ export class EmailService {
             <p style="color: rgba(255,255,255,0.9); font-size: 16px; margin-top: 10px;">Cảm ơn bạn đã đăng ký nhận tin từ HimLamTourist</p>
           </div>
 
-          <!-- Content -->
           <div style="padding: 40px 30px;">
             
             <div style="text-align: center; margin-bottom: 30px;">
@@ -628,7 +619,6 @@ export class EmailService {
 
           </div>
 
-          <!-- Footer -->
           <div style="padding: 30px 20px; text-align: center; background-color: #f9fafb;">
             <p style="color: #6b7280; font-size: 12px; line-height: 1.6; margin-bottom: 15px;">
               <strong>CÔNG TY TNHH HimLamTourist VIỆT NAM</strong><br>

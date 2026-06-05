@@ -299,7 +299,7 @@ export class GuestService {
 
     const guests: GuestEntity[] = [];
     worksheet.eachRow((row, rowNumber) => {
-      if (rowNumber === 1) return; // skip header
+      if (rowNumber === 1) return; 
       const fullName = getCellValueString(row.getCell(1).value);
       if (!fullName) return;
 

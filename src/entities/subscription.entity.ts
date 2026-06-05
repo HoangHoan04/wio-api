@@ -1,12 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Entity, Index, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { SubStatus } from './enums';
 import { ServicePlanEntity } from './service-plan.entity';
 import { UserEntity } from './user.entity';
 import { WeddingEntity } from './wedding.entity';
 
-// ==================== SUBSCRIPTIONS ====================
 @Entity('subscriptions')
 @Index(['status', 'expiresAt'])
 export class SubscriptionEntity extends BaseEntity {

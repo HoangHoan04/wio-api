@@ -1,8 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Entity, Column } from 'typeorm';
+import { Column, Entity } from 'typeorm';
 import { BaseEntity } from './base.entity';
 
-// ==================== SERVICE PLANS ====================
 @Entity('service_plans')
 export class ServicePlanEntity extends BaseEntity {
   @Column({ type: 'varchar', length: 50, nullable: false })
