@@ -21,6 +21,7 @@ import { TemplateModule } from '../template/template.module';
 import { WeddingPhotoUserController } from '../wedding-photo/controllers/wedding-photo-user.controller';
 import { WeddingPhotoModule } from '../wedding-photo/wedding-photo.module';
 import { WeddingUserController } from '../wedding/controllers/wedding-user.controller';
+import { WeddingPublicController } from '../wedding/controllers/wedding-public.controller';
 import { WeddingModule } from '../wedding/wedding.module';
 import { WishUserController } from '../wish/controllers/wish-user.controller';
 import { WishModule } from '../wish/wish.module';
@@ -44,6 +45,7 @@ import { MusicBackgroundUserController } from '../music-background/controllers/m
     ServicePlanUserController,
     SubscriptionUserController,
     MusicBackgroundUserController,
+    WeddingPublicController,
   ],
   imports: [
     AuthModule,

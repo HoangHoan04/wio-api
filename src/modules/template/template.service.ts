@@ -11,6 +11,25 @@ import {
   UpdateTemplateDto,
 } from './dto';
 
+const THEME_SLUG_MAP: Record<string, string> = {
+  BOHO_FLORAL_BROWN: 'hoa-moc-lan-nau',
+  BOHO_FLORAL_GREEN: 'hoa-moc-lan-xanh',
+  BOHO_FLORAL_PINK: 'hoa-moc-lan-hong',
+  DOUBLE_PHOENIX_BLUE: 'song-phung-xanh',
+  DOUBLE_PHOENIX_GREEN: 'song-phung-xanh-la',
+  DOUBLE_PHOENIX_RED: 'song-phung-do',
+  DOUBLE_DRAGON_BLUE: 'song-long-xanh',
+  DOUBLE_DRAGON_GREEN: 'song-long-xanh-la',
+  DOUBLE_DRAGON_RED: 'song-long-do',
+  DRAGON_PHOENIX_BLUE: 'long-phung-xanh',
+  DRAGON_PHOENIX_GREEN: 'long-phung-xanh-la',
+  DRAGON_PHOENIX_RED: 'long-phung-do',
+  ROYAL_BLUE: 'hoang-gia-xanh',
+  ROYAL_GREEN: 'hoang-gia-xanh-la',
+  ROYAL_RED: 'hoang-gia-do',
+  RED_DOUBLE_HAPPINESS: 'song-hy-do',
+};
+
 @Injectable()
 export class TemplateService {
   constructor(private readonly repo: TemplateRepository) {}
@@ -46,18 +65,19 @@ export class TemplateService {
   async create(user: UserDto, dto: CreateTemplateDto) {
     const entity = new TemplateEntity();
     entity.id = uuidv4();
-    entity.createdBy = user.id;
-
     entity.name = dto.name;
     entity.description = dto.description;
     entity.tags = dto.tags ?? [];
     entity.features = dto.features ?? null;
     entity.thumbnailUrl = dto.thumbnailUrl ?? null;
     entity.themeCode = dto.themeCode;
+    entity.slug = THEME_SLUG_MAP[dto.themeCode] || `${dto.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`;
     entity.isShow = dto.isShow;
     entity.isPremium = dto.isPremium;
     entity.minPlan = dto.minPlan;
     entity.trialDays = dto.trialDays;
+    entity.createdBy = user.id;
+    entity.createdAt = new Date();
 
     const saved = await this.repo.save(entity);
     return { message: 'Tạo thành công', data: saved };
@@ -70,13 +90,23 @@ export class TemplateService {
     if (!entity) throw new NotFoundException('Không tìm thấy mẫu giao diện');
 
     entity.updatedBy = user.id;
-
-    if (dto.name !== undefined) entity.name = dto.name;
+    entity.updatedAt = new Date();
+    if (dto.name !== undefined) {
+      entity.name = dto.name;
+      if (!entity.slug || !THEME_SLUG_MAP[dto.themeCode || entity.themeCode]) {
+        entity.slug = `${dto.name.toLowerCase().trim().replace(/\s+/g, '-')}-${Date.now()}`;
+      }
+    }
     if (dto.description !== undefined) entity.description = dto.description;
     if (dto.tags !== undefined) entity.tags = dto.tags;
     if (dto.features !== undefined) entity.features = dto.features;
     if (dto.thumbnailUrl !== undefined) entity.thumbnailUrl = dto.thumbnailUrl;
-    if (dto.themeCode !== undefined) entity.themeCode = dto.themeCode;
+    if (dto.themeCode !== undefined) {
+      entity.themeCode = dto.themeCode;
+      if (THEME_SLUG_MAP[dto.themeCode]) {
+        entity.slug = THEME_SLUG_MAP[dto.themeCode];
+      }
+    }
     if (dto.isShow !== undefined) entity.isShow = dto.isShow;
     if (dto.isPremium !== undefined) entity.isPremium = dto.isPremium;
     if (dto.minPlan !== undefined) entity.minPlan = dto.minPlan;
@@ -104,7 +134,7 @@ export class TemplateService {
     });
     if (!entity) throw new NotFoundException('Không tìm thấy mẫu giao diện');
 
-    entity.isShow = true; 
+    entity.isShow = true;
     entity.updatedBy = user.id;
     const saved = await this.repo.save(entity);
     return { message: 'Hiển thị mẫu giao diện thành công', data: saved };
@@ -116,7 +146,7 @@ export class TemplateService {
     });
     if (!entity) throw new NotFoundException('Không tìm thấy mẫu giao diện');
 
-    entity.isShow = false; 
+    entity.isShow = false;
     entity.updatedBy = user.id;
     const saved = await this.repo.save(entity);
     return { message: 'Ẩn mẫu giao diện thành công', data: saved };

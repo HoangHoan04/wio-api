@@ -13,6 +13,11 @@ export class TemplateEntity extends BaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   description: string;
 
+  // slug
+  @ApiProperty({ description: 'Slug' })
+  @Column({ type: 'varchar', length: 100, nullable: false, unique: true })
+  slug: string;
+
   // Tags
   @ApiProperty({ description: 'Tags' })
   @Column({ type: 'simple-array', nullable: true })
@@ -28,17 +33,9 @@ export class TemplateEntity extends BaseEntity {
   @Column({ type: 'text', nullable: true })
   thumbnailUrl?: string | null;
 
-  @ApiProperty({
-    description: 'Mã giao diện',
-    required: true,
-  })
-  @Column({
-    type: 'varchar',
-    length: 100,
-    nullable: false,
-  })
   // Theme Code
-  @ApiProperty({ description: 'Theme Code' })
+  @ApiProperty({ description: 'Mã giao diện', required: true })
+  @Column({ type: 'varchar', length: 100, nullable: false })
   themeCode: string;
 
   // Is Show

@@ -5,9 +5,9 @@ import {
   SlugHistoryEntity,
   WeddingEntity,
   WeddingEventEntity,
-  WeddingTimelineEntity,
   WeddingPhotoEntity,
   WeddingStatus,
+  WeddingTimelineEntity,
 } from '@/entities';
 import {
   GuestRepository,
@@ -155,13 +155,19 @@ export class WeddingService {
     }
 
     if (dto.events !== undefined) {
-      await this.repo.manager.delete(WeddingEventEntity, { weddingId: entity.id });
+      await this.repo.manager.delete(WeddingEventEntity, {
+        weddingId: entity.id,
+      });
     }
     if (dto.timelines !== undefined) {
-      await this.repo.manager.delete(WeddingTimelineEntity, { weddingId: entity.id });
+      await this.repo.manager.delete(WeddingTimelineEntity, {
+        weddingId: entity.id,
+      });
     }
     if (dto.gallery !== undefined) {
-      await this.repo.manager.delete(WeddingPhotoEntity, { weddingId: entity.id });
+      await this.repo.manager.delete(WeddingPhotoEntity, {
+        weddingId: entity.id,
+      });
     }
 
     if (dto.events && Array.isArray(dto.events)) {
@@ -247,13 +253,19 @@ export class WeddingService {
     }
 
     if (dto.events !== undefined) {
-      await this.repo.manager.delete(WeddingEventEntity, { weddingId: entity.id });
+      await this.repo.manager.delete(WeddingEventEntity, {
+        weddingId: entity.id,
+      });
     }
     if (dto.timelines !== undefined) {
-      await this.repo.manager.delete(WeddingTimelineEntity, { weddingId: entity.id });
+      await this.repo.manager.delete(WeddingTimelineEntity, {
+        weddingId: entity.id,
+      });
     }
     if (dto.gallery !== undefined) {
-      await this.repo.manager.delete(WeddingPhotoEntity, { weddingId: entity.id });
+      await this.repo.manager.delete(WeddingPhotoEntity, {
+        weddingId: entity.id,
+      });
     }
 
     if (dto.events && Array.isArray(dto.events)) {
@@ -356,7 +368,7 @@ export class WeddingService {
   async findBySlug(slug: string): Promise<WeddingEntity> {
     const item = await this.repo.findOne({
       where: { slug, isDeleted: false } as any,
-      relations: ['events', 'timelines', 'photos'],
+      relations: ['events', 'timelines', 'photos', 'template'],
     });
     if (!item) throw new NotFoundException('Không tìm thấy thiệp cưới');
     return item;
@@ -535,8 +547,6 @@ export class WeddingService {
     };
   }
 
-
-
   async adminForceResetSlug(
     dto: { weddingId: string; newSlug: string; reason: string },
     user: UserDto,
@@ -583,9 +593,6 @@ export class WeddingService {
     };
   }
 
-  /**
-   * Unpublish / archive một đám cưới (Admin hoặc owner).
-   */
   async unpublish(id: string, user: UserDto): Promise<any> {
     const entity = await this.repo.findOne({
       where: { id, isDeleted: false } as any,
@@ -602,9 +609,6 @@ export class WeddingService {
     return { message: 'Đã archive đám cưới', data: saved };
   }
 
-  /**
-   * Xem toàn bộ lịch sử thay đổi slug của một đám cưới (audit log).
-   */
   async getSlugHistory(weddingId: string): Promise<any> {
     const history = await this.slugHistoryRepo.find({
       where: { weddingId } as any,

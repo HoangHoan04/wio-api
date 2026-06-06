@@ -452,9 +452,7 @@ export class EmailService {
         
         <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
           
-          <div style="text-align: center; padding: 30px 0; background-color: #ffffff;">
-            <img src="https://via.placeholder.com/150x40?text=HimLamTourist" alt="HimLamTourist Logo" style="width: 120px; height: auto;">
-          </div>
+       
 
           <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px 20px; text-align: center; border-radius: 20px 20px 0 0; margin: 0 20px;">
             <div style="background-color: rgba(255,255,255,0.2); width: 60px; height: 60px; border-radius: 50%; margin: 0 auto 15px auto; line-height: 60px;">
