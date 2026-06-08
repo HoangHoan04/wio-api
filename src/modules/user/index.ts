@@ -26,6 +26,8 @@ import { WeddingModule } from '../wedding/wedding.module';
 import { WishUserController } from '../wish/controllers/wish-user.controller';
 import { WishModule } from '../wish/wish.module';
 import { TemplateUserController } from '../template/controllers/template-user.controller';
+import { GiphyModule } from '../giphy/giphy.module';
+import { GiphyUserController } from '../giphy/controllers/giphy-user.controller';
 import { MusicBackgroundModule } from '../music-background/music-background.module';
 import { MusicBackgroundUserController } from '../music-background/controllers/music-background-user.controller';
 
@@ -45,6 +47,7 @@ import { MusicBackgroundUserController } from '../music-background/controllers/m
     ServicePlanUserController,
     SubscriptionUserController,
     MusicBackgroundUserController,
+    GiphyUserController,
     WeddingPublicController,
   ],
   imports: [
@@ -60,7 +63,8 @@ import { MusicBackgroundUserController } from '../music-background/controllers/m
     NotificationModule,
     ServicePlanModule,
     SubscriptionModule,
-    MusicBackgroundModule
+    MusicBackgroundModule,
+    GiphyModule,
   ],
   exports: [],
 })
