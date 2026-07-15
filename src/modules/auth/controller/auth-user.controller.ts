@@ -1,9 +1,18 @@
 import { CurrentUser } from '@/common/decorators';
 import { JwtAuthGuard } from '@/common/guards';
 import { UserDto } from '@/dto';
-import { Body, Controller, Ip, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Ip,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { AuthService } from '../auth.service';
 import {
   ChangePasswordDto,
@@ -13,10 +22,12 @@ import {
   GoogleLoginDto,
   RefreshTokenDto,
   RegisterDto,
+  ResendVerificationDto,
   SendOtpCustomerDto,
   SendOtpVerifyDto,
   UpdatePasswordDto,
   UserLoginDto,
+  VerifyEmailDto,
   VerifyLoginOtpDto,
 } from '../dto';
 
@@ -48,6 +59,12 @@ export class AuthUserController {
     );
   }
 
+  @Get('google')
+  async getGoogleAuthUrl(@Res() res: Response) {
+    const url = await this.service.getGoogleAuthUrl();
+    return res.redirect(url);
+  }
+
   @Post('login/facebook')
   async loginWithFacebook(
     @Body() data: FacebookLoginDto,
@@ -59,6 +76,12 @@ export class AuthUserController {
       req.headers['user-agent'],
       ipAddress,
     );
+  }
+
+  @Get('facebook')
+  async getFacebookAuthUrl(@Res() res: Response) {
+    const url = await this.service.getFacebookAuthUrl();
+    return res.redirect(url);
   }
 
   @Post('check-phone-email')
@@ -135,5 +158,21 @@ export class AuthUserController {
     @Body() data: { refreshToken?: string },
   ) {
     return await this.service.logout(user, data?.refreshToken);
+  }
+
+  @Post('verify-email')
+  async verifyEmail(@Body() data: VerifyEmailDto) {
+    return await this.service.verifyEmail(data);
+  }
+
+  @Post('resend-verification')
+  async resendVerification(@Body() data: ResendVerificationDto) {
+    return await this.service.resendVerificationEmail(data.email);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('clean-tokens')
+  async cleanExpiredTokens() {
+    return await this.service.cleanExpiredTokens();
   }
 }

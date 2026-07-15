@@ -15,8 +15,8 @@ export class MusicBackgroundService {
     private readonly musicRepo: MusicBackgroundRepository,
   ) {}
 
-  async paginationActive(data: PaginationDto<any>) {
-    const { skip = 0, take = 10, where = {} } = data;
+  async paginationActive(data?: PaginationDto<any>) {
+    const { skip = 0, take = 10, where = {} } = data || {};
     const whereCon: FindOptionsWhere<any> = { isDeleted: false, isActive: true, status: MusicProcessStatus.COMPLETED };
 
     const [list, total] = await this.musicRepo.findAndCount({

@@ -5,6 +5,7 @@ import {
   VerifyOtpRepository,
 } from '@/repositories';
 import { OtpService } from '@/services/otp.service';
+import { TokenService } from '@/services/token.service';
 import { TypeOrmExModule } from '@/typeorm';
 import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
@@ -40,7 +41,7 @@ import { JwtStrategy } from './jwt.strategy';
     NotificationModule,
   ],
   controllers: [],
-  providers: [AuthService, JwtStrategy, OtpService],
-  exports: [AuthService, JwtStrategy, PassportModule],
+  providers: [AuthService, JwtStrategy, OtpService, TokenService],
+  exports: [AuthService, JwtStrategy, PassportModule, TokenService],
 })
 export class AuthModule {}

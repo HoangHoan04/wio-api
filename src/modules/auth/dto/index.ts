@@ -180,3 +180,22 @@ export class VerifyLoginOtpDto {
   @IsEnum(['EMAIL', 'PHONE'])
   method: 'EMAIL' | 'PHONE';
 }
+
+export class VerifyEmailDto {
+  @ApiProperty({ description: 'Email cần xác thực' })
+  @IsNotEmpty()
+  @IsEmail()
+  email: string;
+
+  @ApiProperty({ description: 'Mã OTP xác thực' })
+  @IsNotEmpty()
+  @IsString()
+  otpCode: string;
+}
+
+export class ResendVerificationDto {
+  @ApiProperty({ description: 'Email cần gửi lại mã xác thực' })
+  @IsNotEmpty()
+  @IsEmail()
+  email: string;
+}

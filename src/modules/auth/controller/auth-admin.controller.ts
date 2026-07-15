@@ -64,4 +64,10 @@ export class AuthAdminController {
   ) {
     return await this.service.logout(user, data?.refreshToken);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('clean-tokens')
+  async cleanExpiredTokens() {
+    return await this.service.cleanExpiredTokens();
+  }
 }
