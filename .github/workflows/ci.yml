@@ -23,19 +23,13 @@ jobs:
           COMMIT_MSG: ${{ github.event.head_commit.message || '' }}
           COMMIT_SHA: ${{ github.sha || '' }}
         run: |
-          MSG=$(echo "${COMMIT_MSG}" | head -n1 | tr -d '\r' | sed 's/[\"`$]//g')
+          MSG=$(echo "${COMMIT_MSG}" | head -n1 | tr -d '\r' | sed 's/["`$]//g')
           SHA_SHORT=$(echo ${COMMIT_SHA} | cut -c1-7)
           REPO_NAME=$(echo '${{ github.repository }}' | cut -d/ -f2)
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-          -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-          -d parse_mode="HTML" \
-          -d text="<b>CI BUILD IN PROGRESS</b>
-
-          <b>Dự án:</b>     ${REPO_NAME}
-          <b>Nhân viên:</b> ${{ github.actor }}
-          <b>Nhánh:</b>     ${{ github.ref_name }} (<code>${SHA_SHORT}</code>)
-          <b>Commit:</b>    ${MSG}
-          <b>Tiến trình:</b> Build and deloy ${{ github.ref_name }} — in_progress"
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d parse_mode="HTML" \
+            -d text="<b>🚀 CI BUILD IN PROGRESS</b>%0A%0A<b>Repo:</b>     ${REPO_NAME}%0A<b>Người:</b>    ${{ github.actor }}%0A<b>Nhánh:</b>    ${{ github.ref_name }} (<code>${SHA_SHORT}</code>)%0A<b>Commit:</b>   ${MSG}%0A<b>Status:</b>   In Progress"
 
       - uses: actions/checkout@v4
 
@@ -71,13 +65,9 @@ jobs:
           if [ -n "$COVERAGE_NUM" ] && [ "$COVERAGE_NUM" != "0" ] && [ "$COVERAGE_NUM" -lt "$THRESHOLD" ] 2>/dev/null; then
             REPO_NAME=$(echo '${{ github.repository }}' | cut -d/ -f2)
             curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-            -d parse_mode="HTML" \
-            -d text="<b>COVERAGE DROPPED BELOW THRESHOLD</b>
-
-            <b>Dự án:</b>     ${REPO_NAME}
-            <b>Coverage:</b>  ${COVERAGE}
-            <b>Ngưỡng:</b>   ${THRESHOLD}%"
+              -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+              -d parse_mode="HTML" \
+              -d text="<b>⚠️ COVERAGE DROPPED BELOW THRESHOLD</b>%0A%0A<b>Repo:</b>      ${REPO_NAME}%0A<b>Coverage:</b>  ${COVERAGE}%0A<b>Ngưỡng:</b>    ${THRESHOLD}%"
           fi
 
       - name: Build Application
@@ -92,14 +82,9 @@ jobs:
           if [ $DURATION -gt 600 ]; then
             REPO_NAME=$(echo '${{ github.repository }}' | cut -d/ -f2)
             curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-            -d parse_mode="HTML" \
-            -d text="<b>SLOW BUILD DETECTED</b>
-
-            <b>Dự án:</b>     ${REPO_NAME}
-            <b>Nhánh:</b>     ${{ github.ref_name }}
-            <b>Duration:</b>  ${DURATION}s
-            <b>Threshold:</b>  600s (10 phút)"
+              -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+              -d parse_mode="HTML" \
+              -d text="<b>🐢 SLOW BUILD DETECTED</b>%0A%0A<b>Repo:</b>      ${REPO_NAME}%0A<b>Nhánh:</b>    ${{ github.ref_name }}%0A<b>Duration:</b> ${DURATION}s%0A<b>Giới hạn:</b> 600s (10 phút)"
           fi
 
   notify:
@@ -115,7 +100,7 @@ jobs:
           COMMIT_SHA: ${{ github.sha || '' }}
         run: |
           echo "sha_short=$(echo ${COMMIT_SHA} | cut -c1-7)" >> $GITHUB_OUTPUT
-          echo "msg_first=$(echo "${COMMIT_MSG}" | head -n1 | tr -d '\r' | sed 's/[\"`$]//g')" >> $GITHUB_OUTPUT
+          echo "msg_first=$(echo "${COMMIT_MSG}" | head -n1 | tr -d '\r' | sed 's/["`$]//g')" >> $GITHUB_OUTPUT
           echo "repo_name=$(echo '${{ github.repository }}' | cut -d/ -f2)" >> $GITHUB_OUTPUT
 
       - name: Notify Telegram - Success
@@ -128,17 +113,9 @@ jobs:
           DURATION: ${{ needs.build-and-test.outputs.duration }}
         run: |
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-          -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-          -d parse_mode="HTML" \
-          -d text="<b>CI BUILD SUCCESS</b>
-
-          <b>Dự án:</b>     ${REPO}
-          <b>Nhân viên:</b> ${{ github.actor }}
-          <b>Nhánh:</b>     ${{ github.ref_name }} (<code>${SHA}</code>)
-          <b>Commit:</b>    ${MSG}
-          <b>Coverage:</b>  ${COVERAGE}
-          <b>Duration:</b>  ${DURATION}
-          <b>Tiến trình:</b> Build and deloy ${{ github.ref_name }} — success"
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d parse_mode="HTML" \
+            -d text="<b>✅ CI BUILD SUCCESS</b>%0A%0A<b>Repo:</b>     ${REPO}%0A<b>Người:</b>    ${{ github.actor }}%0A<b>Nhánh:</b>    ${{ github.ref_name }} (<code>${SHA}</code>)%0A<b>Commit:</b>   ${MSG}%0A<b>Coverage:</b> ${COVERAGE}%0A<b>Duration:</b> ${DURATION}%0A<b>Status:</b>   Success"
 
       - name: Notify Telegram - Failure
         if: needs.build-and-test.result == 'failure'
@@ -148,13 +125,6 @@ jobs:
           REPO: ${{ steps.info.outputs.repo_name }}
         run: |
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-          -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-          -d parse_mode="HTML" \
-          -d text="<b>CI BUILD FAILED</b>
-
-          <b>Dự án:</b>     ${REPO}
-          <b>Nhân viên:</b> ${{ github.actor }}
-          <b>Nhánh:</b>     ${{ github.ref_name }} (<code>${SHA}</code>)
-          <b>Commit:</b>    ${MSG}
-          <b>Duration:</b>  ${{ needs.build-and-test.outputs.duration }}
-          <b>Tiến trình:</b> Build and deloy ${{ github.ref_name }} — failure"
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d parse_mode="HTML" \
+            -d text="<b>❌ CI BUILD FAILED</b>%0A%0A<b>Repo:</b>     ${REPO}%0A<b>Người:</b>    ${{ github.actor }}%0A<b>Nhánh:</b>    ${{ github.ref_name }} (<code>${SHA}</code>)%0A<b>Commit:</b>   ${MSG}%0A<b>Duration:</b> ${{ needs.build-and-test.outputs.duration }}%0A<b>Status:</b>   Failed"
