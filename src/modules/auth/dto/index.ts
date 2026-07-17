@@ -199,3 +199,25 @@ export class ResendVerificationDto {
   @IsEmail()
   email: string;
 }
+
+export class UpdateProfileDto {
+  @ApiPropertyOptional({ description: 'Họ và tên khách hàng' })
+  @IsOptional()
+  @IsString()
+  fullName?: string;
+
+  @ApiPropertyOptional({ description: 'Số điện thoại' })
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @ApiPropertyOptional({ description: 'Giới tính' })
+  @IsOptional()
+  @IsString()
+  gender?: string;
+
+  @ApiPropertyOptional({ description: 'Ngày sinh' })
+  @IsOptional()
+  @IsString()
+  dateOfBirth?: string;
+}

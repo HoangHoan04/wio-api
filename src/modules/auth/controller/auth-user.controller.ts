@@ -29,6 +29,7 @@ import {
   UserLoginDto,
   VerifyEmailDto,
   VerifyLoginOtpDto,
+  UpdateProfileDto,
 } from '../dto';
 
 @ApiBearerAuth()
@@ -149,6 +150,15 @@ export class AuthUserController {
   @Post('me')
   async getUserInfo(@CurrentUser() user: UserDto) {
     return await this.service.getUserInfo(user);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('update-profile')
+  async updateProfile(
+    @CurrentUser() user: UserDto,
+    @Body() dto: UpdateProfileDto,
+  ) {
+    return await this.service.updateProfile(user, dto);
   }
 
   @UseGuards(JwtAuthGuard)

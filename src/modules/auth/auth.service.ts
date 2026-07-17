@@ -31,6 +31,7 @@ import {
   UserLoginDto,
   VerifyEmailDto,
   VerifyLoginOtpDto,
+  UpdateProfileDto,
 } from './dto';
 
 @Injectable()
@@ -43,7 +44,7 @@ export class AuthService {
     private readonly otpService: OtpService,
     private readonly httpService: HttpService,
     private readonly emailService: EmailService,
-  ) {}
+  ) { }
 
   private async generateAuthTokens(
     user: UserEntity,
@@ -443,6 +444,47 @@ export class AuthService {
     });
     return {
       message: 'Lấy thông tin thành công',
+      data: { ...user, customer },
+    };
+  }
+
+  async updateProfile(userDto: any, dto: UpdateProfileDto) {
+    const user = await this.userRepo.findOne({ where: { id: userDto.id } });
+    if (!user) throw new BadRequestException('Không tìm thấy người dùng');
+
+    let customer = await this.customerRepo.findOne({
+      where: { userId: userDto.id },
+    });
+
+    if (!customer) {
+      customer = new CustomerEntity();
+      customer.id = uuidv4();
+      customer.userId = user.id;
+      customer.fullName = dto.fullName || 'Khách Hàng';
+      customer.email = user.email;
+      customer.createdBy = user.id;
+    }
+
+    if (dto.fullName !== undefined) customer.fullName = dto.fullName;
+    if (dto.phone !== undefined) {
+      customer.phone = dto.phone;
+      user.phone = dto.phone;
+    }
+    if (dto.gender !== undefined) customer.gender = dto.gender;
+    if (dto.dateOfBirth !== undefined) {
+      (customer as any).dateOfBirth = dto.dateOfBirth ? new Date(dto.dateOfBirth) : null;
+    }
+
+    customer.updatedBy = user.id;
+    customer.updatedAt = new Date();
+    await this.customerRepo.save(customer);
+
+    user.updatedBy = user.id;
+    user.updatedAt = new Date();
+    await this.userRepo.save(user);
+
+    return {
+      message: 'Cập nhật thông tin thành công',
       data: { ...user, customer },
     };
   }
