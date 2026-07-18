@@ -12,7 +12,7 @@ export class TemplateEntity extends BaseEntity {
   // Mô tả
   @ApiProperty({ description: 'Mô tả ngắn' })
   @Column({ type: 'varchar', length: 255, nullable: true })
-  description: string;
+  description?: string;
 
   // slug
   @ApiProperty({ description: 'Slug' })
@@ -22,17 +22,17 @@ export class TemplateEntity extends BaseEntity {
   // Tags
   @ApiProperty({ description: 'Tags' })
   @Column({ type: 'simple-array', nullable: true })
-  tags: string[];
+  tags?: string[];
 
   // Tính năng
   @ApiProperty({ description: 'Cấu hình tính năng' })
   @Column({ type: 'json', nullable: true })
-  features: any;
+  features?: any;
 
   // Ảnh đại diện
   @ApiProperty({ description: 'Đường dẫn ảnh thu nhỏ', required: false })
   @Column({ type: 'text', nullable: true })
-  thumbnailUrl?: string | null;
+  thumbnailUrl?: string;
 
   // Theme Code
   @ApiProperty({ description: 'Mã giao diện', required: true })

@@ -17,12 +17,12 @@ export class WeddingPhotoEntity extends BaseEntity {
   // Storage Key
   @Column({ type: 'varchar', length: 500, nullable: true })
   @ApiProperty({ description: 'Storage Key' })
-  storageKey: string;
+  storageKey?: string;
 
   // Caption
   @Column({ type: 'varchar', length: 255, nullable: true })
   @ApiProperty({ description: 'Caption' })
-  caption: string;
+  caption?: string;
 
   // Thứ tự sắp xếp
   @Column({ type: 'int', default: 0, nullable: false })

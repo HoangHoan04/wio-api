@@ -14,7 +14,7 @@ export class WishEntity extends BaseEntity {
   // Id khách mời
   @Column({ type: 'uuid', nullable: true })
   @ApiProperty({ description: 'Guest Id' })
-  guestId: string;
+  guestId?: string;
 
   // Tên khách mời
   @Column({ type: 'varchar', length: 100, nullable: false })
@@ -39,7 +39,7 @@ export class WishEntity extends BaseEntity {
   // Ngày được duyệt
   @Column({ type: 'timestamptz', nullable: true })
   @ApiProperty({ description: 'Approved At' })
-  approvedAt: Date;
+  approvedAt?: Date;
 
   // Id người duyệt
   @ManyToOne(() => WeddingEntity, (wedding) => wedding.wishes, {

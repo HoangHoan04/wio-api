@@ -7,32 +7,32 @@ export class UserTokenEntity extends BaseEntity {
   // ID người dùng
   @ApiProperty({ description: 'ID của user liên kết' })
   @Column({ type: 'uuid', nullable: true })
-  userId: string;
+  userId?: string;
 
   // Access Token
   @ApiProperty({ description: 'Access Token' })
   @Column({ type: 'text', nullable: true })
-  accessToken: string;
+  accessToken?: string;
 
   // Refresh Token
   @ApiProperty({ description: 'Refresh Token' })
   @Column({ type: 'text', nullable: true })
-  refreshToken: string;
+  refreshToken?: string;
 
   // Địa chỉ IP
   @ApiProperty({ description: 'Địa chỉ IP đăng nhập' })
   @Column({ type: 'varchar', length: 50, nullable: true })
-  ipAddress: string;
+  ipAddress?: string;
 
   // User Agent
   @ApiProperty({ description: 'Thiết bị đăng nhập' })
   @Column({ type: 'varchar', length: 255, nullable: true })
-  userAgent: string;
+  userAgent?: string;
 
   // Ngày hết hạn
   @ApiProperty({ description: 'Thời gian hết hạn' })
   @Column({ type: 'timestamptz', nullable: true })
-  expiresAt: Date;
+  expiresAt?: Date;
 
   // Is Revoked
   @ApiProperty({ description: 'Trạng thái thu hồi token' })

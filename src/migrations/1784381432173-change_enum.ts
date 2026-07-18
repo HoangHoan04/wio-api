@@ -4,7 +4,6 @@ export class ChangeEnum1784381432173 implements MigrationInterface {
   name = 'ChangeEnum1784381432173';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    // Xóa tất cả các Index cũ liên quan trước để tránh khóa ràng buộc
     await queryRunner.query(
       `DROP INDEX IF EXISTS "public"."IDX_98a1b6028433512c2550428a36"`,
     );
@@ -21,10 +20,6 @@ export class ChangeEnum1784381432173 implements MigrationInterface {
       `DROP INDEX IF EXISTS "public"."IDX_5cda9f299594e9c9aafff3e081"`,
     );
 
-    // ==========================================
-    // 1. XỬ LÝ BẢNG GUESTS
-    // ==========================================
-    // Tạo cột tạm
     await queryRunner.query(
       `ALTER TABLE "guests" ADD "side_temp" character varying(20)`,
     );
@@ -34,11 +29,9 @@ export class ChangeEnum1784381432173 implements MigrationInterface {
     await queryRunner.query(
       `ALTER TABLE "guests" ADD "dietary_temp" character varying(20)`,
     );
-    // Copy + Chuẩn hóa dữ liệu sang chữ hoa
     await queryRunner.query(
       `UPDATE "guests" SET "side_temp" = UPPER("side"::text), "rsvpStatus_temp" = UPPER("rsvpStatus"::text), "dietary_temp" = UPPER("dietary"::text)`,
     );
-    // Đổ giá trị fallback nếu dính null trước khi gắn NOT NULL
     await queryRunner.query(
       `UPDATE "guests" SET "side_temp" = 'BOTH' WHERE "side_temp" IS NULL`,
     );
@@ -48,7 +41,6 @@ export class ChangeEnum1784381432173 implements MigrationInterface {
     await queryRunner.query(
       `UPDATE "guests" SET "dietary_temp" = 'NORMAL' WHERE "dietary_temp" IS NULL`,
     );
-    // Gắn ràng buộc NOT NULL
     await queryRunner.query(
       `ALTER TABLE "guests" ALTER COLUMN "side_temp" SET NOT NULL`,
     );
@@ -58,7 +50,6 @@ export class ChangeEnum1784381432173 implements MigrationInterface {
     await queryRunner.query(
       `ALTER TABLE "guests" ALTER COLUMN "dietary_temp" SET NOT NULL`,
     );
-    // Xóa cột cũ và đổi tên cột tạm
     await queryRunner.query(`ALTER TABLE "guests" DROP COLUMN "side"`);
     await queryRunner.query(`ALTER TABLE "guests" DROP COLUMN "rsvpStatus"`);
     await queryRunner.query(`ALTER TABLE "guests" DROP COLUMN "dietary"`);
@@ -71,7 +62,6 @@ export class ChangeEnum1784381432173 implements MigrationInterface {
     await queryRunner.query(
       `ALTER TABLE "guests" RENAME COLUMN "dietary_temp" TO "dietary"`,
     );
-    // Xóa ENUM cũ khỏi DB
     await queryRunner.query(`DROP TYPE IF EXISTS "public"."guests_side_enum"`);
     await queryRunner.query(
       `DROP TYPE IF EXISTS "public"."guests_rsvpstatus_enum"`,
@@ -80,9 +70,6 @@ export class ChangeEnum1784381432173 implements MigrationInterface {
       `DROP TYPE IF EXISTS "public"."guests_dietary_enum"`,
     );
 
-    // ==========================================
-    // 2. XỬ LÝ BẢNG USERS
-    // ==========================================
     await queryRunner.query(
       `ALTER TABLE "users" ADD "role_temp" character varying(20)`,
     );
@@ -95,9 +82,6 @@ export class ChangeEnum1784381432173 implements MigrationInterface {
     );
     await queryRunner.query(`DROP TYPE IF EXISTS "public"."users_role_enum"`);
 
-    // ==========================================
-    // 3. XỬ LÝ BẢNG WEDDINGS
-    // ==========================================
     await queryRunner.query(
       `ALTER TABLE "weddings" ADD "musicType_temp" character varying(255)`,
     );
@@ -128,9 +112,6 @@ export class ChangeEnum1784381432173 implements MigrationInterface {
       `DROP TYPE IF EXISTS "public"."weddings_status_enum"`,
     );
 
-    // ==========================================
-    // 4. XỬ LÝ BẢNG SUBSCRIPTIONS
-    // ==========================================
     await queryRunner.query(
       `ALTER TABLE "subscriptions" ADD "status_temp" character varying(255)`,
     );
@@ -151,9 +132,6 @@ export class ChangeEnum1784381432173 implements MigrationInterface {
       `DROP TYPE IF EXISTS "public"."subscriptions_status_enum"`,
     );
 
-    // ==========================================
-    // 5. XỬ LÝ BẢNG NOTIFICATIONS
-    // ==========================================
     await queryRunner.query(
       `ALTER TABLE "notifications" ADD "channel_temp" character varying(255)`,
     );
@@ -199,9 +177,6 @@ export class ChangeEnum1784381432173 implements MigrationInterface {
       `DROP TYPE IF EXISTS "public"."notifications_status_enum"`,
     );
 
-    // ==========================================
-    // 6. XỬ LÝ BẢNG MUSIC BACKGROUNDS
-    // ==========================================
     await queryRunner.query(
       `ALTER TABLE "music_backgrounds" ADD "status_temp" character varying(20)`,
     );
@@ -221,9 +196,6 @@ export class ChangeEnum1784381432173 implements MigrationInterface {
       `DROP TYPE IF EXISTS "public"."music_backgrounds_status_enum"`,
     );
 
-    // ==========================================
-    // TÁI TẠO LẠI TOÀN BỘ CÁC CỦA INDEX
-    // ==========================================
     await queryRunner.query(
       `CREATE INDEX "IDX_98a1b6028433512c2550428a36" ON "guests" ("weddingId", "rsvpStatus")`,
     );
@@ -242,7 +214,6 @@ export class ChangeEnum1784381432173 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    // Phần hàm down giữ nguyên để rollback về cấu trúc cũ khi cần thiết
     await queryRunner.query(
       `DROP INDEX IF EXISTS "public"."IDX_5cda9f299594e9c9aafff3e081"`,
     );

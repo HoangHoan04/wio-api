@@ -28,7 +28,7 @@ export class UserEntity extends BaseEntity {
   // Customer Id
   @Column({ type: 'uuid', nullable: true })
   @ApiProperty({ description: 'Mã khách hàng (nếu user là khách hàng)' })
-  customerId: string;
+  customerId?: string;
 
   // Is Admin
   @Column({ type: 'boolean', default: false })
@@ -38,22 +38,22 @@ export class UserEntity extends BaseEntity {
   // Refresh Token
   @Column({ type: 'text', nullable: true })
   @ApiProperty({ description: 'Refresh token đã mã hóa' })
-  refreshToken: string;
+  refreshToken?: string;
 
   // Last Login
   @Column({ type: 'timestamptz', nullable: true })
   @ApiProperty({ description: 'Lần đăng nhập gần nhất' })
-  lastLogin: Date;
+  lastLogin?: Date;
 
   // Số điện thoại
   @Column({ type: 'varchar', length: 20, nullable: true })
   @ApiProperty({ description: 'Số điện thoại', required: false })
-  phone: string;
+  phone?: string;
 
   // Vai trò
   @Column({ type: 'varchar', length: 20, nullable: true })
   @ApiProperty({ description: 'Quyền' })
-  role: string;
+  role?: string;
 
   // Is Active
   @Column({ type: 'boolean', default: true, nullable: false })

@@ -1,3 +1,5 @@
+export * from './public.dto';
+
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
@@ -16,11 +18,6 @@ export class CreateGuestDto {
   @IsString()
   weddingId: string;
 
-  @ApiProperty({ description: 'ID Nhóm khách mời', required: false })
-  @IsOptional()
-  @IsString()
-  groupId?: string;
-
   @ApiProperty({
     description: 'ID Bàn tiệc (Null nếu chưa xếp)',
     required: false,
@@ -34,62 +31,45 @@ export class CreateGuestDto {
   @IsString()
   fullName: string;
 
-  @ApiProperty({ description: 'Số điện thoại', required: false })
-  @IsOptional()
-  @IsString()
-  phone?: string;
-
-  @ApiProperty({ description: 'Email', required: false })
-  @IsOptional()
-  @IsString()
-  email?: string;
-
   @ApiProperty({ description: 'Danh xưng (Anh, Chị, Bác...)', required: false })
   @IsOptional()
   @IsString()
   salutation?: string;
 
-  @ApiProperty({ description: 'Khách của ai' })
-  @IsNotEmpty()
-  side: string;
-
-  @ApiProperty({ description: 'Khách VIP?' })
-  @IsNotEmpty()
-  @IsBoolean()
-  isVip: boolean;
-
-  @ApiProperty({ description: 'Mã mời cá nhân hóa (Unique)' })
-  @IsNotEmpty()
+  @ApiProperty({ description: 'Khách của ai', required: false })
+  @IsOptional()
   @IsString()
-  invitationCode: string;
+  side?: string;
+
+  @ApiProperty({ description: 'Khách VIP?', required: false })
+  @IsOptional()
+  @IsBoolean()
+  isVip?: boolean;
+
+  @ApiProperty({ description: 'Mã mờicá nhân hóa (Unique)', required: false })
+  @IsOptional()
+  @IsString()
+  invitationCode?: string;
 
   @ApiProperty({ description: 'URL ảnh QR Code cá nhân', required: false })
   @IsOptional()
   @IsString()
   qrCodeUrl?: string;
 
-  @ApiProperty({ description: 'Trạng thái RSVP' })
-  @IsNotEmpty()
-  rsvpStatus: string;
-
-  @ApiProperty({ description: 'Số người đi kèm (+1, +2...)' })
-  @IsNotEmpty()
-  @IsNumber()
-  attendingCount: number;
-
-  @ApiProperty({ description: 'Chế độ ăn' })
-  @IsNotEmpty()
-  dietary: string;
-
-  @ApiProperty({ description: 'Ghi chú chế độ ăn', required: false })
+  @ApiProperty({ description: 'Trạng thái RSVP', required: false })
   @IsOptional()
   @IsString()
-  dietaryNote?: string;
+  rsvpStatus?: string;
 
-  @ApiProperty({ description: 'Cần phương tiện di chuyển?' })
-  @IsNotEmpty()
+  @ApiProperty({ description: 'Số ngườđi kèm (+1, +2...)', required: false })
+  @IsOptional()
+  @IsNumber()
+  attendingCount?: number;
+
+  @ApiProperty({ description: 'Cần phương tiện di chuyển?', required: false })
+  @IsOptional()
   @IsBoolean()
-  needsTransport: boolean;
+  needsTransport?: boolean;
 
   @ApiProperty({ description: 'Lời nhắn khi RSVP', required: false })
   @IsOptional()
@@ -131,11 +111,6 @@ export class FilterGuestDto {
   @IsString()
   weddingId?: string;
 
-  @ApiProperty({ description: 'ID Nhóm khách mời', required: false })
-  @IsOptional()
-  @IsString()
-  groupId?: string;
-
   @ApiProperty({
     description: 'ID Bàn tiệc (Null nếu chưa xếp)',
     required: false,
@@ -148,16 +123,6 @@ export class FilterGuestDto {
   @IsOptional()
   @IsString()
   fullName?: string;
-
-  @ApiProperty({ description: 'Số điện thoại', required: false })
-  @IsOptional()
-  @IsString()
-  phone?: string;
-
-  @ApiProperty({ description: 'Email', required: false })
-  @IsOptional()
-  @IsString()
-  email?: string;
 
   @ApiProperty({ description: 'Danh xưng (Anh, Chị, Bác...)', required: false })
   @IsOptional()
@@ -197,15 +162,6 @@ export class FilterGuestDto {
   @IsOptional()
   @IsNumber()
   attendingCount?: number;
-
-  @ApiProperty({ description: 'Chế độ ăn', required: false })
-  @IsOptional()
-  dietary?: string;
-
-  @ApiProperty({ description: 'Ghi chú chế độ ăn', required: false })
-  @IsOptional()
-  @IsString()
-  dietaryNote?: string;
 
   @ApiProperty({ description: 'Cần phương tiện di chuyển?', required: false })
   @IsOptional()

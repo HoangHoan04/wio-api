@@ -13,7 +13,7 @@ export class CustomerEntity extends BaseEntity {
   // Mã khách hàng
   @Column({ type: 'varchar', length: 50, nullable: true })
   @ApiProperty({ description: 'Mã khách hàng' })
-  code: string;
+  code?: string;
 
   // Họ và tên
   @Column({ type: 'varchar', length: 100, nullable: false })
@@ -23,22 +23,22 @@ export class CustomerEntity extends BaseEntity {
   // Email
   @Column({ type: 'varchar', length: 255, nullable: true })
   @ApiProperty({ description: 'Email khách hàng' })
-  email: string;
+  email?: string;
 
   // Số điện thoại
   @Column({ type: 'varchar', length: 20, nullable: true })
   @ApiProperty({ description: 'Số điện thoại khách hàng' })
-  phone: string;
+  phone?: string;
 
   // Giới tính
   @Column({ type: 'varchar', length: 20, nullable: true })
   @ApiProperty({ description: 'Giới tính' })
-  gender: string;
+  gender?: string;
 
   // Ngày sinh
   @Column({ type: 'timestamptz', nullable: true })
   @ApiProperty({ description: 'Ngày sinh' })
-  dateOfBirth: Date;
+  dateOfBirth?: Date;
 
   // User liên kết với khách hàng
   @OneToOne(() => UserEntity, (user) => user.customer)

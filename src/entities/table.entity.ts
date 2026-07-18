@@ -22,24 +22,24 @@ export class TableEntity extends BaseEntity {
   maxSeats: number;
 
   // Số ghế hiện tại
-  @Column({ type: 'smallint', default: 0, nullable: false })
+  @Column({ type: 'smallint', default: 0, nullable: true })
   @ApiProperty({ description: 'Số ghế hiện tại' })
-  currentSeats: number;
+  currentSeats?: number;
 
   // Mô tả
   @Column({ type: 'varchar', length: 255, nullable: true })
   @ApiProperty({ description: 'Mô tả' })
-  description: string;
+  description?: string;
 
   // Position X
   @Column({ type: 'int', nullable: true })
   @ApiProperty({ description: 'Vị trí X' })
-  positionX: number;
+  positionX?: number;
 
   // Position Y
   @Column({ type: 'int', nullable: true })
   @ApiProperty({ description: 'Vị trí Y' })
-  positionY: number;
+  positionY?: number;
 
   // Wedding
   @ManyToOne(() => WeddingEntity, (wedding) => wedding.tables, {

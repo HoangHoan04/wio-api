@@ -45,17 +45,17 @@ export class SubscriptionEntity extends BaseEntity {
   // Số tiền đã thanh toán
   @Column({ type: 'bigint', nullable: true })
   @ApiProperty({ description: 'Số tiền đã thanh toán' })
-  paidAmountVnd: number;
+  paidAmountVnd?: number;
 
   // Phương thức thanh toán
   @Column({ type: 'varchar', length: 50, nullable: true })
   @ApiProperty({ description: 'Phương thức thanh toán' })
-  paymentMethod: string;
+  paymentMethod?: string;
 
   // Tham chiếu thanh toán
   @Column({ type: 'varchar', length: 255, nullable: true })
   @ApiProperty({ description: 'Tham chiếu thanh toán' })
-  paymentRef: string;
+  paymentRef?: string;
 
   // User
   @ManyToOne(() => UserEntity, { onDelete: 'CASCADE' })

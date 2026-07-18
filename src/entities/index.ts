@@ -1,7 +1,6 @@
 export * from './action-log.entity';
 export * from './base.entity';
 export * from './customer.entity';
-export * from './guest-group.entity';
 export * from './guest.entity';
 export * from './music-background.entity';
 export * from './notification.entity';

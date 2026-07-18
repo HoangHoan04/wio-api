@@ -1,7 +1,6 @@
 import {
   CustomerEntity,
   GuestEntity,
-  GuestGroupEntity,
   MusicBackgroundEntity,
   NotificationEntity,
   PhotoWallEntity,
@@ -31,9 +30,6 @@ export class WeddingRepository extends Repository<WeddingEntity> {}
 
 @CustomRepository(WeddingPhotoEntity)
 export class WeddingPhotoRepository extends Repository<WeddingPhotoEntity> {}
-
-@CustomRepository(GuestGroupEntity)
-export class GuestGroupRepository extends Repository<GuestGroupEntity> {}
 
 @CustomRepository(GuestEntity)
 export class GuestRepository extends Repository<GuestEntity> {}

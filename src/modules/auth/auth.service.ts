@@ -226,7 +226,17 @@ export class AuthService {
       where: { refreshToken: data.refreshToken, isRevoked: false },
     });
 
-    if (!tokenRecord || tokenRecord.expiresAt < new Date()) {
+    if (!tokenRecord) {
+      throw new UnauthorizedException(
+        'Refresh token không hợp lệ hoặc đã hết hạn',
+      );
+    }
+
+    if (
+      !tokenRecord ||
+      !tokenRecord.expiresAt ||
+      tokenRecord.expiresAt < new Date()
+    ) {
       throw new UnauthorizedException(
         'Refresh token không hợp lệ hoặc đã hết hạn',
       );

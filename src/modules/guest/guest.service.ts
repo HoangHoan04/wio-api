@@ -12,7 +12,14 @@ import * as ExcelJS from 'exceljs';
 import * as QRCode from 'qrcode';
 import { FindOptionsWhere } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { CreateGuestDto, FilterGuestDto, UpdateGuestDto } from './dto';
+import {
+  CreateGuestDto,
+  CreateManyGuestsDto,
+  FilterGuestDto,
+  IdentifyGuestDto,
+  RsvpGuestDto,
+  UpdateGuestDto,
+} from './dto';
 
 @Injectable()
 export class GuestService {
@@ -21,16 +28,32 @@ export class GuestService {
     private readonly weddingRepo: WeddingRepository,
   ) {}
 
-  async pagination(data: PaginationDto<FilterGuestDto>) {
+  async pagination(data: PaginationDto<FilterGuestDto>, user?: UserDto) {
     const { skip = 0, take = 10, where = {} } = data;
     const whereCon: FindOptionsWhere<GuestEntity> = { isDeleted: false };
 
+    if (user && !user.isAdmin) {
+      if (where.weddingId) {
+        const wedding = await this.weddingRepo.findOne({
+          where: { id: where.weddingId, isDeleted: false },
+        });
+        if (!wedding || wedding.userId !== user.id) {
+          throw new ForbiddenException(
+            'Bạn không có quyền xem khách mời của đám cưới này',
+          );
+        }
+      } else {
+        const weddings = await this.weddingRepo.find({
+          where: { userId: user.id, isDeleted: false },
+          select: ['id'],
+        });
+        whereCon.weddingId = weddings.map((w) => w.id) as any;
+      }
+    }
+
     if (where.weddingId !== undefined) whereCon.weddingId = where.weddingId;
-    if (where.groupId !== undefined) whereCon.groupId = where.groupId;
     if (where.tableId !== undefined) whereCon.tableId = where.tableId;
     if (where.fullName !== undefined) whereCon.fullName = where.fullName;
-    if (where.phone !== undefined) whereCon.phone = where.phone;
-    if (where.email !== undefined) whereCon.email = where.email;
     if (where.salutation !== undefined) whereCon.salutation = where.salutation;
     if (where.side !== undefined) whereCon.side = where.side;
     if (where.isVip !== undefined) whereCon.isVip = where.isVip;
@@ -40,9 +63,7 @@ export class GuestService {
     if (where.rsvpStatus !== undefined) whereCon.rsvpStatus = where.rsvpStatus;
     if (where.attendingCount !== undefined)
       whereCon.attendingCount = where.attendingCount;
-    if (where.dietary !== undefined) whereCon.dietary = where.dietary;
-    if (where.dietaryNote !== undefined)
-      whereCon.dietaryNote = where.dietaryNote;
+
     if (where.needsTransport !== undefined)
       whereCon.needsTransport = where.needsTransport;
     if (where.rsvpNote !== undefined) whereCon.rsvpNote = where.rsvpNote;
@@ -61,11 +82,21 @@ export class GuestService {
     return { data: list, total };
   }
 
-  async findById(data: IdDto) {
+  async findById(data: IdDto, user?: UserDto) {
     const item = await this.repo.findOne({
       where: { id: data.id, isDeleted: false },
     });
     if (!item) throw new NotFoundException('Không tìm thấy bản ghi');
+
+    if (user && !user.isAdmin) {
+      const wedding = await this.weddingRepo.findOne({
+        where: { id: item.weddingId, isDeleted: false },
+      });
+      if (!wedding || wedding.userId !== user.id) {
+        throw new ForbiddenException('Bạn không có quyền xem khách mời này');
+      }
+    }
+
     return { message: 'Thành công', data: item };
   }
 
@@ -86,25 +117,18 @@ export class GuestService {
     entity.createdBy = user.id;
 
     if (dto.weddingId !== undefined) entity.weddingId = dto.weddingId;
-    if (dto.groupId !== undefined) entity.groupId = dto.groupId;
     if (dto.tableId !== undefined) entity.tableId = dto.tableId;
     if (dto.fullName !== undefined) entity.fullName = dto.fullName;
-    if (dto.phone !== undefined) entity.phone = dto.phone;
-    if (dto.email !== undefined) entity.email = dto.email;
-    if (dto.salutation !== undefined) entity.salutation = dto.salutation;
-    if (dto.side !== undefined) entity.side = dto.side;
-    if (dto.isVip !== undefined) entity.isVip = dto.isVip;
+    entity.salutation = dto.salutation || 'Kính mời';
+    entity.side = dto.side || enumData.GUEST_SIDE.BOTH.code;
+    entity.isVip = dto.isVip ?? false;
     entity.invitationCode =
       dto.invitationCode ||
       Math.random().toString(36).substring(2, 8).toUpperCase();
     if (dto.qrCodeUrl !== undefined) entity.qrCodeUrl = dto.qrCodeUrl;
-    if (dto.rsvpStatus !== undefined) entity.rsvpStatus = dto.rsvpStatus;
-    if (dto.attendingCount !== undefined)
-      entity.attendingCount = dto.attendingCount;
-    if (dto.dietary !== undefined) entity.dietary = dto.dietary;
-    if (dto.dietaryNote !== undefined) entity.dietaryNote = dto.dietaryNote;
-    if (dto.needsTransport !== undefined)
-      entity.needsTransport = dto.needsTransport;
+    entity.rsvpStatus = dto.rsvpStatus || enumData.RSVP_STATUS.PENDING.code;
+    entity.attendingCount = dto.attendingCount ?? 1;
+    entity.needsTransport = dto.needsTransport ?? false;
     if (dto.rsvpNote !== undefined) entity.rsvpNote = dto.rsvpNote;
     if (dto.rsvpAt !== undefined) entity.rsvpAt = dto.rsvpAt;
     if (dto.invitedAt !== undefined) entity.invitedAt = dto.invitedAt;
@@ -113,6 +137,82 @@ export class GuestService {
 
     const saved = await this.repo.save(entity);
     return { message: 'Tạo thành công', data: saved };
+  }
+
+  async createMany(user: UserDto, dto: CreateManyGuestsDto) {
+    const wedding = await this.weddingRepo.findOne({
+      where: { id: dto.weddingId, isDeleted: false },
+    });
+    if (!wedding) throw new NotFoundException('Không tìm thấy đám cưới');
+    if (!user.isAdmin && wedding.userId !== user.id) {
+      throw new ForbiddenException(
+        'Bạn không có quyền thêm khách mời vào đám cưới này',
+      );
+    }
+
+    const entities: GuestEntity[] = dto.guests.map((g) => {
+      const entity = new GuestEntity();
+      entity.id = uuidv4();
+      entity.createdBy = user.id;
+      entity.weddingId = dto.weddingId;
+      if (g.tableId !== undefined) entity.tableId = g.tableId;
+      entity.fullName = g.fullName;
+      entity.salutation = g.salutation || 'Kính mời';
+      entity.side = g.side || enumData.GUEST_SIDE.BOTH.code;
+      entity.isVip = g.isVip ?? false;
+      entity.invitationCode =
+        g.invitationCode ||
+        Math.random().toString(36).substring(2, 8).toUpperCase();
+      if (g.qrCodeUrl !== undefined) entity.qrCodeUrl = g.qrCodeUrl;
+      entity.rsvpStatus = g.rsvpStatus || enumData.RSVP_STATUS.PENDING.code;
+      entity.attendingCount = g.attendingCount ?? 1;
+      entity.needsTransport = g.needsTransport ?? false;
+      if (g.rsvpNote !== undefined) entity.rsvpNote = g.rsvpNote;
+      return entity;
+    });
+
+    const saved = await this.repo.save(entities);
+    return {
+      message: `Tạo thành công ${saved.length} khách mờ`,
+      data: saved,
+    };
+  }
+
+  async downloadSampleExcel(): Promise<Buffer> {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Mau khach moi');
+    worksheet.columns = [
+      { header: 'Họ tên', key: 'fullName', width: 30 },
+      { header: 'Số điện thoại', key: 'phone', width: 20 },
+      { header: 'Email', key: 'email', width: 30 },
+      { header: 'Danh xưng', key: 'salutation', width: 15 },
+      { header: 'Bên (Chú rể/Cô dâu/Cả hai)', key: 'side', width: 22 },
+      { header: 'VIP (true/false)', key: 'isVip', width: 18 },
+      { header: 'Cần đưa đón (true/false)', key: 'needsTransport', width: 22 },
+    ];
+
+    worksheet.addRow({
+      fullName: 'Nguyễn Văn A',
+      phone: '0901234567',
+      email: 'a@example.com',
+      salutation: 'Anh',
+      side: 'groom',
+      isVip: 'false',
+      needsTransport: 'false',
+    });
+
+    worksheet.addRow({
+      fullName: 'Trần Thị B',
+      phone: '0912345678',
+      email: 'b@example.com',
+      salutation: 'Chị',
+      side: 'bride',
+      isVip: 'true',
+      needsTransport: 'true',
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    return Buffer.from(buffer);
   }
 
   async update(dto: UpdateGuestDto, user: UserDto) {
@@ -133,11 +233,8 @@ export class GuestService {
     entity.updatedBy = user.id;
 
     if (dto.weddingId !== undefined) entity.weddingId = dto.weddingId;
-    if (dto.groupId !== undefined) entity.groupId = dto.groupId;
     if (dto.tableId !== undefined) entity.tableId = dto.tableId;
     if (dto.fullName !== undefined) entity.fullName = dto.fullName;
-    if (dto.phone !== undefined) entity.phone = dto.phone;
-    if (dto.email !== undefined) entity.email = dto.email;
     if (dto.salutation !== undefined) entity.salutation = dto.salutation;
     if (dto.side !== undefined) entity.side = dto.side;
     if (dto.isVip !== undefined) entity.isVip = dto.isVip;
@@ -147,8 +244,6 @@ export class GuestService {
     if (dto.rsvpStatus !== undefined) entity.rsvpStatus = dto.rsvpStatus;
     if (dto.attendingCount !== undefined)
       entity.attendingCount = dto.attendingCount;
-    if (dto.dietary !== undefined) entity.dietary = dto.dietary;
-    if (dto.dietaryNote !== undefined) entity.dietaryNote = dto.dietaryNote;
     if (dto.needsTransport !== undefined)
       entity.needsTransport = dto.needsTransport;
     if (dto.rsvpNote !== undefined) entity.rsvpNote = dto.rsvpNote;
@@ -180,7 +275,7 @@ export class GuestService {
     return { message: 'Xóa thành công' };
   }
 
-  async rsvp(dto: any): Promise<any> {
+  async rsvp(dto: RsvpGuestDto): Promise<any> {
     const guest = await this.repo.findOne({
       where: { invitationCode: dto.invitationCode, isDeleted: false },
     });
@@ -190,8 +285,6 @@ export class GuestService {
     if (dto.rsvpStatus !== undefined) guest.rsvpStatus = dto.rsvpStatus;
     if (dto.attendingCount !== undefined)
       guest.attendingCount = dto.attendingCount;
-    if (dto.dietary !== undefined) guest.dietary = dto.dietary;
-    if (dto.dietaryNote !== undefined) guest.dietaryNote = dto.dietaryNote;
     if (dto.needsTransport !== undefined)
       guest.needsTransport = dto.needsTransport;
     if (dto.rsvpNote !== undefined) guest.rsvpNote = dto.rsvpNote;
@@ -201,9 +294,9 @@ export class GuestService {
     return { message: 'Gửi RSVP thành công', data: saved };
   }
 
-  async identify(code: string): Promise<any> {
+  async identify(dto: IdentifyGuestDto): Promise<any> {
     const guest = await this.repo.findOne({
-      where: { invitationCode: code, isDeleted: false },
+      where: { invitationCode: dto.invitationCode, isDeleted: false },
     });
     if (!guest) throw new NotFoundException('Mã mời không chính xác');
 
@@ -212,6 +305,12 @@ export class GuestService {
 
     const wedding = await this.weddingRepo.findOne({
       where: { id: guest.weddingId, isDeleted: false },
+      relations: {
+        events: true,
+        timelines: true,
+        photos: true,
+        template: true,
+      },
     });
 
     return {
@@ -219,6 +318,39 @@ export class GuestService {
       data: {
         guest,
         wedding,
+      },
+    };
+  }
+
+  async getStats(weddingId: string) {
+    const guests = await this.repo.find({
+      where: { weddingId, isDeleted: false },
+    });
+
+    const total = guests.length;
+    const attending = guests.filter(
+      (g) => g.rsvpStatus === enumData.RSVP_STATUS.ATTENDING.code,
+    ).length;
+    const declined = guests.filter(
+      (g) => g.rsvpStatus === enumData.RSVP_STATUS.DECLINED.code,
+    ).length;
+    const pending = guests.filter(
+      (g) => g.rsvpStatus === enumData.RSVP_STATUS.PENDING.code,
+    ).length;
+    const attendingGuests = guests
+      .filter((g) => g.rsvpStatus === enumData.RSVP_STATUS.ATTENDING.code)
+      .reduce((sum, g) => sum + (g.attendingCount || 0), 0);
+    const needsTransport = guests.filter((g) => g.needsTransport).length;
+
+    return {
+      message: 'Thống kê khách mời',
+      data: {
+        total,
+        attending,
+        declined,
+        pending,
+        attendingGuests,
+        needsTransport,
       },
     };
   }
@@ -304,9 +436,7 @@ export class GuestService {
       const fullName = getCellValueString(row.getCell(1).value);
       if (!fullName) return;
 
-      const phone = getCellValueString(row.getCell(2).value);
-      const email = getCellValueString(row.getCell(3).value);
-      const salutation = getCellValueString(row.getCell(4).value) || 'Bạn';
+      const salutation = getCellValueString(row.getCell(4).value) || 'Kính mời';
       const sideStr = getCellValueString(row.getCell(5).value).toLowerCase();
       const isVipStr = getCellValueString(row.getCell(6).value).toLowerCase();
 
@@ -314,8 +444,6 @@ export class GuestService {
       guest.id = uuidv4();
       guest.weddingId = weddingId;
       guest.fullName = fullName;
-      guest.phone = phone;
-      guest.email = email;
       guest.salutation = salutation;
       guest.side =
         sideStr === 'groom'

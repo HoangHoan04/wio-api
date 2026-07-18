@@ -7,6 +7,10 @@ import { AuthAdminController } from '../auth/controller/auth-admin.controller';
 import { PREFIX_MODULE } from '../config-module';
 import { CustomerAdminController } from '../customer/controllers/customer-admin.controller';
 import { CustomerModule } from '../customer/customer.module';
+import { GuestAdminController } from '../guest/controllers/guest-admin.controller';
+import { GuestModule } from '../guest/guest.module';
+import { MusicBackgroundAdminController } from '../music-background/controllers/music-background-admin.controller';
+import { MusicBackgroundModule } from '../music-background/music-background.module';
 import { PhotoWallAdminController } from '../photo-wall/controllers/photo-wall-admin.controller';
 import { PhotoWallModule } from '../photo-wall/photo-wall.module';
 import { SubscriptionAdminController } from '../subscription/controllers/subscription-admin.controller';
@@ -17,8 +21,6 @@ import { WeddingAdminController } from '../wedding/controllers/wedding-admin.con
 import { WeddingModule } from '../wedding/wedding.module';
 import { WishAdminController } from '../wish/controllers/wish-admin.controller';
 import { WishModule } from '../wish/wish.module';
-import { MusicBackgroundAdminController } from '../music-background/controllers/music-background-admin.controller';
-import { MusicBackgroundModule } from '../music-background/music-background.module';
 
 @ChildModule({
   prefix: PREFIX_MODULE.admin,
@@ -32,6 +34,7 @@ import { MusicBackgroundModule } from '../music-background/music-background.modu
     ActionLogController,
     CustomerAdminController,
     MusicBackgroundAdminController,
+    GuestAdminController,
   ],
   imports: [
     AuthModule,
@@ -43,6 +46,7 @@ import { MusicBackgroundModule } from '../music-background/music-background.modu
     ActionLogModule,
     CustomerModule,
     MusicBackgroundModule,
+    GuestModule,
   ],
   exports: [],
 })

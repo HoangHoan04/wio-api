@@ -161,6 +161,8 @@ export class TableService {
       );
     }
 
+    const oldTableId = guest.tableId;
+
     const currentAssignedGuests = await this.guestRepo.find({
       where: { tableId, isDeleted: false },
     });
@@ -181,6 +183,60 @@ export class TableService {
     table.currentSeats = totalAssignedSeats + guestAttendingCount;
     await this.repo.save(table);
 
+    if (oldTableId && oldTableId !== tableId) {
+      const oldTable = await this.repo.findOne({
+        where: { id: oldTableId, isDeleted: false },
+      });
+      if (oldTable) {
+        const oldAssignedGuests = await this.guestRepo.find({
+          where: { tableId: oldTableId, isDeleted: false },
+        });
+        oldTable.currentSeats = oldAssignedGuests.reduce(
+          (sum, g) => sum + (g.attendingCount || 1),
+          0,
+        );
+        await this.repo.save(oldTable);
+      }
+    }
+
     return { message: 'Xếp khách vào bàn thành công', data: guest };
+  }
+
+  async unassignGuest(guestId: string, user: UserDto): Promise<any> {
+    const guest = await this.guestRepo.findOne({
+      where: { id: guestId, isDeleted: false },
+    });
+    if (!guest) throw new NotFoundException('Không tìm thấy khách mời');
+
+    const wedding = await this.weddingRepo.findOne({
+      where: { id: guest.weddingId },
+    });
+    if (!user.isAdmin && (!wedding || wedding.userId !== user.id)) {
+      throw new ForbiddenException(
+        'Bạn không có quyền xếp chỗ cho khách mời này',
+      );
+    }
+
+    const oldTableId = guest.tableId;
+    guest.tableId = undefined;
+    await this.guestRepo.save(guest);
+
+    if (oldTableId) {
+      const oldTable = await this.repo.findOne({
+        where: { id: oldTableId, isDeleted: false },
+      });
+      if (oldTable) {
+        const oldAssignedGuests = await this.guestRepo.find({
+          where: { tableId: oldTableId, isDeleted: false },
+        });
+        oldTable.currentSeats = oldAssignedGuests.reduce(
+          (sum, g) => sum + (g.attendingCount || 1),
+          0,
+        );
+        await this.repo.save(oldTable);
+      }
+    }
+
+    return { message: 'Gỡ khách khỏi bàn thành công', data: guest };
   }
 }

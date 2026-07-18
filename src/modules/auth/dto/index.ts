@@ -37,7 +37,6 @@ export class FacebookLoginDto {
 
 export class RefreshTokenDto {
   @ApiProperty({ description: 'Chuỗi Refresh Token' })
-  @IsNotEmpty()
   @IsString()
   refreshToken: string;
 }

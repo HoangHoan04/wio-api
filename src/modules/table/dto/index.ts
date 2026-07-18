@@ -23,10 +23,10 @@ export class CreateTableDto {
   @IsNumber()
   maxSeats: number;
 
-  @ApiProperty({ description: 'Số chỗ hiện tại' })
-  @IsNotEmpty()
+  @ApiProperty({ description: 'Số chỗ hiện tại', required: false })
+  @IsOptional()
   @IsNumber()
-  currentSeats: number;
+  currentSeats?: number;
 
   @ApiProperty({ description: 'Mô tả', required: false })
   @IsOptional()
@@ -98,4 +98,23 @@ export class FilterTableDto {
   @IsOptional()
   @IsNumber()
   positionY?: number;
+}
+
+export class AssignGuestDto {
+  @ApiProperty({ description: 'ID Bàn tiệc' })
+  @IsUUID()
+  @IsNotEmpty()
+  tableId: string;
+
+  @ApiProperty({ description: 'ID Khách mời' })
+  @IsUUID()
+  @IsNotEmpty()
+  guestId: string;
+}
+
+export class UnassignGuestDto {
+  @ApiProperty({ description: 'ID Khách mời' })
+  @IsUUID()
+  @IsNotEmpty()
+  guestId: string;
 }

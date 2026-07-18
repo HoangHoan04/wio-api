@@ -20,7 +20,7 @@ export class NotificationEntity extends BaseEntity {
   @Column({ type: 'uuid', nullable: true })
   @Index()
   @ApiProperty({ description: 'Guest Id' })
-  guestId: string;
+  guestId?: string;
 
   // Kênh thông báo
   @ApiProperty({ description: 'Kênh gửi', enum: enumData.NOTIF_CHANNEL })
@@ -35,7 +35,7 @@ export class NotificationEntity extends BaseEntity {
   // Chủ đề email
   @ApiProperty({ description: 'Chủ đề email', required: false })
   @Column({ type: 'varchar', length: 255, nullable: true })
-  subject: string;
+  subject?: string;
 
   // Nội dung thông báo
   @ApiProperty({ description: 'Nội dung thông báo' })
@@ -56,12 +56,12 @@ export class NotificationEntity extends BaseEntity {
   // Ngày gửi
   @ApiProperty({ description: 'Thời gian đã gửi', required: false })
   @Column({ type: 'timestamptz', nullable: true })
-  sentAt: Date;
+  sentAt?: Date;
 
   // Lý do thất bại
   @ApiProperty({ description: 'Lý do thất bại', required: false })
   @Column({ type: 'text', nullable: true })
-  failedReason: string;
+  failedReason?: string;
 
   @ApiProperty({
     description: 'Nhà cung cấp (Zalo ZNS, Twilio...)',
@@ -70,7 +70,7 @@ export class NotificationEntity extends BaseEntity {
   // Nơi gửi thông báo (Zalo ZNS, Twilio...)
   @Column({ type: 'varchar', length: 50, nullable: true })
   @ApiProperty({ description: 'Nơi gửi thông báo' })
-  provider: string;
+  provider?: string;
 
   @ApiProperty({
     description: 'Message ID trả về từ provider',
@@ -79,5 +79,5 @@ export class NotificationEntity extends BaseEntity {
   // Message ID trả về từ provider
   @Column({ type: 'varchar', length: 255, nullable: true })
   @ApiProperty({ description: 'Message ID từ provider' })
-  providerMsgId: string;
+  providerMsgId?: string;
 }

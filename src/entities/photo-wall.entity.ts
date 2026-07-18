@@ -14,7 +14,7 @@ export class PhotoWallEntity extends BaseEntity {
   // Id khách mời
   @Column({ type: 'uuid', nullable: true })
   @ApiProperty({ description: 'Id khách mời' })
-  guestId: string;
+  guestId?: string;
 
   // Tên người tải lên
   @Column({ type: 'varchar', length: 100, nullable: false })
@@ -29,12 +29,12 @@ export class PhotoWallEntity extends BaseEntity {
   // Khoá lưu trữ (Storage Key)
   @Column({ type: 'varchar', length: 500, nullable: true })
   @ApiProperty({ description: 'Khoá lưu trữ (Storage Key)' })
-  storageKey: string;
+  storageKey?: string;
 
   // Caption
   @Column({ type: 'varchar', length: 255, nullable: true })
   @ApiProperty({ description: 'Caption' })
-  caption: string;
+  caption?: string;
 
   // Có được duyệt không
   @Column({ type: 'boolean', default: true, nullable: false })
@@ -44,7 +44,7 @@ export class PhotoWallEntity extends BaseEntity {
   // Ngày duyệt
   @Column({ type: 'timestamptz', nullable: true })
   @ApiProperty({ description: 'Ngày duyệt ' })
-  approvedAt: Date;
+  approvedAt?: Date;
 
   @ManyToOne(() => WeddingEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'weddingId' })

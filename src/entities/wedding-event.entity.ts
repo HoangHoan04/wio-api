@@ -18,17 +18,17 @@ export class WeddingEventEntity extends BaseEntity {
   // Ngày
   @Column({ type: 'varchar', length: 50, nullable: true })
   @ApiProperty({ description: 'Ngày' })
-  date: string;
+  date?: string;
 
   // Thời gian
   @Column({ type: 'varchar', length: 50, nullable: true })
   @ApiProperty({ description: 'Thời gian' })
-  time: string;
+  time?: string;
 
   // Địa chỉ
   @Column({ type: 'text', nullable: true })
   @ApiProperty({ description: 'Địa chỉ' })
-  address: string;
+  address?: string;
 
   // Thứ tự sắp xếp
   @Column({ type: 'int', default: 0, nullable: false })

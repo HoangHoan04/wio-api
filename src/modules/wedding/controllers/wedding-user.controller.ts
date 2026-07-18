@@ -43,4 +43,10 @@ export class WeddingUserController {
   async publish(@Body() body: IdDto, @CurrentUser() user: UserDto) {
     return await this.service.publish(body.id, user);
   }
+
+  @ApiOperation({ summary: 'Hủy xuất bản đám cưới (về Nháp)' })
+  @Post('unpublish')
+  async unpublish(@Body() body: IdDto, @CurrentUser() user: UserDto) {
+    return await this.service.unpublish(body.id, user);
+  }
 }

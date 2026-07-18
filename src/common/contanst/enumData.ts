@@ -67,13 +67,6 @@ export const enumData = {
     DECLINED: { code: 'DECLINED', name: 'Từ chối' },
   },
 
-  DIETARY_PREF: {
-    NORMAL: { code: 'NORMAL', name: 'Bình thường' },
-    VEGETARIAN: { code: 'VEGETARIAN', name: 'Chay' },
-    HALAL: { code: 'HALAL', name: 'Halal' },
-    OTHER: { code: 'OTHER', name: 'Khác' },
-  },
-
   NOTIF_CHANNEL: {
     ZALO: { code: 'ZALO', name: 'Zalo' },
     SMS: { code: 'SMS', name: 'SMS' },

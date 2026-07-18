@@ -69,7 +69,7 @@ export class TemplateService {
     entity.description = dto.description;
     entity.tags = dto.tags ?? [];
     entity.features = dto.features ?? null;
-    entity.thumbnailUrl = dto.thumbnailUrl ?? null;
+    entity.thumbnailUrl = dto.thumbnailUrl;
     entity.themeCode = dto.themeCode;
     entity.slug =
       THEME_SLUG_MAP[dto.themeCode] ||

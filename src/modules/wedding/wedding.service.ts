@@ -120,6 +120,7 @@ export class WeddingService {
         events: true,
         timelines: true,
         photos: true,
+        template: true,
       },
     });
     if (!item) throw new NotFoundException('Không tìm thấy bản ghi');
@@ -398,9 +399,14 @@ export class WeddingService {
       throw new ForbiddenException('Bạn không có quyền xuất bản đám cưới này');
     }
 
+    const customerUrl =
+      process.env.CUSTOMER_URL ||
+      process.env.GOOGLE_FRONTEND_REDIRECT_URL ||
+      'http://localhost:2504';
+
     entity.status = enumData.WEDDING_STATUS.PUBLISHED.code;
     entity.publishedAt = new Date();
-    entity.shareUrl = `https://wedding.vn/thiep/${entity.slug}`;
+    entity.shareUrl = `${customerUrl}/thiep/${entity.slug}`;
     try {
       entity.shareQrUrl = await QRCode.toDataURL(entity.shareUrl);
     } catch (err) {
@@ -423,8 +429,11 @@ export class WeddingService {
       );
     }
 
-    const shareUrl =
-      entity.shareUrl || `https://wedding.vn/thiep/${entity.slug}`;
+    const customerUrl =
+      process.env.CUSTOMER_URL ||
+      process.env.GOOGLE_FRONTEND_REDIRECT_URL ||
+      'http://localhost:2504';
+    const shareUrl = entity.shareUrl || `${customerUrl}/thiep/${entity.slug}`;
     let qrCodeBase64 = entity.shareQrUrl;
     if (!qrCodeBase64) {
       try {
@@ -487,49 +496,16 @@ export class WeddingService {
       0,
     );
 
-    const [dietNormal, dietVeg, dietHalal, dietOther, needsTransport] =
-      await Promise.all([
-        this.guestRepo.count({
-          where: {
-            weddingId: id,
-            dietary: enumData.DIETARY_PREF.NORMAL.code,
-            rsvpStatus: enumData.RSVP_STATUS.ATTENDING.code,
-            isDeleted: false,
-          },
-        }),
-        this.guestRepo.count({
-          where: {
-            weddingId: id,
-            dietary: enumData.DIETARY_PREF.VEGETARIAN.code,
-            rsvpStatus: enumData.RSVP_STATUS.ATTENDING.code,
-            isDeleted: false,
-          },
-        }),
-        this.guestRepo.count({
-          where: {
-            weddingId: id,
-            dietary: enumData.DIETARY_PREF.HALAL.code,
-            rsvpStatus: enumData.RSVP_STATUS.ATTENDING.code,
-            isDeleted: false,
-          },
-        }),
-        this.guestRepo.count({
-          where: {
-            weddingId: id,
-            dietary: enumData.DIETARY_PREF.OTHER.code,
-            rsvpStatus: enumData.RSVP_STATUS.ATTENDING.code,
-            isDeleted: false,
-          },
-        }),
-        this.guestRepo.count({
-          where: {
-            weddingId: id,
-            needsTransport: true,
-            rsvpStatus: enumData.RSVP_STATUS.ATTENDING.code,
-            isDeleted: false,
-          },
-        }),
-      ]);
+    const needsTransport = await Promise.all([
+      this.guestRepo.count({
+        where: {
+          weddingId: id,
+          needsTransport: true,
+          rsvpStatus: enumData.RSVP_STATUS.ATTENDING.code,
+          isDeleted: false,
+        },
+      }),
+    ]);
 
     const recentGuests = await this.guestRepo.find({
       where: { weddingId: id, isDeleted: false },
@@ -546,12 +522,6 @@ export class WeddingService {
           attending: attendingCount,
           declined: declinedCount,
           totalSeats: totalAttendingSeats,
-        },
-        dietary: {
-          normal: dietNormal,
-          vegetarian: dietVeg,
-          halal: dietHalal,
-          other: dietOther,
         },
         transport: {
           needsTransport,

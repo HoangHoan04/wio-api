@@ -13,7 +13,7 @@ export class TokenService {
   generateAccessToken(payload: {
     sub: string;
     email: string;
-    role: string;
+    role?: string;
   }): string {
     return this.jwtService.sign(payload);
   }
