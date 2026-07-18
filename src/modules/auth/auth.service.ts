@@ -1,5 +1,5 @@
+import { enumData } from '@/common/contanst/enumData';
 import { CustomerEntity, UserEntity, UserTokenEntity } from '@/entities';
-import { UserRole } from '@/entities/enums';
 import {
   CustomerRepository,
   UserRepository,
@@ -28,10 +28,10 @@ import {
   SendOtpCustomerDto,
   SendOtpVerifyDto,
   UpdatePasswordDto,
+  UpdateProfileDto,
   UserLoginDto,
   VerifyEmailDto,
   VerifyLoginOtpDto,
-  UpdateProfileDto,
 } from './dto';
 
 @Injectable()
@@ -44,7 +44,7 @@ export class AuthService {
     private readonly otpService: OtpService,
     private readonly httpService: HttpService,
     private readonly emailService: EmailService,
-  ) { }
+  ) {}
 
   private async generateAuthTokens(
     user: UserEntity,
@@ -140,7 +140,7 @@ export class AuthService {
     user.email = data.email;
     user.phone = data.phone;
     user.password = hashedPassword;
-    user.role = UserRole.COUPLE;
+    user.role = enumData.USER_ROLE.COUPLE.code;
     user.isActive = true;
     user.createdAt = new Date();
     user.createdBy = undefined;
@@ -185,7 +185,10 @@ export class AuthService {
       .where('expiresAt < NOW()')
       .orWhere('isRevoked = true')
       .execute();
-    return { message: 'Dọn dẹp token thành công', deletedCount: result.affected || 0 };
+    return {
+      message: 'Dọn dẹp token thành công',
+      deletedCount: result.affected || 0,
+    };
   }
 
   async verifyEmail(data: VerifyEmailDto) {
@@ -364,7 +367,7 @@ export class AuthService {
         user.phone = data.identifier;
       }
       user.password = '';
-      user.role = UserRole.COUPLE;
+      user.role = enumData.USER_ROLE.COUPLE.code;
       user.isActive = true;
       user.createdAt = new Date();
       user.createdBy = undefined;
@@ -471,9 +474,8 @@ export class AuthService {
       user.phone = dto.phone;
     }
     if (dto.gender !== undefined) customer.gender = dto.gender;
-    if (dto.dateOfBirth !== undefined) {
-      (customer as any).dateOfBirth = dto.dateOfBirth ? new Date(dto.dateOfBirth) : null;
-    }
+    if (dto.dateOfBirth !== undefined)
+      customer.dateOfBirth = new Date(dto.dateOfBirth);
 
     customer.updatedBy = user.id;
     customer.updatedAt = new Date();
@@ -512,7 +514,11 @@ export class AuthService {
     return url;
   }
 
-  async handleGoogleCallback(code: string, userAgent?: string, ipAddress?: string) {
+  async handleGoogleCallback(
+    code: string,
+    userAgent?: string,
+    ipAddress?: string,
+  ) {
     const tokenResponse = await this.exchangeGoogleCode(code);
     const googleUser = await this.getGoogleUserInfo(tokenResponse.access_token);
     return this.handleGoogleUser(googleUser, userAgent, ipAddress);
@@ -555,22 +561,31 @@ export class AuthService {
     return url;
   }
 
-  async handleFacebookCallback(code: string, userAgent?: string, ipAddress?: string) {
+  async handleFacebookCallback(
+    code: string,
+    userAgent?: string,
+    ipAddress?: string,
+  ) {
     const tokenResponse = await this.exchangeFacebookCode(code);
-    const fbUser = await this.getFacebookUserInfoFromCode(tokenResponse.access_token);
+    const fbUser = await this.getFacebookUserInfoFromCode(
+      tokenResponse.access_token,
+    );
     return this.handleFacebookUser(fbUser, userAgent, ipAddress);
   }
 
   private async exchangeFacebookCode(code: string) {
     const { data } = await lastValueFrom(
-      this.httpService.get('https://graph.facebook.com/v18.0/oauth/access_token', {
-        params: {
-          client_id: process.env.FACEBOOK_APP_ID,
-          client_secret: process.env.FACEBOOK_APP_SECRET,
-          redirect_uri: process.env.FACEBOOK_CALLBACK_URL,
-          code,
+      this.httpService.get(
+        'https://graph.facebook.com/v18.0/oauth/access_token',
+        {
+          params: {
+            client_id: process.env.FACEBOOK_APP_ID,
+            client_secret: process.env.FACEBOOK_APP_SECRET,
+            redirect_uri: process.env.FACEBOOK_CALLBACK_URL,
+            code,
+          },
         },
-      }),
+      ),
     );
     return data;
   }
@@ -601,7 +616,7 @@ export class AuthService {
       user.id = uuidv4();
       user.email = fbUser.email;
       user.password = '';
-      user.role = UserRole.COUPLE;
+      user.role = enumData.USER_ROLE.COUPLE.code;
       user.isActive = true;
       await this.userRepo.save(user);
 
@@ -650,7 +665,7 @@ export class AuthService {
       user.id = uuidv4();
       user.email = googleUser.email;
       user.password = '';
-      user.role = UserRole.COUPLE;
+      user.role = enumData.USER_ROLE.COUPLE.code;
       user.isActive = true;
       await this.userRepo.save(user);
 

@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from './base.entity';
-import { DietaryPref, GuestSide, RsvpStatus } from './enums';
 import { GuestGroupEntity } from './guest-group.entity';
 import { TableEntity } from './table.entity';
 import { WeddingEntity } from './wedding.entity';
@@ -45,14 +44,9 @@ export class GuestEntity extends BaseEntity {
   salutation: string;
 
   // Nhà trai/Nhà gái
-  @Column({
-    type: 'enum',
-    enum: GuestSide,
-    default: GuestSide.BOTH,
-    nullable: false,
-  })
+  @Column({ type: 'varchar', length: 20, nullable: false })
   @ApiProperty({ description: 'Nhà trai/Nhà gái' })
-  side: GuestSide;
+  side: string;
 
   // Is Vip
   @Column({ type: 'boolean', default: false, nullable: false })
@@ -70,14 +64,9 @@ export class GuestEntity extends BaseEntity {
   qrCodeUrl: string;
 
   // Trạng thái RSVP
-  @Column({
-    type: 'enum',
-    enum: RsvpStatus,
-    default: RsvpStatus.PENDING,
-    nullable: false,
-  })
+  @Column({ type: 'varchar', length: 20, nullable: false })
   @ApiProperty({ description: 'Trạng thái RSVP' })
-  rsvpStatus: RsvpStatus;
+  rsvpStatus: string;
 
   // Số người tham dự
   @Column({ type: 'smallint', default: 1, nullable: false })
@@ -85,14 +74,9 @@ export class GuestEntity extends BaseEntity {
   attendingCount: number;
 
   // Chế độ ăn
-  @Column({
-    type: 'enum',
-    enum: DietaryPref,
-    default: DietaryPref.NORMAL,
-    nullable: false,
-  })
+  @Column({ type: 'varchar', length: 20, nullable: false })
   @ApiProperty({ description: 'Chế độ ăn' })
-  dietary: DietaryPref;
+  dietary: string;
 
   // Dietary Note
   @Column({ type: 'varchar', length: 255, nullable: true })

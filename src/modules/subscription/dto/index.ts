@@ -1,9 +1,7 @@
-import { SubStatus } from '@/entities/enums';
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsDate,
-  IsEnum,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -27,10 +25,10 @@ export class CreateSubscriptionDto {
   @IsString()
   planId: string;
 
-  @ApiProperty({ description: 'Trạng thái gói', enum: SubStatus })
+  @ApiProperty({ description: 'Trạng thái gói' })
   @IsNotEmpty()
-  @IsEnum(SubStatus)
-  status: SubStatus;
+  @IsString()
+  status: string;
 
   @ApiProperty({ description: 'Ngày bắt đầu' })
   @IsNotEmpty()
@@ -85,12 +83,11 @@ export class FilterSubscriptionDto {
 
   @ApiProperty({
     description: 'Trạng thái gói',
-    enum: SubStatus,
     required: false,
   })
   @IsOptional()
-  @IsEnum(SubStatus)
-  status?: SubStatus;
+  @IsString()
+  status?: string;
 
   @ApiProperty({ description: 'Ngày bắt đầu', required: false })
   @IsOptional()

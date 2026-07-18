@@ -1,9 +1,7 @@
-import { NotifChannel, NotifStatus, NotifType } from '@/entities/enums';
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsDate,
-  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -24,15 +22,13 @@ export class CreateNotificationDto {
   @IsString()
   guestId?: string;
 
-  @ApiProperty({ description: 'Kênh gửi', enum: NotifChannel })
+  @ApiProperty({ description: 'Kênh gửi' })
   @IsNotEmpty()
-  @IsEnum(NotifChannel)
-  channel: NotifChannel;
+  channel: string;
 
-  @ApiProperty({ description: 'Loại thông báo', enum: NotifType })
+  @ApiProperty({ description: 'Loại thông báo' })
   @IsNotEmpty()
-  @IsEnum(NotifType)
-  type: NotifType;
+  type: string;
 
   @ApiProperty({ description: 'Chủ đề email', required: false })
   @IsOptional()
@@ -44,10 +40,9 @@ export class CreateNotificationDto {
   @IsString()
   content: string;
 
-  @ApiProperty({ description: 'Trạng thái gửi', enum: NotifStatus })
+  @ApiProperty({ description: 'Trạng thái gửi' })
   @IsNotEmpty()
-  @IsEnum(NotifStatus)
-  status: NotifStatus;
+  status: string;
 
   @ApiProperty({ description: 'Thời gian lên lịch gửi' })
   @IsNotEmpty()
@@ -104,19 +99,18 @@ export class FilterNotificationDto {
   @IsString()
   guestId?: string;
 
-  @ApiProperty({ description: 'Kênh gửi', enum: NotifChannel, required: false })
+  @ApiProperty({ description: 'Kênh gửi', required: false })
   @IsOptional()
-  @IsEnum(NotifChannel)
-  channel?: NotifChannel;
+  @IsString()
+  channel?: string;
 
   @ApiProperty({
     description: 'Loại thông báo',
-    enum: NotifType,
     required: false,
   })
   @IsOptional()
-  @IsEnum(NotifType)
-  type?: NotifType;
+  @IsString()
+  type?: string;
 
   @ApiProperty({ description: 'Chủ đề email', required: false })
   @IsOptional()
@@ -130,12 +124,11 @@ export class FilterNotificationDto {
 
   @ApiProperty({
     description: 'Trạng thái gửi',
-    enum: NotifStatus,
     required: false,
   })
   @IsOptional()
-  @IsEnum(NotifStatus)
-  status?: NotifStatus;
+  @IsString()
+  status?: string;
 
   @ApiProperty({ description: 'Thời gian lên lịch gửi', required: false })
   @IsOptional()

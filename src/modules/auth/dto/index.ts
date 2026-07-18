@@ -85,10 +85,9 @@ export class SendOtpCustomerDto {
   @IsString()
   phone?: string;
 
-  @ApiProperty({ description: 'Phương thức gửi: EMAIL | PHONE' })
+  @ApiProperty({ description: 'Phương thức gửi' })
   @IsNotEmpty()
-  @IsEnum(['EMAIL', 'PHONE'], { message: 'Phương thức gửi không hợp lệ' })
-  sendMethod: 'EMAIL' | 'PHONE';
+  sendMethod: string;
 }
 
 export class SendOtpVerifyDto {
@@ -97,10 +96,9 @@ export class SendOtpVerifyDto {
   @IsString()
   identifier: string;
 
-  @ApiProperty({ description: 'Phương thức: EMAIL | PHONE' })
+  @ApiProperty({ description: 'Phương thức' })
   @IsNotEmpty()
-  @IsEnum(['EMAIL', 'PHONE'])
-  method: 'EMAIL' | 'PHONE';
+  method: string;
 }
 
 export class RegisterDto {

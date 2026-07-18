@@ -3,12 +3,7 @@ import { JwtAuthGuard } from '@/common/guards';
 import { IdDto, PaginationDto, UserDto } from '@/dto';
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import {
-  AdminForceResetSlugDto,
-  CreateWeddingDto,
-  FilterWeddingDto,
-  UpdateWeddingDto,
-} from '../dto';
+import { AdminForceResetSlugDto, FilterWeddingDto } from '../dto';
 import { WeddingService } from '../wedding.service';
 
 @ApiTags('Admin - Wedding')

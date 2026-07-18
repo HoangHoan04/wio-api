@@ -37,7 +37,7 @@ export class ActionLogCreateDto {
   createdNote?: string;
 
   @ApiProperty({
-    description: 'Loại hành động: Login | CreateExam | SubmitExam...',
+    description: 'Loại hành động: ',
   })
   @IsOptional()
   actionType?: string;

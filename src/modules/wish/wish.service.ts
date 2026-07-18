@@ -26,7 +26,7 @@ export class WishService {
       where: whereCon,
       skip,
       take,
-      order: { createdAt: 'DESC' } as any,
+      order: { createdAt: 'DESC' },
     });
 
     return { data: list, total };
@@ -34,7 +34,7 @@ export class WishService {
 
   async findById(data: IdDto) {
     const item = await this.repo.findOne({
-      where: { id: data.id, isDeleted: false } as any,
+      where: { id: data.id, isDeleted: false },
     });
     if (!item) throw new NotFoundException('Không tìm thấy bản ghi');
     return { message: 'Thành công', data: item };
@@ -59,7 +59,7 @@ export class WishService {
 
   async update(dto: UpdateWishDto, user: UserDto) {
     const entity = await this.repo.findOne({
-      where: { id: dto.id, isDeleted: false } as any,
+      where: { id: dto.id, isDeleted: false },
     });
     if (!entity) throw new NotFoundException('Không tìm thấy bản ghi');
 
@@ -79,7 +79,7 @@ export class WishService {
 
   async delete(data: IdDto, user: UserDto) {
     const entity = await this.repo.findOne({
-      where: { id: data.id, isDeleted: false } as any,
+      where: { id: data.id, isDeleted: false },
     });
     if (!entity) throw new NotFoundException('Không tìm thấy bản ghi');
 
@@ -91,7 +91,7 @@ export class WishService {
 
   async approve(data: IdDto, user: UserDto) {
     const entity = await this.repo.findOne({
-      where: { id: data.id, isDeleted: false } as any,
+      where: { id: data.id, isDeleted: false },
     });
     if (!entity) throw new NotFoundException('Không tìm thấy bản ghi');
 
@@ -104,7 +104,7 @@ export class WishService {
 
   async reject(data: IdDto, user: UserDto) {
     const entity = await this.repo.findOne({
-      where: { id: data.id, isDeleted: false } as any,
+      where: { id: data.id, isDeleted: false },
     });
     if (!entity) throw new NotFoundException('Không tìm thấy bản ghi');
 
@@ -117,7 +117,7 @@ export class WishService {
 
   async pin(data: IdDto, user: UserDto) {
     const entity = await this.repo.findOne({
-      where: { id: data.id, isDeleted: false } as any,
+      where: { id: data.id, isDeleted: false },
     });
     if (!entity) throw new NotFoundException('Không tìm thấy bản ghi');
 
@@ -129,7 +129,7 @@ export class WishService {
 
   async unpin(data: IdDto, user: UserDto) {
     const entity = await this.repo.findOne({
-      where: { id: data.id, isDeleted: false } as any,
+      where: { id: data.id, isDeleted: false },
     });
     if (!entity) throw new NotFoundException('Không tìm thấy bản ghi');
 

@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from './base.entity';
-import { SubStatus } from './enums';
 import { ServicePlanEntity } from './service-plan.entity';
 import { UserEntity } from './user.entity';
 import { WeddingEntity } from './wedding.entity';
@@ -9,6 +8,7 @@ import { WeddingEntity } from './wedding.entity';
 @Entity('subscriptions')
 @Index(['status', 'expiresAt'])
 export class SubscriptionEntity extends BaseEntity {
+  // ID người dùng
   @Column({ type: 'uuid', nullable: false })
   @ApiProperty({ description: 'ID người dùng' })
   userId: string;
@@ -18,28 +18,23 @@ export class SubscriptionEntity extends BaseEntity {
   @ApiProperty({ description: 'ID đám cưới' })
   weddingId: string;
 
-  // Plan Id
+  // ID gói dịch vụ
   @Column({ type: 'uuid', nullable: false })
   @ApiProperty({ description: 'Plan Id' })
   planId: string;
 
   // Trạng thái
-  @Column({
-    type: 'enum',
-    enum: SubStatus,
-    default: SubStatus.ACTIVE,
-    nullable: false,
-  })
+  @Column({ type: 'varchar', length: 255, nullable: false })
   @ApiProperty({ description: 'Trạng thái' })
-  status: SubStatus;
+  status: string;
 
-  // Started At
+  // Ngày bắt đầu
   @Column({
     type: 'timestamptz',
     default: () => 'CURRENT_TIMESTAMP',
     nullable: false,
   })
-  @ApiProperty({ description: 'Started At' })
+  @ApiProperty({ description: 'Ngày bắt đầu' })
   startedAt: Date;
 
   // Ngày hết hạn
@@ -47,19 +42,19 @@ export class SubscriptionEntity extends BaseEntity {
   @ApiProperty({ description: 'Ngày hết hạn' })
   expiresAt: Date;
 
-  // Paid Amount Vnd
+  // Số tiền đã thanh toán
   @Column({ type: 'bigint', nullable: true })
-  @ApiProperty({ description: 'Paid Amount Vnd' })
+  @ApiProperty({ description: 'Số tiền đã thanh toán' })
   paidAmountVnd: number;
 
-  // Payment Method
+  // Phương thức thanh toán
   @Column({ type: 'varchar', length: 50, nullable: true })
-  @ApiProperty({ description: 'Payment Method' })
+  @ApiProperty({ description: 'Phương thức thanh toán' })
   paymentMethod: string;
 
-  // Payment Ref
+  // Tham chiếu thanh toán
   @Column({ type: 'varchar', length: 255, nullable: true })
-  @ApiProperty({ description: 'Payment Ref' })
+  @ApiProperty({ description: 'Tham chiếu thanh toán' })
   paymentRef: string;
 
   // User

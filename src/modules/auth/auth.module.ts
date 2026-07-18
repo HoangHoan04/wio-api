@@ -12,6 +12,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
+import type { StringValue } from 'ms';
 import { EmailModule } from '../email/email.module';
 import { NotificationModule } from '../notification/notification.module';
 import { AuthService } from './auth.service';
@@ -26,7 +27,8 @@ import { JwtStrategy } from './jwt.strategy';
       useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET') || 'default-secret',
         signOptions: {
-          expiresIn: (configService.get<string>('JWT_EXPIRY') || '1h') as any,
+          expiresIn: (configService.get<string>('JWT_EXPIRY') ||
+            '1h') as StringValue,
         },
       }),
     }),

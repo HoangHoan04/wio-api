@@ -1,10 +1,8 @@
-import { DietaryPref, GuestSide, RsvpStatus } from '@/entities/enums';
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsBoolean,
   IsDate,
-  IsEnum,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -51,10 +49,9 @@ export class CreateGuestDto {
   @IsString()
   salutation?: string;
 
-  @ApiProperty({ description: 'Khách của ai', enum: GuestSide })
+  @ApiProperty({ description: 'Khách của ai' })
   @IsNotEmpty()
-  @IsEnum(GuestSide)
-  side: GuestSide;
+  side: string;
 
   @ApiProperty({ description: 'Khách VIP?' })
   @IsNotEmpty()
@@ -71,20 +68,18 @@ export class CreateGuestDto {
   @IsString()
   qrCodeUrl?: string;
 
-  @ApiProperty({ description: 'Trạng thái RSVP', enum: RsvpStatus })
+  @ApiProperty({ description: 'Trạng thái RSVP' })
   @IsNotEmpty()
-  @IsEnum(RsvpStatus)
-  rsvpStatus: RsvpStatus;
+  rsvpStatus: string;
 
   @ApiProperty({ description: 'Số người đi kèm (+1, +2...)' })
   @IsNotEmpty()
   @IsNumber()
   attendingCount: number;
 
-  @ApiProperty({ description: 'Chế độ ăn', enum: DietaryPref })
+  @ApiProperty({ description: 'Chế độ ăn' })
   @IsNotEmpty()
-  @IsEnum(DietaryPref)
-  dietary: DietaryPref;
+  dietary: string;
 
   @ApiProperty({ description: 'Ghi chú chế độ ăn', required: false })
   @IsOptional()
@@ -171,12 +166,10 @@ export class FilterGuestDto {
 
   @ApiProperty({
     description: 'Khách của ai',
-    enum: GuestSide,
     required: false,
   })
   @IsOptional()
-  @IsEnum(GuestSide)
-  side?: GuestSide;
+  side?: string;
 
   @ApiProperty({ description: 'Khách VIP?', required: false })
   @IsOptional()
@@ -195,22 +188,19 @@ export class FilterGuestDto {
 
   @ApiProperty({
     description: 'Trạng thái RSVP',
-    enum: RsvpStatus,
     required: false,
   })
   @IsOptional()
-  @IsEnum(RsvpStatus)
-  rsvpStatus?: RsvpStatus;
+  rsvpStatus?: string;
 
   @ApiProperty({ description: 'Số người đi kèm (+1, +2...)', required: false })
   @IsOptional()
   @IsNumber()
   attendingCount?: number;
 
-  @ApiProperty({ description: 'Chế độ ăn', enum: DietaryPref, required: false })
+  @ApiProperty({ description: 'Chế độ ăn', required: false })
   @IsOptional()
-  @IsEnum(DietaryPref)
-  dietary?: DietaryPref;
+  dietary?: string;
 
   @ApiProperty({ description: 'Ghi chú chế độ ăn', required: false })
   @IsOptional()

@@ -36,25 +36,74 @@ export const enumData = {
       name: 'Tải file lên',
       type: 'TaiFileLen',
     },
-    CREATE_EXAM: { code: 'CREATE_EXAM', name: 'Tạo đề thi', type: 'TaoDeThi' },
-    SUBMIT_EXAM: {
-      code: 'SUBMIT_EXAM',
-      name: 'Nộp bài thi',
-      type: 'NopBaiThi',
-    },
-    GRADE_EXAM: { code: 'GRADE_EXAM', name: 'Chấm thi', type: 'ChamThi' },
-    PUBLISH: { code: 'PUBLISH', name: 'Xuất bản', type: 'XuatBan' },
-    UNPUBLISH: { code: 'UNPUBLISH', name: 'Huỷ xuất bản', type: 'HuyXuatBan' },
-    COMMENT: { code: 'COMMENT', name: 'Bình luận', type: 'BinhLuan' },
-    APPROVE_COMMENT: {
-      code: 'APPROVE_COMMENT',
-      name: 'Duyệt bình luận',
-      type: 'DuyetBinhLuan',
-    },
-    SEND_NOTIFICATION: {
-      code: 'SEND_NOTIFICATION',
-      name: 'Gửi thông báo',
-      type: 'GuiThongBao',
-    },
+  },
+
+  USER_ROLE: {
+    COUPLE: { code: 'COUPLE', name: 'Cặp đôi' },
+    ADMIN: { code: 'ADMIN', name: 'Quản trị viên' },
+  },
+
+  WEDDING_STATUS: {
+    DRAFT: { code: 'DRAFT', name: 'Nháp', color: 'gray' },
+    PUBLISHED: { code: 'PUBLISHED', name: 'Đã xuất bản', color: 'green' },
+    ARCHIVED: { code: 'ARCHIVED', name: 'Đã lưu trữ', color: 'blue' },
+  },
+
+  MUSIC_TYPE: {
+    UPLOAD: { code: 'UPLOAD', name: 'Tải lên' },
+    YOUTUBE: { code: 'YOUTUBE', name: 'YouTube' },
+    SPOTIFY: { code: 'SPOTIFY', name: 'Spotify' },
+  },
+
+  GUEST_SIDE: {
+    GROOM: { code: 'GROOM', name: 'Bên chú rể' },
+    BRIDE: { code: 'BRIDE', name: 'Bên cô dâu' },
+    BOTH: { code: 'BOTH', name: 'Cả hai bên' },
+  },
+
+  RSVP_STATUS: {
+    PENDING: { code: 'PENDING', name: 'Chưa phản hồi' },
+    ATTENDING: { code: 'ATTENDING', name: 'Tham dự' },
+    DECLINED: { code: 'DECLINED', name: 'Từ chối' },
+  },
+
+  DIETARY_PREF: {
+    NORMAL: { code: 'NORMAL', name: 'Bình thường' },
+    VEGETARIAN: { code: 'VEGETARIAN', name: 'Chay' },
+    HALAL: { code: 'HALAL', name: 'Halal' },
+    OTHER: { code: 'OTHER', name: 'Khác' },
+  },
+
+  NOTIF_CHANNEL: {
+    ZALO: { code: 'ZALO', name: 'Zalo' },
+    SMS: { code: 'SMS', name: 'SMS' },
+    EMAIL: { code: 'EMAIL', name: 'Email' },
+  },
+
+  NOTIF_TYPE: {
+    INVITE: { code: 'INVITE', name: 'Lời mời' },
+    REMINDER: { code: 'REMINDER', name: 'Nhắc nhở' },
+    THANK_YOU: { code: 'THANK_YOU', name: 'Cảm ơn' },
+    RSVP_CONFIRM: { code: 'RSVP_CONFIRM', name: 'Xác nhận RSVP' },
+  },
+
+  NOTIF_STATUS: {
+    PENDING: { code: 'PENDING', name: 'Chờ gửi' },
+    SENT: { code: 'SENT', name: 'Đã gửi' },
+    FAILED: { code: 'FAILED', name: 'Gửi thất bại' },
+    CANCELLED: { code: 'CANCELLED', name: 'Đã hủy' },
+  },
+
+  SUB_STATUS: {
+    ACTIVE: { code: 'ACTIVE', name: 'Đang hoạt động' },
+    EXPIRED: { code: 'EXPIRED', name: 'Hết hạn' },
+    CANCELLED: { code: 'CANCELLED', name: 'Đã hủy' },
+  },
+
+  MUSIC_PROCESS_STATUS: {
+    PENDING: { code: 'PENDING', name: 'Chờ xử lý' },
+    PROCESSING: { code: 'PROCESSING', name: 'Đang xử lý' },
+    COMPLETED: { code: 'COMPLETED', name: 'Hoàn tất' },
+    FAILED: { code: 'FAILED', name: 'Thất bại' },
   },
 };

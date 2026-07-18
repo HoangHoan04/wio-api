@@ -35,7 +35,7 @@ export class SubscriptionService {
       where: whereCon,
       skip,
       take,
-      order: { createdAt: 'DESC' } as any,
+      order: { createdAt: 'DESC' },
     });
 
     return { data: list, total };
@@ -43,7 +43,7 @@ export class SubscriptionService {
 
   async findById(data: IdDto) {
     const item = await this.repo.findOne({
-      where: { id: data.id, isDeleted: false } as any,
+      where: { id: data.id, isDeleted: false },
     });
     if (!item) throw new NotFoundException('Không tìm thấy bản ghi');
     return { message: 'Thành công', data: item };
@@ -72,7 +72,7 @@ export class SubscriptionService {
 
   async update(dto: UpdateSubscriptionDto, user: UserDto) {
     const entity = await this.repo.findOne({
-      where: { id: dto.id, isDeleted: false } as any,
+      where: { id: dto.id, isDeleted: false },
     });
     if (!entity) throw new NotFoundException('Không tìm thấy bản ghi');
 
@@ -96,7 +96,7 @@ export class SubscriptionService {
 
   async delete(data: IdDto, user: UserDto) {
     const entity = await this.repo.findOne({
-      where: { id: data.id, isDeleted: false } as any,
+      where: { id: data.id, isDeleted: false },
     });
     if (!entity) throw new NotFoundException('Không tìm thấy bản ghi');
 
@@ -108,7 +108,7 @@ export class SubscriptionService {
 
   async changePlan(dto: AdminChangeSubscriptionPlanDto, user: UserDto) {
     const entity = await this.repo.findOne({
-      where: { id: dto.subscriptionId, isDeleted: false } as any,
+      where: { id: dto.subscriptionId, isDeleted: false },
     });
     if (!entity) throw new NotFoundException('Không tìm thấy đăng ký');
 

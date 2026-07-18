@@ -6,18 +6,19 @@ import { WeddingEntity } from './wedding.entity';
 @Entity('photo_wall')
 @Index(['weddingId', 'isApproved'])
 export class PhotoWallEntity extends BaseEntity {
+  // ID đám cưới
   @Column({ type: 'uuid', nullable: false })
   @ApiProperty({ description: 'ID đám cưới' })
   weddingId: string;
 
-  // Guest Id
+  // Id khách mời
   @Column({ type: 'uuid', nullable: true })
-  @ApiProperty({ description: 'Guest Id' })
+  @ApiProperty({ description: 'Id khách mời' })
   guestId: string;
 
-  // Uploader Name
+  // Tên người tải lên
   @Column({ type: 'varchar', length: 100, nullable: false })
-  @ApiProperty({ description: 'Uploader Name' })
+  @ApiProperty({ description: 'Tên người tải lên' })
   uploaderName: string;
 
   // Đường dẫn URL
@@ -25,9 +26,9 @@ export class PhotoWallEntity extends BaseEntity {
   @ApiProperty({ description: 'Đường dẫn URL' })
   url: string;
 
-  // Storage Key
+  // Khoá lưu trữ (Storage Key)
   @Column({ type: 'varchar', length: 500, nullable: true })
-  @ApiProperty({ description: 'Storage Key' })
+  @ApiProperty({ description: 'Khoá lưu trữ (Storage Key)' })
   storageKey: string;
 
   // Caption
@@ -35,17 +36,16 @@ export class PhotoWallEntity extends BaseEntity {
   @ApiProperty({ description: 'Caption' })
   caption: string;
 
-  // Is Approved
+  // Có được duyệt không
   @Column({ type: 'boolean', default: true, nullable: false })
-  @ApiProperty({ description: 'Is Approved' })
+  @ApiProperty({ description: 'Có được duyệt không' })
   isApproved: boolean;
 
-  // Approved At
+  // Ngày duyệt
   @Column({ type: 'timestamptz', nullable: true })
-  @ApiProperty({ description: 'Approved At' })
+  @ApiProperty({ description: 'Ngày duyệt ' })
   approvedAt: Date;
 
-  // Wedding
   @ManyToOne(() => WeddingEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'weddingId' })
   @ApiProperty({ description: 'Wedding' })

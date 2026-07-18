@@ -1,12 +1,10 @@
+import { enumData } from '@/common/contanst/enumData';
 import { IdDto, PaginationDto, UserDto } from '@/dto';
 import {
-  DietaryPref,
-  RsvpStatus,
   SlugHistoryEntity,
   WeddingEntity,
   WeddingEventEntity,
   WeddingPhotoEntity,
-  WeddingStatus,
   WeddingTimelineEntity,
 } from '@/entities';
 import {
@@ -109,7 +107,7 @@ export class WeddingService {
       where: whereCon,
       skip,
       take,
-      order: { createdAt: 'DESC' } as any,
+      order: { createdAt: 'DESC' },
     });
 
     return { data: list, total };
@@ -117,8 +115,12 @@ export class WeddingService {
 
   async findById(data: IdDto) {
     const item = await this.repo.findOne({
-      where: { id: data.id, isDeleted: false } as any,
-      relations: ['events', 'timelines', 'photos'],
+      where: { id: data.id, isDeleted: false },
+      relations: {
+        events: true,
+        timelines: true,
+        photos: true,
+      },
     });
     if (!item) throw new NotFoundException('Không tìm thấy bản ghi');
     return { message: 'Thành công', data: item };
@@ -203,7 +205,7 @@ export class WeddingService {
 
   async update(dto: UpdateWeddingDto, user: UserDto) {
     const entity = await this.repo.findOne({
-      where: { id: dto.id, isDeleted: false } as any,
+      where: { id: dto.id, isDeleted: false },
     });
     if (!entity) throw new NotFoundException('Không tìm thấy bản ghi');
 
@@ -211,7 +213,7 @@ export class WeddingService {
       throw new ForbiddenException('Bạn không có quyền chỉnh sửa đám cưới này');
     }
 
-    if (entity.status === WeddingStatus.PUBLISHED) {
+    if (entity.status === enumData.WEDDING_STATUS.PUBLISHED.code) {
       throw new ForbiddenException('Thiệp đã xuất bản không thể chỉnh sửa');
     }
 
@@ -301,8 +303,12 @@ export class WeddingService {
 
   async delete(data: IdDto, user: UserDto) {
     const entity = await this.repo.findOne({
-      where: { id: data.id, isDeleted: false } as any,
-      relations: ['events', 'timelines', 'photos'],
+      where: { id: data.id, isDeleted: false },
+      relations: {
+        events: true,
+        timelines: true,
+        photos: true,
+      },
     });
     if (!entity) throw new NotFoundException('Không tìm thấy bản ghi');
 
@@ -341,9 +347,12 @@ export class WeddingService {
       .andWhere(
         new Brackets((qb) => {
           qb.where('w.status IN (:...statuses)', {
-            statuses: [WeddingStatus.DRAFT, WeddingStatus.PUBLISHED],
+            statuses: [
+              enumData.WEDDING_STATUS.DRAFT.code,
+              enumData.WEDDING_STATUS.PUBLISHED.code,
+            ],
           }).orWhere('w.status = :archived AND w.updatedAt > :graceDate', {
-            archived: WeddingStatus.ARCHIVED,
+            archived: enumData.WEDDING_STATUS.ARCHIVED.code,
             graceDate,
           });
         }),
@@ -367,8 +376,13 @@ export class WeddingService {
 
   async findBySlug(slug: string): Promise<WeddingEntity> {
     const item = await this.repo.findOne({
-      where: { slug, isDeleted: false } as any,
-      relations: ['events', 'timelines', 'photos', 'template'],
+      where: { slug, isDeleted: false },
+      relations: {
+        events: true,
+        timelines: true,
+        photos: true,
+        template: true,
+      },
     });
     if (!item) throw new NotFoundException('Không tìm thấy thiệp cưới');
     return item;
@@ -376,7 +390,7 @@ export class WeddingService {
 
   async publish(id: string, user: UserDto): Promise<any> {
     const entity = await this.repo.findOne({
-      where: { id, isDeleted: false } as any,
+      where: { id, isDeleted: false },
     });
     if (!entity) throw new NotFoundException('Không tìm thấy đám cưới');
 
@@ -384,7 +398,7 @@ export class WeddingService {
       throw new ForbiddenException('Bạn không có quyền xuất bản đám cưới này');
     }
 
-    entity.status = WeddingStatus.PUBLISHED;
+    entity.status = enumData.WEDDING_STATUS.PUBLISHED.code;
     entity.publishedAt = new Date();
     entity.shareUrl = `https://wedding.vn/thiep/${entity.slug}`;
     try {
@@ -399,7 +413,7 @@ export class WeddingService {
 
   async getShareUrl(id: string, user: UserDto): Promise<any> {
     const entity = await this.repo.findOne({
-      where: { id, isDeleted: false } as any,
+      where: { id, isDeleted: false },
     });
     if (!entity) throw new NotFoundException('Không tìm thấy đám cưới');
 
@@ -425,7 +439,7 @@ export class WeddingService {
 
   async getStats(id: string, user: UserDto): Promise<any> {
     const entity = await this.repo.findOne({
-      where: { id, isDeleted: false } as any,
+      where: { id, isDeleted: false },
     });
     if (!entity) throw new NotFoundException('Không tìm thấy đám cưới');
 
@@ -441,21 +455,21 @@ export class WeddingService {
         this.guestRepo.count({
           where: {
             weddingId: id,
-            rsvpStatus: RsvpStatus.PENDING,
+            rsvpStatus: enumData.RSVP_STATUS.PENDING.code,
             isDeleted: false,
           },
         }),
         this.guestRepo.count({
           where: {
             weddingId: id,
-            rsvpStatus: RsvpStatus.ATTENDING,
+            rsvpStatus: enumData.RSVP_STATUS.ATTENDING.code,
             isDeleted: false,
           },
         }),
         this.guestRepo.count({
           where: {
             weddingId: id,
-            rsvpStatus: RsvpStatus.DECLINED,
+            rsvpStatus: enumData.RSVP_STATUS.DECLINED.code,
             isDeleted: false,
           },
         }),
@@ -464,7 +478,7 @@ export class WeddingService {
     const attendingGuests = await this.guestRepo.find({
       where: {
         weddingId: id,
-        rsvpStatus: RsvpStatus.ATTENDING,
+        rsvpStatus: enumData.RSVP_STATUS.ATTENDING.code,
         isDeleted: false,
       },
     });
@@ -478,32 +492,32 @@ export class WeddingService {
         this.guestRepo.count({
           where: {
             weddingId: id,
-            dietary: DietaryPref.NORMAL,
-            rsvpStatus: RsvpStatus.ATTENDING,
+            dietary: enumData.DIETARY_PREF.NORMAL.code,
+            rsvpStatus: enumData.RSVP_STATUS.ATTENDING.code,
             isDeleted: false,
           },
         }),
         this.guestRepo.count({
           where: {
             weddingId: id,
-            dietary: DietaryPref.VEGETARIAN,
-            rsvpStatus: RsvpStatus.ATTENDING,
+            dietary: enumData.DIETARY_PREF.VEGETARIAN.code,
+            rsvpStatus: enumData.RSVP_STATUS.ATTENDING.code,
             isDeleted: false,
           },
         }),
         this.guestRepo.count({
           where: {
             weddingId: id,
-            dietary: DietaryPref.HALAL,
-            rsvpStatus: RsvpStatus.ATTENDING,
+            dietary: enumData.DIETARY_PREF.HALAL.code,
+            rsvpStatus: enumData.RSVP_STATUS.ATTENDING.code,
             isDeleted: false,
           },
         }),
         this.guestRepo.count({
           where: {
             weddingId: id,
-            dietary: DietaryPref.OTHER,
-            rsvpStatus: RsvpStatus.ATTENDING,
+            dietary: enumData.DIETARY_PREF.OTHER.code,
+            rsvpStatus: enumData.RSVP_STATUS.ATTENDING.code,
             isDeleted: false,
           },
         }),
@@ -511,7 +525,7 @@ export class WeddingService {
           where: {
             weddingId: id,
             needsTransport: true,
-            rsvpStatus: RsvpStatus.ATTENDING,
+            rsvpStatus: enumData.RSVP_STATUS.ATTENDING.code,
             isDeleted: false,
           },
         }),
@@ -519,7 +533,7 @@ export class WeddingService {
 
     const recentGuests = await this.guestRepo.find({
       where: { weddingId: id, isDeleted: false },
-      order: { rsvpAt: 'DESC' } as any,
+      order: { rsvpAt: 'DESC' },
       take: 5,
     });
 
@@ -552,7 +566,7 @@ export class WeddingService {
     user: UserDto,
   ): Promise<any> {
     const entity = await this.repo.findOne({
-      where: { id: dto.weddingId, isDeleted: false } as any,
+      where: { id: dto.weddingId, isDeleted: false },
     });
     if (!entity) throw new NotFoundException('Không tìm thấy đám cưới');
 
@@ -595,7 +609,7 @@ export class WeddingService {
 
   async unpublish(id: string, user: UserDto): Promise<any> {
     const entity = await this.repo.findOne({
-      where: { id, isDeleted: false } as any,
+      where: { id, isDeleted: false },
     });
     if (!entity) throw new NotFoundException('Không tìm thấy đám cưới');
 
@@ -603,7 +617,7 @@ export class WeddingService {
       throw new ForbiddenException('Bạn không có quyền thực hiện thao tác này');
     }
 
-    entity.status = WeddingStatus.ARCHIVED;
+    entity.status = enumData.WEDDING_STATUS.ARCHIVED.code;
     entity.updatedBy = user.id;
     const saved = await this.repo.save(entity);
     return { message: 'Đã archive đám cưới', data: saved };
@@ -611,8 +625,8 @@ export class WeddingService {
 
   async getSlugHistory(weddingId: string): Promise<any> {
     const history = await this.slugHistoryRepo.find({
-      where: { weddingId } as any,
-      order: { createdAt: 'DESC' } as any,
+      where: { weddingId },
+      order: { createdAt: 'DESC' },
     });
     return { message: 'Thành công', data: history };
   }

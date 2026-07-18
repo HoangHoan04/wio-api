@@ -32,7 +32,7 @@ export class PhotoWallService {
       where: whereCon,
       skip,
       take,
-      order: { createdAt: 'DESC' } as any,
+      order: { createdAt: 'DESC' },
     });
 
     return { data: list, total };
@@ -40,7 +40,7 @@ export class PhotoWallService {
 
   async findById(data: IdDto) {
     const item = await this.repo.findOne({
-      where: { id: data.id, isDeleted: false } as any,
+      where: { id: data.id, isDeleted: false },
     });
     if (!item) throw new NotFoundException('Không tìm thấy bản ghi');
     return { message: 'Thành công', data: item };
@@ -66,7 +66,7 @@ export class PhotoWallService {
 
   async update(dto: UpdatePhotoWallDto, user: UserDto) {
     const entity = await this.repo.findOne({
-      where: { id: dto.id, isDeleted: false } as any,
+      where: { id: dto.id, isDeleted: false },
     });
     if (!entity) throw new NotFoundException('Không tìm thấy bản ghi');
 
@@ -87,7 +87,7 @@ export class PhotoWallService {
 
   async delete(data: IdDto, user: UserDto) {
     const entity = await this.repo.findOne({
-      where: { id: data.id, isDeleted: false } as any,
+      where: { id: data.id, isDeleted: false },
     });
     if (!entity) throw new NotFoundException('Không tìm thấy bản ghi');
 
@@ -99,7 +99,7 @@ export class PhotoWallService {
 
   async approve(data: IdDto, user: UserDto) {
     const entity = await this.repo.findOne({
-      where: { id: data.id, isDeleted: false } as any,
+      where: { id: data.id, isDeleted: false },
     });
     if (!entity) throw new NotFoundException('Không tìm thấy bản ghi');
 
@@ -112,7 +112,7 @@ export class PhotoWallService {
 
   async reject(data: IdDto, user: UserDto) {
     const entity = await this.repo.findOne({
-      where: { id: data.id, isDeleted: false } as any,
+      where: { id: data.id, isDeleted: false },
     });
     if (!entity) throw new NotFoundException('Không tìm thấy bản ghi');
 

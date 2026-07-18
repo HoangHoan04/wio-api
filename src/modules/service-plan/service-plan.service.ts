@@ -37,7 +37,7 @@ export class ServicePlanService {
       where: whereCon,
       skip,
       take,
-      order: { createdAt: 'DESC' } as any,
+      order: { createdAt: 'DESC' },
     });
 
     return { data: list, total };
@@ -45,7 +45,7 @@ export class ServicePlanService {
 
   async findById(data: IdDto) {
     const item = await this.repo.findOne({
-      where: { id: data.id, isDeleted: false } as any,
+      where: { id: data.id, isDeleted: false },
     });
     if (!item) throw new NotFoundException('Không tìm thấy bản ghi');
     return { message: 'Thành công', data: item };
@@ -74,7 +74,7 @@ export class ServicePlanService {
 
   async update(dto: UpdateServicePlanDto, user: UserDto) {
     const entity = await this.repo.findOne({
-      where: { id: dto.id, isDeleted: false } as any,
+      where: { id: dto.id, isDeleted: false },
     });
     if (!entity) throw new NotFoundException('Không tìm thấy bản ghi');
 
@@ -98,7 +98,7 @@ export class ServicePlanService {
 
   async delete(data: IdDto, user: UserDto) {
     const entity = await this.repo.findOne({
-      where: { id: data.id, isDeleted: false } as any,
+      where: { id: data.id, isDeleted: false },
     });
     if (!entity) throw new NotFoundException('Không tìm thấy bản ghi');
 

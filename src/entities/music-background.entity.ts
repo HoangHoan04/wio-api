@@ -1,13 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Entity, Column } from 'typeorm';
+import { Column, Entity } from 'typeorm';
 import { BaseEntity } from './base.entity';
-
-export enum MusicProcessStatus {
-  PENDING = 'PENDING',
-  PROCESSING = 'PROCESSING',
-  COMPLETED = 'COMPLETED',
-  FAILED = 'FAILED',
-}
 
 @Entity('music_backgrounds')
 export class MusicBackgroundEntity extends BaseEntity {
@@ -31,19 +24,18 @@ export class MusicBackgroundEntity extends BaseEntity {
   @ApiProperty({ description: 'Trạng thái hoạt động' })
   isActive: boolean;
 
-  @Column({
-    type: 'enum',
-    enum: MusicProcessStatus,
-    default: MusicProcessStatus.COMPLETED,
-  })
-  @ApiProperty({ description: 'Trạng thái xử lý file âm thanh', enum: MusicProcessStatus })
-  status: MusicProcessStatus;
+  @Column({ type: 'varchar', length: 20, nullable: false })
+  @ApiProperty({ description: 'Trạng thái xử lý file âm thanh' })
+  status: string;
 
   @Column({ type: 'text', nullable: true })
   @ApiProperty({ description: 'Link gốc Youtube (nếu có)', required: false })
   youtubeUrl: string;
 
   @Column({ type: 'text', nullable: true })
-  @ApiProperty({ description: 'URL trực tiếp đến file mp3 trên Cloudinary', required: false })
+  @ApiProperty({
+    description: 'URL trực tiếp đến file mp3 trên Cloudinary',
+    required: false,
+  })
   audioUrl: string;
 }

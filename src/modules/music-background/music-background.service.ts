@@ -1,23 +1,34 @@
-import { Injectable, NotFoundException, Logger, BadRequestException } from '@nestjs/common';
-import { MusicProcessStatus } from '@/entities/music-background.entity';
-import { CreateMusicBackgroundDto, UpdateMusicBackgroundDto, ImportYoutubeDto } from './dto';
-import { MusicBackgroundRepository } from '@/repositories';
+import { enumData } from '@/common/contanst/enumData';
 import { IdDto, PaginationDto } from '@/dto';
+import { MusicBackgroundRepository } from '@/repositories';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
+import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
 import { FindOptionsWhere } from 'typeorm';
 import youtubedl from 'youtube-dl-exec';
-import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
+import {
+  CreateMusicBackgroundDto,
+  ImportYoutubeDto,
+  UpdateMusicBackgroundDto,
+} from './dto';
 
 @Injectable()
 export class MusicBackgroundService {
   private readonly logger = new Logger(MusicBackgroundService.name);
 
-  constructor(
-    private readonly musicRepo: MusicBackgroundRepository,
-  ) {}
+  constructor(private readonly musicRepo: MusicBackgroundRepository) {}
 
   async paginationActive(data?: PaginationDto<any>) {
     const { skip = 0, take = 10, where = {} } = data || {};
-    const whereCon: FindOptionsWhere<any> = { isDeleted: false, isActive: true, status: MusicProcessStatus.COMPLETED };
+    const whereCon: FindOptionsWhere<any> = {
+      isDeleted: false,
+      isActive: true,
+      status: enumData.MUSIC_PROCESS_STATUS.COMPLETED.code,
+    };
 
     const [list, total] = await this.musicRepo.findAndCount({
       where: whereCon,
@@ -54,7 +65,7 @@ export class MusicBackgroundService {
   async create(createDto: CreateMusicBackgroundDto) {
     const music = this.musicRepo.create({
       ...createDto,
-      status: MusicProcessStatus.COMPLETED,
+      status: enumData.MUSIC_PROCESS_STATUS.COMPLETED.code,
     });
     return this.musicRepo.save(music);
   }
@@ -82,7 +93,7 @@ export class MusicBackgroundService {
       author: 'Đang xử lý',
       duration: '0:00',
       youtubeUrl: dto.youtubeUrl,
-      status: MusicProcessStatus.PROCESSING,
+      status: enumData.MUSIC_PROCESS_STATUS.PROCESSING.code,
       isActive: true,
     });
 
@@ -90,7 +101,10 @@ export class MusicBackgroundService {
 
     try {
       this.logger.log(`Fetching youtube info for: ${dto.youtubeUrl}`);
-      const info = await youtubedl(dto.youtubeUrl, { dumpJson: true, noWarnings: true }) as any;
+      const info = (await youtubedl(dto.youtubeUrl, {
+        dumpJson: true,
+        noWarnings: true,
+      })) as any;
       const title = info.title || 'Unknown Title';
       const author = info.uploader || 'Unknown Author';
       const lengthSeconds = parseInt(info.duration, 10) || 0;
@@ -110,56 +124,66 @@ export class MusicBackgroundService {
       });
 
       this.logger.log(`Downloading and piping to cloudinary...`);
-      const uploadResult = await new Promise<UploadApiResponse>((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          {
-            resource_type: 'video', 
-            folder: 'wio-audio-background',
-            public_id: `yt_${savedMusic.id}`,
-          },
-          (error, result) => {
-            if (error) {
-              this.logger.error(`Cloudinary upload error: ${error.message}`);
-              return reject(error);
-            }
-            if (result) {
-              this.logger.log(`Cloudinary upload success: ${result.secure_url}`);
-              return resolve(result);
-            }
+      const uploadResult = await new Promise<UploadApiResponse>(
+        (resolve, reject) => {
+          const uploadStream = cloudinary.uploader.upload_stream(
+            {
+              resource_type: 'video',
+              folder: 'wio-audio-background',
+              public_id: `yt_${savedMusic.id}`,
+            },
+            (error, result) => {
+              if (error) {
+                this.logger.error(`Cloudinary upload error: ${error.message}`);
+                return reject(error);
+              }
+              if (result) {
+                this.logger.log(
+                  `Cloudinary upload success: ${result.secure_url}`,
+                );
+                return resolve(result);
+              }
+            },
+          );
+
+          const subprocess = youtubedl.exec(
+            dto.youtubeUrl,
+            { output: '-', format: 'bestaudio' },
+            { stdio: ['ignore', 'pipe', 'ignore'] },
+          );
+
+          if (!subprocess.stdout) {
+            return reject(new Error('Failed to start youtube-dl-exec process'));
           }
-        );
 
-        const subprocess = youtubedl.exec(dto.youtubeUrl, { output: '-', format: 'bestaudio' }, { stdio: ['ignore', 'pipe', 'ignore'] });
+          subprocess.stdout.on('error', (err: any) => {
+            this.logger.error(`youtubedl error: ${err.message}`);
+            reject(err);
+          });
 
-        if (!subprocess.stdout) {
-          return reject(new Error('Failed to start youtube-dl-exec process'));
-        }
-
-        subprocess.stdout.on('error', (err: any) => {
-          this.logger.error(`youtubedl error: ${err.message}`);
-          reject(err);
-        });
-
-        subprocess.stdout.pipe(uploadStream);
-      });
+          subprocess.stdout.pipe(uploadStream);
+        },
+      );
 
       savedMusic.name = title;
       savedMusic.author = author;
       savedMusic.duration = duration;
-      savedMusic.status = MusicProcessStatus.COMPLETED;
+      savedMusic.status = enumData.MUSIC_PROCESS_STATUS.COMPLETED.code;
       savedMusic.audioUrl = uploadResult.secure_url;
-      
+
       await this.musicRepo.update(savedMusic.id, {
-        status: MusicProcessStatus.COMPLETED,
+        status: enumData.MUSIC_PROCESS_STATUS.COMPLETED.code,
         audioUrl: uploadResult.secure_url,
       });
 
-      this.logger.log(`Completed youtube download for musicId: ${savedMusic.id}`);
+      this.logger.log(
+        `Completed youtube download for musicId: ${savedMusic.id}`,
+      );
       return savedMusic;
     } catch (error: any) {
       this.logger.error(`Failed to process youtube: ${error.message}`);
       await this.musicRepo.update(savedMusic.id, {
-        status: MusicProcessStatus.FAILED,
+        status: enumData.MUSIC_PROCESS_STATUS.FAILED.code,
         name: `Lỗi: ${error.message}`,
       });
       throw new BadRequestException(`Không thể tải video: ${error.message}`);

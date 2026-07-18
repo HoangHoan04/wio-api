@@ -4,6 +4,7 @@ import { BaseEntity } from './base.entity';
 
 @Entity('templates')
 export class TemplateEntity extends BaseEntity {
+  // Tên mẫu giao diện
   @ApiProperty({ description: 'Tên mẫu giao diện' })
   @Column({ type: 'varchar', length: 100, nullable: false })
   name: string;
@@ -38,7 +39,7 @@ export class TemplateEntity extends BaseEntity {
   @Column({ type: 'varchar', length: 100, nullable: false })
   themeCode: string;
 
-  // Is Show
+  // Trạng thái hiển thị
   @ApiProperty({ description: 'Trạng thái hiển thị' })
   @Column({ type: 'boolean', default: true, nullable: false })
   isShow: boolean;
@@ -48,15 +49,13 @@ export class TemplateEntity extends BaseEntity {
   @Column({ type: 'boolean', default: false, nullable: false })
   isPremium: boolean;
 
-  @ApiProperty({
-    description: 'Gói tối thiểu để sử dụng (free | basic | premium)',
-  })
-  // Min Plan
+  @ApiProperty({ description: 'Gói tối thiểu để sử dụng' })
+  // Gói tối thiểu để sử dụng
   @Column({ type: 'varchar', length: 20, default: 'free', nullable: false })
-  @ApiProperty({ description: 'Min Plan' })
+  @ApiProperty({ description: 'Gói tối thiểu' })
   minPlan: string;
 
-  // Trial Days
+  // Số ngày dùng thử
   @ApiProperty({ description: 'Số ngày dùng thử' })
   @Column({ type: 'int', default: 3, nullable: false })
   trialDays: number;

@@ -6,23 +6,24 @@ import { WeddingEntity } from './wedding.entity';
 
 @Entity('tables')
 export class TableEntity extends BaseEntity {
+  // ID đám cưới
   @Column({ type: 'uuid', nullable: false })
   @ApiProperty({ description: 'ID đám cưới' })
   weddingId: string;
 
-  // Tên
+  // Tên bàn
   @Column({ type: 'varchar', length: 50, nullable: false })
   @ApiProperty({ description: 'Tên' })
   name: string;
 
-  // Max Seats
+  // Số lượng ghế tối đa
   @Column({ type: 'smallint', default: 10, nullable: false })
-  @ApiProperty({ description: 'Max Seats' })
+  @ApiProperty({ description: 'Số lượng ghế tối đa' })
   maxSeats: number;
 
-  // Current Seats
+  // Số ghế hiện tại
   @Column({ type: 'smallint', default: 0, nullable: false })
-  @ApiProperty({ description: 'Current Seats' })
+  @ApiProperty({ description: 'Số ghế hiện tại' })
   currentSeats: number;
 
   // Mô tả
@@ -32,12 +33,12 @@ export class TableEntity extends BaseEntity {
 
   // Position X
   @Column({ type: 'int', nullable: true })
-  @ApiProperty({ description: 'Position X' })
+  @ApiProperty({ description: 'Vị trí X' })
   positionX: number;
 
   // Position Y
   @Column({ type: 'int', nullable: true })
-  @ApiProperty({ description: 'Position Y' })
+  @ApiProperty({ description: 'Vị trí Y' })
   positionY: number;
 
   // Wedding

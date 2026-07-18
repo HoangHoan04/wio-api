@@ -8,7 +8,6 @@ import {
   OneToMany,
 } from 'typeorm';
 import { BaseEntity } from './base.entity';
-import { MusicType, WeddingStatus } from './enums';
 import { GuestEntity } from './guest.entity';
 import { TableEntity } from './table.entity';
 import { TemplateEntity } from './template.entity';
@@ -21,7 +20,7 @@ import { WishEntity } from './wish.entity';
 @Entity('weddings')
 @Index('UQ_wedding_slug', ['slug'], {
   unique: true,
-  where: `"status" != 'archived' AND "isDeleted" = false`,
+  where: `"status" != 'ARCHIVED' AND "isDeleted" = false`,
 })
 export class WeddingEntity extends BaseEntity {
   // ID người dùng
@@ -353,9 +352,9 @@ export class WeddingEntity extends BaseEntity {
   musicUrl: string;
 
   // Loại nhạc
-  @Column({ type: 'enum', enum: MusicType, nullable: true })
-  @ApiProperty({ description: 'Loại nhạc', enum: MusicType, required: false })
-  musicType: MusicType;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  @ApiProperty({ description: 'Loại nhạc', required: false })
+  musicType: string;
 
   // Tự động phát nhạc
   @Column({ type: 'boolean', default: false, nullable: false })
@@ -408,16 +407,10 @@ export class WeddingEntity extends BaseEntity {
   brideQrUrl: string;
 
   // Trạng thái
-  @Column({
-    type: 'enum',
-    enum: WeddingStatus,
-    default: WeddingStatus.DRAFT,
-    nullable: false,
-  })
-  // Trạng thái
+  @Column({ type: 'varchar', length: 50, nullable: false })
   @Index()
-  @ApiProperty({ description: 'Trạng thái', enum: WeddingStatus })
-  status: WeddingStatus;
+  @ApiProperty({ description: 'Trạng thái' })
+  status: string;
 
   // Ngày xuất bản
   @Column({ type: 'timestamptz', nullable: true })

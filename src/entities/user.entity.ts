@@ -6,13 +6,12 @@ import {
   Column,
   Entity,
   JoinColumn,
-  OneToOne,
   OneToMany,
+  OneToOne,
 } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { CustomerEntity } from './customer.entity';
 import { WeddingEntity } from './wedding.entity';
-import { UserRole } from './enums';
 
 @Entity('users')
 export class UserEntity extends BaseEntity {
@@ -52,14 +51,9 @@ export class UserEntity extends BaseEntity {
   phone: string;
 
   // Vai trò
-  @Column({
-    type: 'enum',
-    enum: UserRole,
-    default: UserRole.COUPLE,
-    nullable: false,
-  })
-  @ApiProperty({ description: 'Quyền: couple | admin', enum: UserRole })
-  role: UserRole;
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  @ApiProperty({ description: 'Quyền' })
+  role: string;
 
   // Is Active
   @Column({ type: 'boolean', default: true, nullable: false })

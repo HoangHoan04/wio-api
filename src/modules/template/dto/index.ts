@@ -57,7 +57,7 @@ export class CreateTemplateDto {
   isPremium: boolean;
 
   @ApiProperty({
-    description: 'Gói tối thiểu để sử dụng (free | basic | premium)',
+    description: 'Gói tối thiểu để sử dụng',
     default: 'free',
   })
   @IsNotEmpty()

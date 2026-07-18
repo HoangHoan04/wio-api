@@ -1,10 +1,8 @@
-import { MusicType, WeddingStatus } from '@/entities/enums';
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsBoolean,
   IsDate,
-  IsEnum,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -199,10 +197,10 @@ export class CreateWeddingDto {
   @IsString()
   musicUrl?: string;
 
-  @ApiProperty({ description: 'Loại nhạc', enum: MusicType, required: false })
+  @ApiProperty({ description: 'Loại nhạc', required: false })
   @IsOptional()
-  @IsEnum(MusicType)
-  musicType?: MusicType;
+  @IsString()
+  musicType?: string;
 
   @ApiProperty({ description: 'Tự động phát nhạc' })
   @IsNotEmpty()
@@ -234,10 +232,10 @@ export class CreateWeddingDto {
   @IsString()
   vietqrUrl?: string;
 
-  @ApiProperty({ description: 'Trạng thái', enum: WeddingStatus })
+  @ApiProperty({ description: 'Trạng thái', required: false })
   @IsNotEmpty()
-  @IsEnum(WeddingStatus)
-  status: WeddingStatus;
+  @IsString()
+  status: string;
 
   @ApiProperty({ description: 'Ngày xuất bản', required: false })
   @IsOptional()
@@ -643,10 +641,10 @@ export class FilterWeddingDto {
   @IsString()
   musicUrl?: string;
 
-  @ApiProperty({ description: 'Loại nhạc', enum: MusicType, required: false })
+  @ApiProperty({ description: 'Loại nhạc', required: false })
   @IsOptional()
-  @IsEnum(MusicType)
-  musicType?: MusicType;
+  @IsString()
+  musicType?: string;
 
   @ApiProperty({ description: 'Tự động phát nhạc', required: false })
   @IsOptional()
@@ -680,12 +678,11 @@ export class FilterWeddingDto {
 
   @ApiProperty({
     description: 'Trạng thái',
-    enum: WeddingStatus,
     required: false,
   })
   @IsOptional()
-  @IsEnum(WeddingStatus)
-  status?: WeddingStatus;
+  @IsString()
+  status?: string;
 
   @ApiProperty({ description: 'Ngày xuất bản', required: false })
   @IsOptional()
@@ -898,7 +895,6 @@ export class FilterWeddingDto {
   @IsOptional()
   gallery?: string[];
 }
-
 
 export class AdminForceResetSlugDto {
   @ApiProperty({ description: 'ID đám cưới cần reset slug' })

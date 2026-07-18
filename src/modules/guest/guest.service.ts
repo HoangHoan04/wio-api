@@ -1,5 +1,6 @@
+import { enumData } from '@/common/contanst/enumData';
 import { IdDto, PaginationDto, UserDto } from '@/dto';
-import { GuestEntity, GuestSide } from '@/entities';
+import { GuestEntity } from '@/entities';
 import { GuestRepository, WeddingRepository } from '@/repositories';
 import {
   BadRequestException,
@@ -54,7 +55,7 @@ export class GuestService {
       where: whereCon,
       skip,
       take,
-      order: { createdAt: 'DESC' } as any,
+      order: { createdAt: 'DESC' },
     });
 
     return { data: list, total };
@@ -62,7 +63,7 @@ export class GuestService {
 
   async findById(data: IdDto) {
     const item = await this.repo.findOne({
-      where: { id: data.id, isDeleted: false } as any,
+      where: { id: data.id, isDeleted: false },
     });
     if (!item) throw new NotFoundException('Không tìm thấy bản ghi');
     return { message: 'Thành công', data: item };
@@ -116,7 +117,7 @@ export class GuestService {
 
   async update(dto: UpdateGuestDto, user: UserDto) {
     const entity = await this.repo.findOne({
-      where: { id: dto.id, isDeleted: false } as any,
+      where: { id: dto.id, isDeleted: false },
     });
     if (!entity) throw new NotFoundException('Không tìm thấy bản ghi');
 
@@ -162,7 +163,7 @@ export class GuestService {
 
   async delete(data: IdDto, user: UserDto) {
     const entity = await this.repo.findOne({
-      where: { id: data.id, isDeleted: false } as any,
+      where: { id: data.id, isDeleted: false },
     });
     if (!entity) throw new NotFoundException('Không tìm thấy bản ghi');
 
@@ -181,7 +182,7 @@ export class GuestService {
 
   async rsvp(dto: any): Promise<any> {
     const guest = await this.repo.findOne({
-      where: { invitationCode: dto.invitationCode, isDeleted: false } as any,
+      where: { invitationCode: dto.invitationCode, isDeleted: false },
     });
     if (!guest)
       throw new NotFoundException('Không tìm thấy khách mời với mã này');
@@ -202,7 +203,7 @@ export class GuestService {
 
   async identify(code: string): Promise<any> {
     const guest = await this.repo.findOne({
-      where: { invitationCode: code, isDeleted: false } as any,
+      where: { invitationCode: code, isDeleted: false },
     });
     if (!guest) throw new NotFoundException('Mã mời không chính xác');
 
@@ -210,7 +211,7 @@ export class GuestService {
     await this.repo.save(guest);
 
     const wedding = await this.weddingRepo.findOne({
-      where: { id: guest.weddingId, isDeleted: false } as any,
+      where: { id: guest.weddingId, isDeleted: false },
     });
 
     return {
@@ -224,12 +225,12 @@ export class GuestService {
 
   async generateQrCode(id: string, user: UserDto): Promise<any> {
     const guest = await this.repo.findOne({
-      where: { id, isDeleted: false } as any,
+      where: { id, isDeleted: false },
     });
     if (!guest) throw new NotFoundException('Không tìm thấy khách mời');
 
     const wedding = await this.weddingRepo.findOne({
-      where: { id: guest.weddingId, isDeleted: false } as any,
+      where: { id: guest.weddingId, isDeleted: false },
     });
 
     if (!wedding) {
@@ -262,7 +263,7 @@ export class GuestService {
     user: UserDto,
   ): Promise<any> {
     const wedding = await this.weddingRepo.findOne({
-      where: { id: weddingId, isDeleted: false } as any,
+      where: { id: weddingId, isDeleted: false },
     });
     if (!wedding) throw new NotFoundException('Không tìm thấy đám cưới');
 
@@ -299,7 +300,7 @@ export class GuestService {
 
     const guests: GuestEntity[] = [];
     worksheet.eachRow((row, rowNumber) => {
-      if (rowNumber === 1) return; 
+      if (rowNumber === 1) return;
       const fullName = getCellValueString(row.getCell(1).value);
       if (!fullName) return;
 
@@ -318,10 +319,10 @@ export class GuestService {
       guest.salutation = salutation;
       guest.side =
         sideStr === 'groom'
-          ? GuestSide.GROOM
+          ? enumData.GUEST_SIDE.GROOM.code
           : sideStr === 'bride'
-            ? GuestSide.BRIDE
-            : GuestSide.BOTH;
+            ? enumData.GUEST_SIDE.BRIDE.code
+            : enumData.GUEST_SIDE.BOTH.code;
       guest.isVip =
         isVipStr === 'true' || isVipStr === '1' || isVipStr === 'yes';
       guest.invitationCode = Math.random()
