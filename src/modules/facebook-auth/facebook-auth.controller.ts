@@ -15,7 +15,8 @@ export class FacebookAuthController {
     @Ip() ipAddress: string,
   ) {
     if (error) {
-      const frontendUrl = process.env.FACEBOOK_FRONTEND_REDIRECT_URL || 'http://localhost:2504';
+      const frontendUrl =
+        process.env.FACEBOOK_FRONTEND_REDIRECT_URL || 'http://localhost:2504';
       return res.redirect(`${frontendUrl}?error=${error}`);
     }
     try {
@@ -24,12 +25,16 @@ export class FacebookAuthController {
         req.headers['user-agent'],
         ipAddress,
       );
-      const frontendUrl = process.env.FACEBOOK_FRONTEND_REDIRECT_URL || 'http://localhost:2504';
+      const frontendUrl =
+        process.env.FACEBOOK_FRONTEND_REDIRECT_URL || 'http://localhost:2504';
       const redirectUrl = `${frontendUrl}?accessToken=${result.accessToken}&refreshToken=${result.refreshToken}`;
       return res.redirect(redirectUrl);
     } catch (err: any) {
-      const frontendUrl = process.env.FACEBOOK_FRONTEND_REDIRECT_URL || 'http://localhost:2504';
-      return res.redirect(`${frontendUrl}?error=${encodeURIComponent(err.message || 'Facebook đăng nhập thất bại')}`);
+      const frontendUrl =
+        process.env.FACEBOOK_FRONTEND_REDIRECT_URL || 'http://localhost:2504';
+      return res.redirect(
+        `${frontendUrl}?error=${encodeURIComponent(err.message || 'Facebook đăng nhập thất bại')}`,
+      );
     }
   }
 }

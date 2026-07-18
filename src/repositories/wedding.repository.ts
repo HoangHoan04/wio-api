@@ -68,6 +68,5 @@ export class VerifyOtpRepository extends Repository<VerifyOtpEntity> {}
 @CustomRepository(SlugHistoryEntity)
 export class SlugHistoryRepository extends Repository<SlugHistoryEntity> {}
 
-
 @CustomRepository(MusicBackgroundEntity)
 export class MusicBackgroundRepository extends Repository<MusicBackgroundEntity> {}

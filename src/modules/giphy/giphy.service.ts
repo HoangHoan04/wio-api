@@ -1,18 +1,18 @@
-import { HttpService } from "@nestjs/axios";
-import { Injectable } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { lastValueFrom } from "rxjs";
+import { HttpService } from '@nestjs/axios';
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { lastValueFrom } from 'rxjs';
 
 @Injectable()
 export class GiphyService {
   private readonly apiKey: string;
-  private readonly baseUrl = "https://api.giphy.com/v1";
+  private readonly baseUrl = 'https://api.giphy.com/v1';
 
   constructor(
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
   ) {
-    this.apiKey = this.configService.get<string>("GIPHY_API_KEY") || "";
+    this.apiKey = this.configService.get<string>('GIPHY_API_KEY') || '';
   }
 
   async search(query: string, limit = 25, offset = 0) {
@@ -24,8 +24,8 @@ export class GiphyService {
           q: query,
           limit,
           offset,
-          rating: "g",
-          lang: "en",
+          rating: 'g',
+          lang: 'en',
         },
       }),
     );
@@ -40,7 +40,7 @@ export class GiphyService {
           api_key: this.apiKey,
           limit,
           offset,
-          rating: "g",
+          rating: 'g',
         },
       }),
     );

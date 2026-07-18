@@ -1,18 +1,18 @@
-import { HttpService } from "@nestjs/axios";
-import { Injectable } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { lastValueFrom } from "rxjs";
+import { HttpService } from '@nestjs/axios';
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { lastValueFrom } from 'rxjs';
 
 @Injectable()
 export class PexelsService {
   private readonly apiKey: string;
-  private readonly baseUrl = "https://api.pexels.com/v1";
+  private readonly baseUrl = 'https://api.pexels.com/v1';
 
   constructor(
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
   ) {
-    this.apiKey = this.configService.get<string>("PEXELS_API_KEY") || "";
+    this.apiKey = this.configService.get<string>('PEXELS_API_KEY') || '';
   }
 
   async search(query: string, perPage = 20, page = 1) {

@@ -42,7 +42,7 @@ import { MusicBackgroundModule } from '../music-background/music-background.modu
     SubscriptionModule,
     ActionLogModule,
     CustomerModule,
-    MusicBackgroundModule
+    MusicBackgroundModule,
   ],
   exports: [],
 })

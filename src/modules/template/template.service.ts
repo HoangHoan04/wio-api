@@ -71,7 +71,9 @@ export class TemplateService {
     entity.features = dto.features ?? null;
     entity.thumbnailUrl = dto.thumbnailUrl ?? null;
     entity.themeCode = dto.themeCode;
-    entity.slug = THEME_SLUG_MAP[dto.themeCode] || `${dto.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`;
+    entity.slug =
+      THEME_SLUG_MAP[dto.themeCode] ||
+      `${dto.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`;
     entity.isShow = dto.isShow;
     entity.isPremium = dto.isPremium;
     entity.minPlan = dto.minPlan;

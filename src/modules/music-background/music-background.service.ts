@@ -135,7 +135,9 @@ export class MusicBackgroundService {
             (error, result) => {
               if (error) {
                 this.logger.error(`Cloudinary upload error: ${error.message}`);
-                return reject(error);
+                return reject(
+                  new Error(`Cloudinary upload error: ${error.message}`),
+                );
               }
               if (result) {
                 this.logger.log(
@@ -158,7 +160,7 @@ export class MusicBackgroundService {
 
           subprocess.stdout.on('error', (err: any) => {
             this.logger.error(`youtubedl error: ${err.message}`);
-            reject(err);
+            reject(new Error(`youtubedl error: ${err.message}`));
           });
 
           subprocess.stdout.pipe(uploadStream);

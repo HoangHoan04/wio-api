@@ -1,1 +1,1 @@
-export * from "./search-giphy.dto";
+export * from './search-giphy.dto';

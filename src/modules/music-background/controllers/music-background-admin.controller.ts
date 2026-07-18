@@ -10,7 +10,11 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { MusicBackgroundService } from '../music-background.service';
-import { CreateMusicBackgroundDto, UpdateMusicBackgroundDto, ImportYoutubeDto } from '../dto';
+import {
+  CreateMusicBackgroundDto,
+  UpdateMusicBackgroundDto,
+  ImportYoutubeDto,
+} from '../dto';
 import { JwtAuthGuard } from '@/common/guards';
 import { RequireRoles } from '@/common/decorators';
 
@@ -21,7 +25,6 @@ import { RequireRoles } from '@/common/decorators';
 @Controller('music-background')
 export class MusicBackgroundAdminController {
   constructor(private readonly musicService: MusicBackgroundService) {}
-
 
   @Post('pagination')
   @ApiOperation({ summary: 'Lấy danh sách nhạc nền (có phân trang)' })
@@ -36,7 +39,9 @@ export class MusicBackgroundAdminController {
   }
 
   @Post('create')
-  @ApiOperation({ summary: 'Tạo nhạc nền mới (audioUrl đã upload qua /api/upload)' })
+  @ApiOperation({
+    summary: 'Tạo nhạc nền mới (audioUrl đã upload qua /api/upload)',
+  })
   create(@Body() createDto: CreateMusicBackgroundDto) {
     return this.musicService.create(createDto);
   }

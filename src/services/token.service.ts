@@ -10,7 +10,11 @@ export class TokenService {
     private readonly configService: ConfigService,
   ) {}
 
-  generateAccessToken(payload: { sub: string; email: string; role: string }): string {
+  generateAccessToken(payload: {
+    sub: string;
+    email: string;
+    role: string;
+  }): string {
     return this.jwtService.sign(payload);
   }
 
@@ -26,7 +30,11 @@ export class TokenService {
     return this.hashToken(plainToken) === hashedToken;
   }
 
-  verifyAccessToken(token: string): { sub: string; email: string; role: string } {
+  verifyAccessToken(token: string): {
+    sub: string;
+    email: string;
+    role: string;
+  } {
     try {
       return this.jwtService.verify(token);
     } catch {

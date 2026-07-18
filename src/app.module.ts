@@ -46,7 +46,7 @@ const globalModules = [
         port: Number(process.env.REDIS_PORT) || 6379,
       },
     }),
-  })
+  }),
 ];
 
 const modules = Object.values(allModules);
