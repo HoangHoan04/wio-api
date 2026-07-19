@@ -6,6 +6,8 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   CreateTemplateDto,
   FilterTemplateDto,
+  SetIsDeletedTemplateDto,
+  SetIsShowTemplateDto,
   SetPremiumTemplateDto,
   UpdateTemplateDto,
 } from '../dto';
@@ -37,28 +39,10 @@ export class TemplateAdminController {
     return await this.service.update(data, user);
   }
 
-  @ApiOperation({ summary: 'Xóa mềm' })
-  @Post('delete')
-  async delete(@Body() body: IdDto, @CurrentUser() user: UserDto) {
-    return await this.service.delete(body, user);
-  }
-
   @ApiOperation({ summary: 'Chi tiết' })
   @Post('find-by-id')
   async findById(@Body() body: IdDto) {
     return await this.service.findById(body);
-  }
-
-  @ApiOperation({ summary: 'Kích hoạt mẫu thiệp' })
-  @Post('activate')
-  async activate(@Body() body: IdDto, @CurrentUser() user: UserDto) {
-    return await this.service.activate(body, user);
-  }
-
-  @ApiOperation({ summary: 'Hủy kích hoạt mẫu thiệp' })
-  @Post('deactivate')
-  async deactivate(@Body() body: IdDto, @CurrentUser() user: UserDto) {
-    return await this.service.deactivate(body, user);
   }
 
   @ApiOperation({ summary: 'Thiết lập trạng thái trả phí (Premium) mẫu thiệp' })
@@ -68,5 +52,23 @@ export class TemplateAdminController {
     @CurrentUser() user: UserDto,
   ) {
     return await this.service.setPremium(body, user);
+  }
+
+  @ApiOperation({ summary: 'Thiết lập trạng thái hiển thị mẫu thiệp' })
+  @Post('set-is-show')
+  async setIsShow(
+    @Body() body: SetIsShowTemplateDto,
+    @CurrentUser() user: UserDto,
+  ) {
+    return await this.service.setIsShow(body, user);
+  }
+
+  @ApiOperation({ summary: 'Thiết lập trạng thái xóa mềm mẫu thiệp' })
+  @Post('set-is-deleted')
+  async setIsDeleted(
+    @Body() body: SetIsDeletedTemplateDto,
+    @CurrentUser() user: UserDto,
+  ) {
+    return await this.service.setIsDeleted(body, user);
   }
 }

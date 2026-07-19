@@ -49,10 +49,20 @@ export class UploadFileService {
     this.catboxUserhash =
       this.configService.get<string>('CATBOX_USERHASH') || '';
 
+    const cloudName = this.configService.get<string>('CLOUDINARY_CLOUD_NAME');
+    const apiKey = this.configService.get<string>('CLOUDINARY_API_KEY');
+    const apiSecret = this.configService.get<string>('CLOUDINARY_API_SECRET');
+
+    if (!cloudName || !apiKey || !apiSecret) {
+      throw new InternalServerErrorException(
+        'Thiếu cấu hình Cloudinary (CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET)',
+      );
+    }
+
     cloudinary.config({
-      cloud_name: this.configService.get<string>('CLOUDINARY_CLOUD_NAME'),
-      api_key: this.configService.get<string>('CLOUDINARY_API_KEY'),
-      api_secret: this.configService.get<string>('CLOUDINARY_API_SECRET'),
+      cloud_name: cloudName,
+      api_key: apiKey,
+      api_secret: apiSecret,
     });
   }
 
@@ -121,8 +131,15 @@ export class UploadFileService {
       );
       return { fileName: `${fileId}.${ext}`, fileUrl: result.secure_url };
     } catch (err) {
+      console.error('Cloudinary upload error:', err);
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : typeof err === 'object' && err !== null
+            ? err?.error?.message || err?.message || JSON.stringify(err)
+            : String(err);
       throw new InternalServerErrorException(
-        `Upload Cloudinary thất bại: ${err instanceof Error ? err.message : String(err)}`,
+        `Upload Cloudinary thất bại: ${errorMessage}`,
       );
     }
   }

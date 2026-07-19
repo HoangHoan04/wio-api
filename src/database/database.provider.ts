@@ -1,4 +1,4 @@
-import { DATA_SOURCE } from '@/common/contanst';
+import { DATA_SOURCE } from '@/common/constanst';
 import { dataSource } from '@/typeorm';
 
 export const databaseProvider = {

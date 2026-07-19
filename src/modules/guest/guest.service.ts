@@ -1,4 +1,4 @@
-import { enumData } from '@/common/contanst/enumData';
+import { enumData } from '@/common/constanst/enumData';
 import { IdDto, PaginationDto, UserDto } from '@/dto';
 import { GuestEntity } from '@/entities';
 import { GuestRepository, WeddingRepository } from '@/repositories';

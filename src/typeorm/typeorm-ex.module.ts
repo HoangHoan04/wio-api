@@ -1,4 +1,4 @@
-import { DATA_SOURCE, TYPEORM_EX_CUSTOM_REPOSITORY } from '@/common/contanst';
+import { DATA_SOURCE, TYPEORM_EX_CUSTOM_REPOSITORY } from '@/common/constanst';
 import { DatabaseModule } from '@/database/database.module';
 import { DynamicModule, Provider } from '@nestjs/common';
 import { DataSource } from 'typeorm';

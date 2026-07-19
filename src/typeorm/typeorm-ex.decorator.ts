@@ -1,4 +1,4 @@
-import { TYPEORM_EX_CUSTOM_REPOSITORY } from '@/common/contanst';
+import { TYPEORM_EX_CUSTOM_REPOSITORY } from '@/common/constanst';
 import { SetMetadata } from '@nestjs/common';
 
 export function CustomRepository(entity: Function): ClassDecorator {

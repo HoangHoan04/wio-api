@@ -1,4 +1,4 @@
-import { enumData } from '@/common/contanst/enumData';
+import { enumData } from '@/common/constanst/enumData';
 import { CustomerEntity, UserEntity, UserTokenEntity } from '@/entities';
 import {
   CustomerRepository,

@@ -1,4 +1,4 @@
-import { enumData } from '@/common/contanst/enumData';
+import { enumData } from '@/common/constanst/enumData';
 import { ApiProperty } from '@nestjs/swagger';
 import { Column, Entity, Index } from 'typeorm';
 import { BaseEntity } from './base.entity';

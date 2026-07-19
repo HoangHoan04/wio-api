@@ -89,6 +89,30 @@ export class SetPremiumTemplateDto {
   isPremium: boolean;
 }
 
+export class SetIsShowTemplateDto {
+  @ApiProperty({ description: 'ID mẫu giao diện' })
+  @IsUUID()
+  @IsNotEmpty()
+  id: string;
+
+  @ApiProperty({ description: 'Trạng thái hiển thị' })
+  @IsNotEmpty()
+  @IsBoolean()
+  isShow: boolean;
+}
+
+export class SetIsDeletedTemplateDto {
+  @ApiProperty({ description: 'ID mẫu giao diện' })
+  @IsUUID()
+  @IsNotEmpty()
+  id: string;
+
+  @ApiProperty({ description: 'Trạng thái xóa mềm' })
+  @IsNotEmpty()
+  @IsBoolean()
+  isDeleted: boolean;
+}
+
 export class FilterTemplateDto {
   @ApiProperty({ description: 'Tên mẫu giao diện', required: false })
   @IsOptional()
@@ -109,6 +133,11 @@ export class FilterTemplateDto {
   @IsOptional()
   @IsBoolean()
   isPremium?: boolean;
+
+  @ApiProperty({ description: 'Trạng thái xóa mềm', required: false })
+  @IsOptional()
+  @IsBoolean()
+  isDeleted?: boolean;
 
   @ApiProperty({
     description: 'Gói tối thiểu để sử dụng (free | basic | premium)',

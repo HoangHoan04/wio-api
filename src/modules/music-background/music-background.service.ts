@@ -1,4 +1,4 @@
-import { enumData } from '@/common/contanst/enumData';
+import { enumData } from '@/common/constanst/enumData';
 import { IdDto, PaginationDto } from '@/dto';
 import { MusicBackgroundRepository } from '@/repositories';
 import {
