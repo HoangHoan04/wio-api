@@ -1,22 +1,14 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  Delete,
-  UseGuards,
-  Query,
-} from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { MusicBackgroundService } from '../music-background.service';
+import { RequireRoles } from '@/common/decorators';
+import { JwtAuthGuard } from '@/common/guards';
+import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { YoutubeAudioProviderType } from '../../youtube-audio';
 import {
   CreateMusicBackgroundDto,
-  UpdateMusicBackgroundDto,
   ImportYoutubeDto,
+  UpdateMusicBackgroundDto,
 } from '../dto';
-import { JwtAuthGuard } from '@/common/guards';
-import { RequireRoles } from '@/common/decorators';
+import { MusicBackgroundService } from '../music-background.service';
 
 @ApiTags('Admin - Music Background')
 @ApiBearerAuth()
@@ -50,6 +42,44 @@ export class MusicBackgroundAdminController {
   @ApiOperation({ summary: 'Nhập nhạc từ YouTube' })
   importYoutube(@Body() importDto: ImportYoutubeDto) {
     return this.musicService.importYoutube(importDto);
+  }
+
+  @Post('import-youtube-library')
+  @ApiOperation({
+    summary: 'Nhập nhạc từ YouTube bằng thư viện youtube-dl-exec',
+  })
+  importYoutubeLibrary(@Body() importDto: ImportYoutubeDto) {
+    return this.musicService.importYoutube({
+      ...importDto,
+      provider: 'youtube-dl-exec',
+    });
+  }
+
+  @Post('import-youtube-public-api')
+  @ApiOperation({ summary: 'Nhập nhạc từ YouTube bằng public internet API' })
+  importYoutubePublicApi(@Body() importDto: ImportYoutubeDto) {
+    return this.musicService.importYoutube({
+      ...importDto,
+      provider: 'public-api',
+    });
+  }
+
+  @Post('import-youtube-python')
+  @ApiOperation({ summary: 'Nhập nhạc từ YouTube bằng hàm Python yt-dlp' })
+  importYoutubePython(@Body() importDto: ImportYoutubeDto) {
+    return this.musicService.importYoutube({
+      ...importDto,
+      provider: 'python-yt-dlp',
+    });
+  }
+
+  @Post('info')
+  @ApiOperation({ summary: 'Lấy metadata YouTube (không tải)' })
+  getYoutubeInfo(
+    @Body('url') url: string,
+    @Body('provider') provider?: YoutubeAudioProviderType,
+  ) {
+    return this.musicService.getYoutubeInfo(url, provider);
   }
 
   @Post('update')

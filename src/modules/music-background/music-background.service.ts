@@ -1,15 +1,20 @@
 import { enumData } from '@/common/constanst/enumData';
 import { IdDto, PaginationDto } from '@/dto';
 import { MusicBackgroundRepository } from '@/repositories';
+import { InjectQueue } from '@nestjs/bull';
 import {
   BadRequestException,
   Injectable,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
+import { Queue } from 'bull';
 import { FindOptionsWhere } from 'typeorm';
-import youtubedl from 'youtube-dl-exec';
+import { UploadFileService } from '../upload-file/upload-file.service';
+import {
+  YoutubeAudioProviderType,
+  YoutubeAudioService,
+} from '../youtube-audio';
 import {
   CreateMusicBackgroundDto,
   ImportYoutubeDto,
@@ -20,7 +25,12 @@ import {
 export class MusicBackgroundService {
   private readonly logger = new Logger(MusicBackgroundService.name);
 
-  constructor(private readonly musicRepo: MusicBackgroundRepository) {}
+  constructor(
+    private readonly musicRepo: MusicBackgroundRepository,
+    private readonly uploadFileService: UploadFileService,
+    private readonly youtubeAudioService: YoutubeAudioService,
+    @InjectQueue('youtube-import') private readonly youtubeQueue: Queue,
+  ) {}
 
   async paginationActive(data?: PaginationDto<any>) {
     const { skip = 0, take = 10, where = {} } = data || {};
@@ -88,107 +98,130 @@ export class MusicBackgroundService {
   }
 
   async importYoutube(dto: ImportYoutubeDto) {
-    const music = this.musicRepo.create({
-      name: 'Đang tải thông tin...',
-      author: 'Đang xử lý',
-      duration: '0:00',
-      youtubeUrl: dto.youtubeUrl,
-      status: enumData.MUSIC_PROCESS_STATUS.PROCESSING.code,
-      isActive: true,
-    });
+    const provider = dto.provider || 'youtube-dl-exec';
+    const info = await this.youtubeAudioService.getInfo(
+      dto.youtubeUrl,
+      provider,
+    );
 
-    const savedMusic = await this.musicRepo.save(music);
+    if (info.durationSeconds > 600) {
+      throw new BadRequestException('Video quá dài (vượt quá 10 phút)');
+    }
+
+    const jobData = {
+      youtubeUrl: dto.youtubeUrl,
+      title: info.title,
+      author: info.author,
+      duration: info.durationText,
+      provider,
+    };
 
     try {
-      this.logger.log(`Fetching youtube info for: ${dto.youtubeUrl}`);
-      const info = (await youtubedl(dto.youtubeUrl, {
-        dumpJson: true,
-        noWarnings: true,
-      })) as any;
-      const title = info.title || 'Unknown Title';
-      const author = info.uploader || 'Unknown Author';
-      const lengthSeconds = parseInt(info.duration, 10) || 0;
-
-      if (lengthSeconds > 600) {
-        throw new Error('Video quá dài (vượt quá 10 phút)');
-      }
-
-      const minutes = Math.floor(lengthSeconds / 60);
-      const seconds = lengthSeconds % 60;
-      const duration = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-
-      await this.musicRepo.update(savedMusic.id, {
-        name: title,
-        author: author,
-        duration: duration,
+      await this.youtubeQueue.add('import', jobData, {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 5000 },
       });
-
-      this.logger.log(`Downloading and piping to cloudinary...`);
-      const uploadResult = await new Promise<UploadApiResponse>(
-        (resolve, reject) => {
-          const uploadStream = cloudinary.uploader.upload_stream(
-            {
-              resource_type: 'video',
-              folder: 'wio-audio-background',
-              public_id: `yt_${savedMusic.id}`,
-            },
-            (error, result) => {
-              if (error) {
-                this.logger.error(`Cloudinary upload error: ${error.message}`);
-                return reject(
-                  new Error(`Cloudinary upload error: ${error.message}`),
-                );
-              }
-              if (result) {
-                this.logger.log(
-                  `Cloudinary upload success: ${result.secure_url}`,
-                );
-                return resolve(result);
-              }
-            },
-          );
-
-          const subprocess = youtubedl.exec(
-            dto.youtubeUrl,
-            { output: '-', format: 'bestaudio' },
-            { stdio: ['ignore', 'pipe', 'ignore'] },
-          );
-
-          if (!subprocess.stdout) {
-            return reject(new Error('Failed to start youtube-dl-exec process'));
-          }
-
-          subprocess.stdout.on('error', (err: any) => {
-            this.logger.error(`youtubedl error: ${err.message}`);
-            reject(new Error(`youtubedl error: ${err.message}`));
-          });
-
-          subprocess.stdout.pipe(uploadStream);
-        },
+      this.logger.log(
+        `Enqueued youtube import job for: ${dto.youtubeUrl} (provider: ${provider})`,
       );
-
-      savedMusic.name = title;
-      savedMusic.author = author;
-      savedMusic.duration = duration;
-      savedMusic.status = enumData.MUSIC_PROCESS_STATUS.COMPLETED.code;
-      savedMusic.audioUrl = uploadResult.secure_url;
-
-      await this.musicRepo.update(savedMusic.id, {
-        status: enumData.MUSIC_PROCESS_STATUS.COMPLETED.code,
-        audioUrl: uploadResult.secure_url,
+    } catch (queueError: any) {
+      this.logger.warn(
+        `Queue failed, falling back to background processing: ${queueError.message}`,
+      );
+      this.processYoutube(jobData).catch((err) => {
+        this.logger.error(
+          `Background youtube processing failed: ${err.message}`,
+        );
       });
+    }
+
+    return { message: 'Đã thêm vào hàng đợi xử lý', provider };
+  }
+
+  async processYoutube(data: {
+    youtubeUrl: string;
+    title: string;
+    author: string;
+    duration: string;
+    provider: YoutubeAudioProviderType;
+  }) {
+    let music: any = null;
+
+    try {
+      music = this.musicRepo.create({
+        name: data.title,
+        author: data.author,
+        duration: data.duration,
+        youtubeUrl: data.youtubeUrl,
+        status: enumData.MUSIC_PROCESS_STATUS.PROCESSING.code,
+        isActive: false,
+        usageCount: 0,
+      });
+      await this.musicRepo.save(music);
 
       this.logger.log(
-        `Completed youtube download for musicId: ${savedMusic.id}`,
+        `[${data.provider}] Downloading and uploading audio for musicId: ${music.id}`,
+      );
+
+      const result = await this.youtubeAudioService.downloadAudio(
+        data.youtubeUrl,
+        data.provider,
+        { maxDurationSeconds: 600 },
+      );
+
+      let uploadResult: { fileName: string; fileUrl: string };
+
+      if (result.stream) {
+        uploadResult = await this.uploadFileService.uploadAudioFromStream(
+          result.stream,
+          'wio-audio-background',
+          result.mimeType,
+        );
+      } else if (result.filePath) {
+        uploadResult = await this.uploadFileService.uploadAudioFromFilePath(
+          result.filePath,
+          'wio-audio-background',
+          result.mimeType,
+        );
+      } else if (result.directUrl) {
+        // For public-api provider that returns a direct URL, we can either:
+        // a) Save the direct URL directly (no upload)
+        // b) Download then re-upload to our own storage
+        // Option (b) is safer for long-term availability.
+        const response = await fetch(result.directUrl);
+        if (!response.ok || !response.body) {
+          throw new Error('Không thể tải file từ public API');
+        }
+        uploadResult = await this.uploadFileService.uploadAudioFromStream(
+          response.body as unknown as NodeJS.ReadableStream,
+          'wio-audio-background',
+          result.mimeType,
+        );
+      } else {
+        throw new Error('Provider did not return audio stream, file or URL');
+      }
+
+      music.audioUrl = uploadResult.fileUrl;
+      music.status = enumData.MUSIC_PROCESS_STATUS.COMPLETED.code;
+      music.isActive = true;
+
+      const savedMusic = await this.musicRepo.save(music);
+      this.logger.log(
+        `Completed youtube download for musicId: ${savedMusic.id} via ${data.provider}`,
       );
       return savedMusic;
     } catch (error: any) {
       this.logger.error(`Failed to process youtube: ${error.message}`);
-      await this.musicRepo.update(savedMusic.id, {
-        status: enumData.MUSIC_PROCESS_STATUS.FAILED.code,
-        name: `Lỗi: ${error.message}`,
-      });
-      throw new BadRequestException(`Không thể tải video: ${error.message}`);
+      if (music) {
+        music.status = enumData.MUSIC_PROCESS_STATUS.FAILED.code;
+        music.isActive = false;
+        await this.musicRepo.save(music).catch(() => null);
+      }
+      throw new Error(`Không thể tải video: ${error.message}`);
     }
+  }
+
+  async getYoutubeInfo(url: string, provider?: YoutubeAudioProviderType) {
+    return this.youtubeAudioService.getInfo(url, provider);
   }
 }

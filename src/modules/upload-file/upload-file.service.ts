@@ -10,6 +10,7 @@ import {
   v2 as cloudinary,
 } from 'cloudinary';
 import { randomBytes } from 'crypto';
+import { createReadStream, existsSync } from 'fs';
 
 const IMAGE_MIMES = [
   'image/jpeg',
@@ -231,6 +232,84 @@ export class UploadFileService {
     if (!file) throw new BadRequestException('File is required');
     const result = await this.uploadToCloudinary(file, folder || 'wio-audio');
     return { ...result, storage: 'cloudinary' };
+  }
+
+  async uploadAudioFromStream(
+    stream: NodeJS.ReadableStream,
+    folder?: string,
+    mimeType = 'audio/webm',
+  ): Promise<{ fileName: string; fileUrl: string; storage: string }> {
+    if (!stream) throw new BadRequestException('Stream is required');
+    const result = await this.uploadStreamToCloudinary(
+      stream,
+      folder || 'wio-audio-background',
+      mimeType,
+    );
+    return { ...result, storage: 'cloudinary' };
+  }
+
+  async uploadAudioFromFilePath(
+    filePath: string,
+    folder?: string,
+    mimeType = 'audio/mpeg',
+  ): Promise<{ fileName: string; fileUrl: string; storage: string }> {
+    if (!filePath) throw new BadRequestException('File path is required');
+    if (!existsSync(filePath)) {
+      throw new BadRequestException(`File không tồn tại: ${filePath}`);
+    }
+
+    const stream = createReadStream(filePath);
+    const result = await this.uploadStreamToCloudinary(
+      stream,
+      folder || 'wio-audio-background',
+      mimeType,
+    );
+    return { ...result, storage: 'cloudinary' };
+  }
+
+  private uploadStreamToCloudinary(
+    stream: NodeJS.ReadableStream,
+    folder: string,
+    mimeType: string,
+  ): Promise<{ fileName: string; fileUrl: string }> {
+    return new Promise((resolve, reject) => {
+      const fileId = this.generateFileId();
+      const ext = this.getExtension(mimeType);
+
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder,
+          public_id: fileId,
+          resource_type: 'video',
+          format: ext,
+        },
+        (error, result) => {
+          if (error) {
+            return reject(
+              new InternalServerErrorException(
+                `Upload Cloudinary stream thất bại: ${error.message}`,
+              ),
+            );
+          }
+          if (!result) {
+            return reject(
+              new InternalServerErrorException(
+                'Cloudinary returned empty result',
+              ),
+            );
+          }
+          resolve({ fileName: `${fileId}.${ext}`, fileUrl: result.secure_url });
+        },
+      );
+
+      stream.on('error', (err) => {
+        reject(
+          new InternalServerErrorException(`Stream error: ${err.message}`),
+        );
+      });
+
+      stream.pipe(uploadStream);
+    });
   }
 
   async uploadDocument(

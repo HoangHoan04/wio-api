@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { MusicBackgroundService } from '../music-background.service';
-import { ImportYoutubeDto } from '../dto';
 import { IdDto } from '@/dto';
+import { Body, Controller, Post, Query } from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ImportYoutubeDto } from '../dto';
+import { MusicBackgroundService } from '../music-background.service';
+import { YoutubeAudioProviderType } from '../../youtube-audio';
 
 @ApiTags('User - Music Background')
 @Controller('music-background')
@@ -19,6 +20,15 @@ export class MusicBackgroundUserController {
   @ApiOperation({ summary: 'Khách hàng nhập nhạc từ YouTube' })
   importYoutube(@Body() importDto: ImportYoutubeDto) {
     return this.musicService.importYoutube(importDto);
+  }
+
+  @Post('info')
+  @ApiOperation({ summary: 'Lấy metadata YouTube (không tải)' })
+  getYoutubeInfo(
+    @Body('url') url: string,
+    @Body('provider') provider?: YoutubeAudioProviderType,
+  ) {
+    return this.musicService.getYoutubeInfo(url, provider);
   }
 
   @Post('increment-usage')

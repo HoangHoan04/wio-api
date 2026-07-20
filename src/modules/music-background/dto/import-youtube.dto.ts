@@ -1,5 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsUrl, Matches } from 'class-validator';
+import {
+  IsIn,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUrl,
+  Matches,
+} from 'class-validator';
 
 export class ImportYoutubeDto {
   @ApiProperty({
@@ -12,4 +19,15 @@ export class ImportYoutubeDto {
     message: 'Link YouTube không hợp lệ',
   })
   youtubeUrl: string;
+
+  @ApiProperty({
+    description:
+      'Provider tải nhạc: youtube-dl-exec | public-api | python-yt-dlp',
+    example: 'youtube-dl-exec',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  @IsIn(['youtube-dl-exec', 'public-api', 'python-yt-dlp'])
+  provider?: 'youtube-dl-exec' | 'public-api' | 'python-yt-dlp';
 }
