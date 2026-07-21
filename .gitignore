@@ -48,6 +48,9 @@ pnpm-lock.yaml
 !.env.dev.example
 !.env.prod.example
 
+# Certbot SSL certificates (generated on server)
+deploy/certbot/
+
 # temp directory
 .temp
 .tmp

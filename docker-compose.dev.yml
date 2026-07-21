@@ -13,7 +13,7 @@ services:
     restart: always
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: root
+      POSTGRES_PASSWORD: hoanghoanrootpass123@
       POSTGRES_DB: wio-dev
     ports:
       - '5433:5432'
@@ -53,11 +53,11 @@ services:
       - .env.dev.local
     environment:
       - NODE_ENV=development
-      - DATABASE_URL=postgresql://postgres:root@postgres:5432/wio-dev
+      - DATABASE_URL=postgresql://postgres:hoanghoanrootpass123@@postgres:5432/wio-dev
       - TYPEORM_HOST=postgres
       - TYPEORM_PORT=5432
       - TYPEORM_USERNAME=postgres
-      - TYPEORM_PASSWORD=root
+      - TYPEORM_PASSWORD=hoanghoanrootpass123@
       - TYPEORM_DATABASE=wio-dev
     depends_on:
       postgres:
@@ -78,19 +78,23 @@ services:
       dockerfile: Dockerfile
     container_name: wio_api_dev
     restart: always
+    # TODO: Tạm chạy root để có quyền ghi file .env của wio-admin/wio-customer.
+    # Sau khi phân quyền xong, chuyển về node user và set đúng file ownership.
+    user: root
     env_file:
       - .env.dev.local
     environment:
       - NODE_ENV=development
       - PORT=4300
-      - DATABASE_URL=postgresql://postgres:root@postgres:5432/wio-dev
+      - DATABASE_URL=postgresql://postgres:hoanghoanrootpass123@@postgres:5432/wio-dev
       - TYPEORM_HOST=postgres
       - TYPEORM_PORT=5432
       - TYPEORM_USERNAME=postgres
-      - TYPEORM_PASSWORD=root
+      - TYPEORM_PASSWORD=hoanghoanrootpass123@
       - TYPEORM_DATABASE=wio-dev
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - ENV_MANAGER_BASE_PATH=/opt/wio
     ports:
       - '4301:4300'
     depends_on:
@@ -100,6 +104,14 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    volumes:
+      # Mount env files của admin/customer để API có thể đọc/ghi
+      - /opt/wio/wio-admin/.env.development:/opt/wio/wio-admin/.env.development
+      - /opt/wio/wio-admin/.env.production:/opt/wio/wio-admin/.env.production
+      - /opt/wio/wio-customer/.env.development:/opt/wio/wio-customer/.env.development
+      - /opt/wio/wio-customer/.env.production:/opt/wio/wio-customer/.env.production
+      - /opt/wio/wio-api/.env.dev.local:/opt/wio/wio-api/.env.dev.local
+      - /opt/wio/wio-api/.env.prod.local:/opt/wio/wio-api/.env.prod.local
     networks:
       - wio_dev_net
 
