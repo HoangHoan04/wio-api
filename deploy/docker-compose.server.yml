@@ -1,12 +1,3 @@
-# ──────────────────────────────────────────────────────────────
-# deploy/docker-compose.server.yml
-# Chạy NGINX reverse proxy + wio-admin + wio-customer trên server.
-# wio-api chạy riêng qua docker-compose.prod.yml / docker-compose.dev.yml
-# trong thư mục wio-api (vì API có database + redis).
-# ──────────────────────────────────────────────────────────────
-
-version: '3.8'
-
 services:
   nginx:
     image: nginx:alpine
@@ -21,29 +12,15 @@ services:
       - ./certbot/conf:/etc/letsencrypt:ro
       - ./certbot/www:/var/www/certbot:ro
     networks:
-      - wio_prod_net
       - wio_dev_net
       - nginx_net
     depends_on:
-      - wio-admin-prod
-      - wio-customer-prod
       - wio-admin-dev
       - wio-customer-dev
     command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
 
-  wio-admin-prod:
-    image: ghcr.io/hoanghoan04/wio-admin:latest
-    container_name: wio_admin_prod
-    restart: always
-    environment:
-      - VITE_API_BASE_URL=https://api.tiemcuoitanthoi.id.vn
-      - VITE_BYPASS_AUTH=false
-    networks:
-      - nginx_net
-      - wio_prod_net
-
   wio-admin-dev:
-    image: ghcr.io/hoanghoan04/wio-admin:develop
+    image: wio-admin:develop
     container_name: wio_admin_dev
     restart: always
     environment:
@@ -53,18 +30,8 @@ services:
       - nginx_net
       - wio_dev_net
 
-  wio-customer-prod:
-    image: ghcr.io/hoanghoan04/wio-customer:latest
-    container_name: wio_customer_prod
-    restart: always
-    environment:
-      - NEXT_PUBLIC_API_URL=https://api.tiemcuoitanthoi.id.vn
-    networks:
-      - nginx_net
-      - wio_prod_net
-
   wio-customer-dev:
-    image: ghcr.io/hoanghoan04/wio-customer:develop
+    image: wio-customer:develop
     container_name: wio_customer_dev
     restart: always
     environment:
@@ -74,9 +41,6 @@ services:
       - wio_dev_net
 
 networks:
-  wio_prod_net:
-    external: true
-    name: wio-api_wio_prod_net
   wio_dev_net:
     external: true
     name: wio-api_wio_dev_net

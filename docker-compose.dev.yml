@@ -13,7 +13,7 @@ services:
     restart: always
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: root
+      POSTGRES_PASSWORD: hoanghoanrootpass123@
       POSTGRES_DB: wio-dev
     ports:
       - '5433:5432'
@@ -53,11 +53,11 @@ services:
       - .env.dev.local
     environment:
       - NODE_ENV=development
-      - DATABASE_URL=postgresql://postgres:root@postgres:5432/wio-dev
+      - DATABASE_URL=postgresql://postgres:hoanghoanrootpass123@@postgres:5432/wio-dev
       - TYPEORM_HOST=postgres
       - TYPEORM_PORT=5432
       - TYPEORM_USERNAME=postgres
-      - TYPEORM_PASSWORD=root
+      - TYPEORM_PASSWORD=hoanghoanrootpass123@
       - TYPEORM_DATABASE=wio-dev
     depends_on:
       postgres:
@@ -83,11 +83,11 @@ services:
     environment:
       - NODE_ENV=development
       - PORT=4300
-      - DATABASE_URL=postgresql://postgres:root@postgres:5432/wio-dev
+      - DATABASE_URL=postgresql://postgres:hoanghoanrootpass123@@postgres:5432/wio-dev
       - TYPEORM_HOST=postgres
       - TYPEORM_PORT=5432
       - TYPEORM_USERNAME=postgres
-      - TYPEORM_PASSWORD=root
+      - TYPEORM_PASSWORD=hoanghoanrootpass123@
       - TYPEORM_DATABASE=wio-dev
       - REDIS_HOST=redis
       - REDIS_PORT=6379
