@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import { EnvFileListItemDto, EnvFileResponseDto } from './dto';
@@ -19,12 +23,36 @@ export class EnvManagerService {
     this.basePath = process.env.ENV_MANAGER_BASE_PATH || '/opt/wio';
 
     this.files = [
-      { project: 'wio-admin', environment: 'production', path: 'wio-admin/.env.production' },
-      { project: 'wio-admin', environment: 'development', path: 'wio-admin/.env.development' },
-      { project: 'wio-customer', environment: 'production', path: 'wio-customer/.env.production' },
-      { project: 'wio-customer', environment: 'development', path: 'wio-customer/.env.development' },
-      { project: 'wio-api', environment: 'dev-local', path: 'wio-api/.env.dev.local' },
-      { project: 'wio-api', environment: 'prod-local', path: 'wio-api/.env.prod.local' },
+      {
+        project: 'wio-admin',
+        environment: 'production',
+        path: 'wio-admin/.env.production',
+      },
+      {
+        project: 'wio-admin',
+        environment: 'development',
+        path: 'wio-admin/.env.development',
+      },
+      {
+        project: 'wio-customer',
+        environment: 'production',
+        path: 'wio-customer/.env.production',
+      },
+      {
+        project: 'wio-customer',
+        environment: 'development',
+        path: 'wio-customer/.env.development',
+      },
+      {
+        project: 'wio-api',
+        environment: 'dev-local',
+        path: 'wio-api/.env.dev.local',
+      },
+      {
+        project: 'wio-api',
+        environment: 'prod-local',
+        path: 'wio-api/.env.prod.local',
+      },
     ];
   }
 
@@ -55,7 +83,10 @@ export class EnvManagerService {
     return result;
   }
 
-  async readFile(project: string, environment: string): Promise<EnvFileResponseDto> {
+  async readFile(
+    project: string,
+    environment: string,
+  ): Promise<EnvFileResponseDto> {
     const config = this.findConfig(project, environment);
     const fullPath = this.getFullPath(config.path);
 
@@ -73,11 +104,17 @@ export class EnvManagerService {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
         throw new NotFoundException(`Env file not found: ${fullPath}`);
       }
-      throw new BadRequestException(`Cannot read env file: ${(error as Error).message}`);
+      throw new BadRequestException(
+        `Cannot read env file: ${(error as Error).message}`,
+      );
     }
   }
 
-  async updateFile(project: string, environment: string, content: string): Promise<EnvFileResponseDto> {
+  async updateFile(
+    project: string,
+    environment: string,
+    content: string,
+  ): Promise<EnvFileResponseDto> {
     const config = this.findConfig(project, environment);
     const fullPath = this.getFullPath(config.path);
 
@@ -104,7 +141,9 @@ export class EnvManagerService {
         updatedAt: stats.mtime,
       };
     } catch (error) {
-      throw new BadRequestException(`Cannot write env file: ${(error as Error).message}`);
+      throw new BadRequestException(
+        `Cannot write env file: ${(error as Error).message}`,
+      );
     }
   }
 
@@ -113,7 +152,9 @@ export class EnvManagerService {
       (f) => f.project === project && f.environment === environment,
     );
     if (!config) {
-      throw new NotFoundException(`Env file config not found: ${project}/${environment}`);
+      throw new NotFoundException(
+        `Env file config not found: ${project}/${environment}`,
+      );
     }
     return config;
   }

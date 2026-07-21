@@ -7,7 +7,6 @@ import { AuthAdminController } from '../auth/controller/auth-admin.controller';
 import { PREFIX_MODULE } from '../config-module';
 import { CustomerAdminController } from '../customer/controllers/customer-admin.controller';
 import { CustomerModule } from '../customer/customer.module';
-import { EnvManagerController } from '../env-manager/env-manager.controller';
 import { EnvManagerModule } from '../env-manager/env-manager.module';
 import { GuestAdminController } from '../guest/controllers/guest-admin.controller';
 import { GuestModule } from '../guest/guest.module';
@@ -37,7 +36,6 @@ import { WishModule } from '../wish/wish.module';
     CustomerAdminController,
     MusicBackgroundAdminController,
     GuestAdminController,
-    EnvManagerController,
   ],
   imports: [
     AuthModule,
