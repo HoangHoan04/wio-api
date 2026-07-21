@@ -90,6 +90,7 @@ jobs:
             EOF
 
             docker network create wio_net || true
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             docker pull ghcr.io/${{ github.repository }}:$TAG
             docker stop $CONTAINER_NAME || true
             docker rm $CONTAINER_NAME || true
