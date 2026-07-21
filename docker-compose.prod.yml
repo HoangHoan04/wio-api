@@ -78,6 +78,9 @@ services:
       dockerfile: Dockerfile
     container_name: wio_api_prod
     restart: always
+    # TODO: Tạm chạy root để có quyền ghi file .env của wio-admin/wio-customer.
+    # Sau khi phân quyền xong, chuyển về node user và set đúng file ownership.
+    user: root
     env_file:
       - .env.prod.local
     environment:
@@ -91,6 +94,7 @@ services:
       - TYPEORM_DATABASE=wio-prod
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - ENV_MANAGER_BASE_PATH=/opt/wio
     ports:
       - '127.0.0.1:4300:4300'
     depends_on:
@@ -100,6 +104,14 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    volumes:
+      # Mount env files của admin/customer để API có thể đọc/ghi
+      - /opt/wio/wio-admin/.env.development:/opt/wio/wio-admin/.env.development
+      - /opt/wio/wio-admin/.env.production:/opt/wio/wio-admin/.env.production
+      - /opt/wio/wio-customer/.env.development:/opt/wio/wio-customer/.env.development
+      - /opt/wio/wio-customer/.env.production:/opt/wio/wio-customer/.env.production
+      - /opt/wio/wio-api/.env.dev.local:/opt/wio/wio-api/.env.dev.local
+      - /opt/wio/wio-api/.env.prod.local:/opt/wio/wio-api/.env.prod.local
     networks:
       - wio_prod_net
 
