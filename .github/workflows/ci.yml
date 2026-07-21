@@ -89,11 +89,13 @@ jobs:
           fi
 
   # ─── Tự động chạy migration khi merge code vào develop / main ────────────────
+  # ⚠️ ĐÃ TẮT: Migration chạy trực tiếp trên server qua docker-compose (service migration).
+  # Nếu dùng Managed Database có thể kết nối từ GitHub Actions, hãy bỏ dòng `if: false` bên dưới
+  # và cấu hình secrets DATABASE_URL_DEV / DATABASE_URL_PROD.
   migrate-database:
     runs-on: ubuntu-latest
     needs: build-and-test
-    # Chỉ chạy khi push/merge vào develop hoặc main, KHÔNG chạy trên Pull Request
-    if: github.event_name == 'push' && needs.build-and-test.result == 'success'
+    if: false
 
     steps:
       - uses: actions/checkout@v4
