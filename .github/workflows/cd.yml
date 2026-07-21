@@ -4,7 +4,7 @@ on:
   workflow_run:
     workflows: ['CI Pipeline']
     types: [completed]
-    branches: [main]
+    branches: [develop, main]
 
 env:
   REGISTRY: ghcr.io
@@ -25,10 +25,11 @@ jobs:
         run: |
           SHA_SHORT=$(echo ${COMMIT_SHA} | cut -c1-7)
           REPO_NAME=$(echo '${{ github.repository }}' | cut -d/ -f2)
+          ENV_LABEL=$(if [ "${{ github.event.workflow_run.head_branch }}" = "main" ]; then echo "PRODUCTION"; else echo "DEVELOP"; fi)
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
             -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
             -d parse_mode="HTML" \
-            -d text="<b>🚀 CD DEPLOY IN PROGRESS</b>%0A%0A<b>Repo:</b>     ${REPO_NAME}%0A<b>Người:</b>    ${{ github.event.workflow_run.actor.login }}%0A<b>Nhánh:</b>    ${{ github.event.workflow_run.head_branch }} (<code>${SHA_SHORT}</code>)%0A<b>Image:</b>    ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest%0A<b>Status:</b>   In Progress"
+            -d text="<b>🚀 CD DEPLOY IN PROGRESS [${ENV_LABEL}]</b>%0A%0A<b>Repo:</b>     ${REPO_NAME}%0A<b>Người:</b>    ${{ github.event.workflow_run.actor.login }}%0A<b>Nhánh:</b>    ${{ github.event.workflow_run.head_branch }} (<code>${SHA_SHORT}</code>)%0A<b>Image:</b>    ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.workflow_run.head_branch == 'main' && 'latest' || 'develop' }}%0A<b>Status:</b>   In Progress"
 
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -51,8 +52,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=sha
+            type=raw,value=${{ github.event.workflow_run.head_branch == 'main' && 'latest' || 'develop' }},enable=true
+            type=sha,prefix=${{ github.event.workflow_run.head_branch == 'main' && 'prod-' || 'dev-' }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -84,10 +85,12 @@ jobs:
           REPO: ${{ steps.info.outputs.repo_name }}
           DEPLOY_URL: ${{ secrets.DEPLOY_URL || '' }}
         run: |
+          ENV_LABEL=$(if [ "${BRANCH}" = "main" ]; then echo "PRODUCTION"; else echo "DEVELOP"; fi)
+          TAG=$(if [ "${BRANCH}" = "main" ]; then echo "latest"; else echo "develop"; fi)
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
             -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
             -d parse_mode="HTML" \
-            -d text="<b>✅ CD DEPLOY SUCCESS</b>%0A%0A<b>Repo:</b>     ${REPO}%0A<b>Người:</b>    ${AUTHOR}%0A<b>Nhánh:</b>    ${BRANCH} (<code>${SHA}</code>)%0A<b>Image:</b>    ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest%0A<b>Commit:</b>   ${MSG}%0A<b>URL:</b>      ${DEPLOY_URL}%0A<b>Status:</b>   Success"
+            -d text="<b>✅ CD DEPLOY SUCCESS [${ENV_LABEL}]</b>%0A%0A<b>Repo:</b>     ${REPO}%0A<b>Người:</b>    ${AUTHOR}%0A<b>Nhánh:</b>    ${BRANCH} (<code>${SHA}</code>)%0A<b>Image:</b>    ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${TAG}%0A<b>Commit:</b>   ${MSG}%0A<b>URL:</b>      ${DEPLOY_URL}%0A<b>Status:</b>   Success"
 
       - name: Notify Telegram - Failure
         if: failure()
@@ -98,7 +101,9 @@ jobs:
           BRANCH: ${{ steps.info.outputs.branch }}
           REPO: ${{ steps.info.outputs.repo_name }}
         run: |
+          ENV_LABEL=$(if [ "${BRANCH}" = "main" ]; then echo "PRODUCTION"; else echo "DEVELOP"; fi)
+          TAG=$(if [ "${BRANCH}" = "main" ]; then echo "latest"; else echo "develop"; fi)
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
             -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
             -d parse_mode="HTML" \
-            -d text="<b>❌ CD DEPLOY FAILED</b>%0A%0A<b>Repo:</b>     ${REPO}%0A<b>Người:</b>    ${AUTHOR}%0A<b>Nhánh:</b>    ${BRANCH} (<code>${SHA}</code>)%0A<b>Image:</b>    ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest%0A<b>Commit:</b>   ${MSG}%0A<b>Status:</b>   Failed"
+            -d text="<b>❌ CD DEPLOY FAILED [${ENV_LABEL}]</b>%0A%0A<b>Repo:</b>     ${REPO}%0A<b>Người:</b>    ${AUTHOR}%0A<b>Nhánh:</b>    ${BRANCH} (<code>${SHA}</code>)%0A<b>Image:</b>    ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${TAG}%0A<b>Commit:</b>   ${MSG}%0A<b>Status:</b>   Failed"
