@@ -89,6 +89,7 @@ jobs:
             PORT=3000
             EOF
 
+            docker network create wio_net || true
             docker pull ghcr.io/${{ github.repository }}:$TAG
             docker stop $CONTAINER_NAME || true
             docker rm $CONTAINER_NAME || true
@@ -100,15 +101,13 @@ jobs:
               --env-file .env \
               ghcr.io/${{ github.repository }}:$TAG
 
-
-
       - name: Prepare commit info
         id: info
         if: always()
         run: |
-          echo "sha_short=$(echo '${{ github.event.workflow_run.head_sha }}' | cut -c1-7)" >> $GITHUB_OUTPUT
-          echo "author=${{ github.event.workflow_run.actor.login }}" >> $GITHUB_OUTPUT
-          echo "branch=${{ github.event.workflow_run.head_branch }}" >> $GITHUB_OUTPUT
+          echo "sha_short=$(echo '${{ github.sha }}' | cut -c1-7)" >> $GITHUB_OUTPUT
+          echo "author=${{ github.actor }}" >> $GITHUB_OUTPUT
+          echo "branch=${{ github.ref_name }}" >> $GITHUB_OUTPUT
           echo "repo_name=$(echo '${{ github.repository }}' | cut -d/ -f2)" >> $GITHUB_OUTPUT
           echo "msg_first=$(git log -1 --format=%s 2>/dev/null | tr -d '\r' | sed 's/["`$]//g' || echo 'N/A')" >> $GITHUB_OUTPUT
 
