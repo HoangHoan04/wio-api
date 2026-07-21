@@ -1,7 +1,9 @@
 # ──────────────────────────────────────────────────────────────
 # wio-api :: docker-compose.prod.yml
-# Môi trường PRODUCTION (người dùng cuối)
-# Database: wio-prod
+# Môi trường PRODUCTION trên server.
+# Biến môi trường được đọc từ file .env duy nhất.
+# Các file env của wio-admin/wio-customer được mount để API có thể
+# đọc/ghi qua giao diện Admin (EnvManager UI).
 # ──────────────────────────────────────────────────────────────
 
 version: '3.8'
@@ -12,11 +14,11 @@ services:
     container_name: wio_postgres_prod
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: hoanghoanrootpass123@
-      POSTGRES_DB: wio-prod
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hoanghoanrootpass123@}
+      POSTGRES_DB: ${POSTGRES_DB:-wio-prod}
     ports:
-      - '127.0.0.1:5432:5432'
+      - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
     volumes:
       - postgres_data_prod:/var/lib/postgresql/data
     networks:
@@ -32,7 +34,7 @@ services:
     container_name: wio_redis_prod
     restart: always
     ports:
-      - '127.0.0.1:6379:6379'
+      - '127.0.0.1:${REDIS_PORT:-6379}:6379'
     volumes:
       - redis_data_prod:/data
     networks:
@@ -50,15 +52,15 @@ services:
       target: migration
     container_name: wio_api_migration_prod
     env_file:
-      - .env.prod.local
+      - .env
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://postgres:hoanghoanrootpass123@@postgres:5432/wio-prod
-      - TYPEORM_HOST=postgres
-      - TYPEORM_PORT=5432
-      - TYPEORM_USERNAME=postgres
-      - TYPEORM_PASSWORD=hoanghoanrootpass123@
-      - TYPEORM_DATABASE=wio-prod
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:hoanghoanrootpass123@@postgres:5432/wio-prod}
+      - TYPEORM_HOST=${TYPEORM_HOST:-postgres}
+      - TYPEORM_PORT=${TYPEORM_PORT:-5432}
+      - TYPEORM_USERNAME=${TYPEORM_USERNAME:-postgres}
+      - TYPEORM_PASSWORD=${TYPEORM_PASSWORD:-hoanghoanrootpass123@}
+      - TYPEORM_DATABASE=${TYPEORM_DATABASE:-wio-prod}
     depends_on:
       postgres:
         condition: service_healthy
@@ -82,19 +84,19 @@ services:
     # Sau khi phân quyền xong, chuyển về node user và set đúng file ownership.
     user: root
     env_file:
-      - .env.prod.local
+      - .env
     environment:
       - NODE_ENV=production
       - PORT=4300
-      - DATABASE_URL=postgresql://postgres:hoanghoanrootpass123@@postgres:5432/wio-prod
-      - TYPEORM_HOST=postgres
-      - TYPEORM_PORT=5432
-      - TYPEORM_USERNAME=postgres
-      - TYPEORM_PASSWORD=hoanghoanrootpass123@
-      - TYPEORM_DATABASE=wio-prod
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - ENV_MANAGER_BASE_PATH=/opt/wio
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:hoanghoanrootpass123@@postgres:5432/wio-prod}
+      - TYPEORM_HOST=${TYPEORM_HOST:-postgres}
+      - TYPEORM_PORT=${TYPEORM_PORT:-5432}
+      - TYPEORM_USERNAME=${TYPEORM_USERNAME:-postgres}
+      - TYPEORM_PASSWORD=${TYPEORM_PASSWORD:-hoanghoanrootpass123@}
+      - TYPEORM_DATABASE=${TYPEORM_DATABASE:-wio-prod}
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - ENV_MANAGER_BASE_PATH=${ENV_MANAGER_BASE_PATH:-/opt/wio}
     ports:
       - '127.0.0.1:4300:4300'
     depends_on:
@@ -105,13 +107,10 @@ services:
       redis:
         condition: service_healthy
     volumes:
-      # Mount env files của admin/customer để API có thể đọc/ghi
-      - /opt/wio/wio-admin/.env.development:/opt/wio/wio-admin/.env.development
-      - /opt/wio/wio-admin/.env.production:/opt/wio/wio-admin/.env.production
-      - /opt/wio/wio-customer/.env.development:/opt/wio/wio-customer/.env.development
-      - /opt/wio/wio-customer/.env.production:/opt/wio/wio-customer/.env.production
-      - /opt/wio/wio-api/.env.dev.local:/opt/wio/wio-api/.env.dev.local
-      - /opt/wio/wio-api/.env.prod.local:/opt/wio/wio-api/.env.prod.local
+      # Mount env files duy nhất của admin/customer/api để EnvManager UI quản lý
+      - /opt/wio/wio-admin/.env:/opt/wio/wio-admin/.env
+      - /opt/wio/wio-customer/.env:/opt/wio/wio-customer/.env
+      - /opt/wio/wio-api/.env:/opt/wio/wio-api/.env
     networks:
       - wio_prod_net
 

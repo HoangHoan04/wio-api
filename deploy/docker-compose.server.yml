@@ -23,9 +23,10 @@ services:
     image: wio-admin:develop
     container_name: wio_admin_dev
     restart: always
-    environment:
-      - VITE_API_BASE_URL=https://api-dev.tiemcuoitanthoi.id.vn
-      - VITE_BYPASS_AUTH=false
+    # Lưu ý: wio-admin là static SPA, VITE_* được bake khi build image.
+    # File .env này chỉ có ý nghĩa khi build; runtime không ảnh hưởng.
+    env_file:
+      - /opt/wio/wio-admin/.env
     networks:
       - nginx_net
       - wio_dev_net
@@ -34,8 +35,10 @@ services:
     image: wio-customer:develop
     container_name: wio_customer_dev
     restart: always
-    environment:
-      - NEXT_PUBLIC_API_URL=https://api-dev.tiemcuoitanthoi.id.vn
+    # Lưu ý: wio-customer là Next.js app, NEXT_PUBLIC_* được bake khi build image.
+    # File .env này chỉ có ý nghĩa khi build; runtime không ảnh hưởng public env.
+    env_file:
+      - /opt/wio/wio-customer/.env
     networks:
       - nginx_net
       - wio_dev_net

@@ -24,34 +24,19 @@ export class EnvManagerService {
 
     this.files = [
       {
-        project: 'wio-admin',
-        environment: 'production',
-        path: 'wio-admin/.env.production',
+        project: 'wio-api',
+        environment: 'default',
+        path: 'wio-api/.env',
       },
       {
         project: 'wio-admin',
-        environment: 'development',
-        path: 'wio-admin/.env.development',
+        environment: 'default',
+        path: 'wio-admin/.env',
       },
       {
         project: 'wio-customer',
-        environment: 'production',
-        path: 'wio-customer/.env.production',
-      },
-      {
-        project: 'wio-customer',
-        environment: 'development',
-        path: 'wio-customer/.env.development',
-      },
-      {
-        project: 'wio-api',
-        environment: 'dev-local',
-        path: 'wio-api/.env.dev.local',
-      },
-      {
-        project: 'wio-api',
-        environment: 'prod-local',
-        path: 'wio-api/.env.prod.local',
+        environment: 'default',
+        path: 'wio-customer/.env',
       },
     ];
   }

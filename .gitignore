@@ -39,14 +39,8 @@ pnpm-lock.yaml
 !.vscode/launch.json
 !.vscode/extensions.json
 
-# dotenv environment variable files
+# dotenv environment variable file
 .env
-.env.local
-.env.*.local
-
-# Không ignore file mẫu cho develop/production
-!.env.dev.example
-!.env.prod.example
 
 # Certbot SSL certificates (generated on server)
 deploy/certbot/
