@@ -94,7 +94,8 @@ jobs:
 
             docker network create wio_net || true
             echo "$GITHUB_TOKEN" | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
-            docker pull ghcr.io/${{ github.repository }}:$TAG
+            REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+            docker pull ghcr.io/$REPO_LOWER:$TAG
             docker stop $CONTAINER_NAME || true
             docker rm $CONTAINER_NAME || true
             docker run -d \
@@ -103,7 +104,7 @@ jobs:
               --net wio_net \
               -p 127.0.0.1:$PORT:3000 \
               --env-file .env \
-              ghcr.io/${{ github.repository }}:$TAG
+              ghcr.io/$REPO_LOWER:$TAG
 
       - name: Prepare commit info
         id: info
