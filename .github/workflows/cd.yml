@@ -65,6 +65,47 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Deploy to Server via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: DATABASE_URL,JWT_SECRET,POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB
+          script: |
+            IS_PROD=${{ github.event.workflow_run.head_branch == 'main' || github.event.workflow_run.head_branch == 'production' }}
+            TARGET_DIR=$(if [ "$IS_PROD" = "true" ]; then echo "/opt/wio/prod"; else echo "/opt/wio/dev"; fi)
+            TAG=$(if [ "$IS_PROD" = "true" ]; then echo "latest"; else echo "develop"; fi)
+            PORT=$(if [ "$IS_PROD" = "true" ]; then echo "5001"; else echo "4001"; fi)
+            CONTAINER_NAME=$(if [ "$IS_PROD" = "true" ]; then echo "wio_api_prod"; else echo "wio_api_dev"; fi)
+            DB_NAME=$(if [ "$IS_PROD" = "true" ]; then echo "wio_prod"; else echo "wio_dev"; fi)
+
+            mkdir -p $TARGET_DIR
+            cd $TARGET_DIR
+
+            cat <<EOF > .env
+            DATABASE_URL=$DATABASE_URL
+            JWT_SECRET=$JWT_SECRET
+            POSTGRES_USER=$POSTGRES_USER
+            POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+            POSTGRES_DB=$DB_NAME
+            NODE_ENV=production
+            PORT=3000
+            EOF
+
+            docker pull ghcr.io/${{ github.repository }}:$TAG
+            docker stop $CONTAINER_NAME || true
+            docker rm $CONTAINER_NAME || true
+            docker run -d \
+              --name $CONTAINER_NAME \
+              --restart always \
+              --net wio_net \
+              -p 127.0.0.1:$PORT:3000 \
+              --env-file .env \
+              ghcr.io/${{ github.repository }}:$TAG
+
+
+
       - name: Prepare commit info
         id: info
         if: always()

@@ -58,12 +58,7 @@ const modules = Object.values(allModules);
     ScheduleModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath:
-        process.env.NODE_ENV === 'production'
-          ? '.env.prod'
-          : process.env.NODE_ENV === 'development'
-            ? '.env.dev'
-            : '.env',
+      envFilePath: '.env',
     }),
   ],
   controllers: [AppController],
