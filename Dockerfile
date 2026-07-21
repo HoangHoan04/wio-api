@@ -2,6 +2,7 @@
 FROM node:22-alpine AS builder
 
 WORKDIR /app
+RUN apk add --no-cache python3 make g++ && ln -sf python3 /usr/bin/python
 
 COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile
@@ -13,6 +14,7 @@ RUN yarn build
 FROM node:22-alpine AS migration
 
 WORKDIR /app
+RUN apk add --no-cache python3 make g++ && ln -sf python3 /usr/bin/python
 
 COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile && yarn cache clean
@@ -29,6 +31,7 @@ CMD ["sh", "-c", "yarn migration:run:prod && node dist/main"]
 FROM node:22-alpine AS production
 
 WORKDIR /app
+RUN apk add --no-cache python3 make g++ && ln -sf python3 /usr/bin/python
 
 # Set Node environment to production
 ENV NODE_ENV=production
