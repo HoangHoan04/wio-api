@@ -4,12 +4,18 @@ import { DataSource } from 'typeorm';
 
 if (process.env.NODE_ENV !== 'production') {
   try {
-    const envFile = process.env.NODE_ENV === 'development' ? '.env' : '.env';
+    const envFile =
+      process.env.NODE_ENV === 'development' ? '.env.dev' : '.env';
     const envPath = path.resolve(process.cwd(), envFile);
-    dotenv.config({ path: envPath });
-    console.log(`Loaded environment from: ${envFile}`);
+    const result = dotenv.config({ path: envPath });
+    if (result.error) {
+      console.log(`Không tìm thấy ${envFile}, fallback về .env`);
+      dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+    } else {
+      console.log(`Loaded environment from: ${envFile}`);
+    }
   } catch (error) {
-    console.log('dotenv not loaded (production environment)');
+    console.log('dotenv not loaded:', error);
   }
 }
 

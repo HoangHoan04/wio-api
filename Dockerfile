@@ -9,7 +9,23 @@ RUN yarn install --frozen-lockfile
 COPY . .
 RUN yarn build
 
-# Stage 2: Production Execution Image
+# Stage 2: Migration Runner Image (contains dev deps + ts-node)
+FROM node:22-alpine AS migration
+
+WORKDIR /app
+
+COPY package.json yarn.lock ./
+RUN yarn install --frozen-lockfile && yarn cache clean
+
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/src ./src
+COPY tsconfig.json tsconfig.build.json ./
+
+ENV NODE_ENV=production
+
+CMD ["sh", "-c", "yarn migration:run:prod && node dist/main"]
+
+# Stage 3: Production Execution Image
 FROM node:22-alpine AS production
 
 WORKDIR /app

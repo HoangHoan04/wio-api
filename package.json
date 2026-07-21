@@ -20,10 +20,13 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli -d ./src/typeorm/typeorm.config.ts",
     "db:create": "ts-node ./src/database/create-database.ts",
-    "typeorm:generate-migration": "yarn db:create && yarn typeorm migration:generate ./src/migrations/migration_name",
-    "typeorm:create-migration": "yarn ts-node ./node_modules/typeorm/cli migration:create ./src/migrations/migration_name",
-    "typeorm:run-migrations": "yarn typeorm migration:run",
-    "typeorm:revert-migration": "yarn typeorm migration:revert"
+    "migration:generate": "yarn db:create && yarn typeorm migration:generate ./src/migrations/migration_name",
+    "migration:create": "yarn ts-node ./node_modules/typeorm/cli migration:create ./src/migrations/migration_name",
+    "migration:run": "yarn db:create && yarn typeorm migration:run",
+    "migration:revert": "yarn typeorm migration:revert",
+    "migration:run:dev": "cross-env NODE_ENV=development yarn migration:run",
+    "migration:run:prod": "cross-env NODE_ENV=production yarn migration:run",
+    "migration:show": "yarn typeorm migration:show"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.52",
@@ -56,6 +59,7 @@
     "class-validator": "^0.14.4",
     "cloudinary": "^2.9.0",
     "dayjs": "^1.11.20",
+    "dotenv": "^16.4.7",
     "exceljs": "^4.4.0",
     "firebase-admin": "^13.7.0",
     "moment": "^2.30.1",
@@ -90,6 +94,7 @@
     "@types/passport-jwt": "^4.0.1",
     "@types/supertest": "^6.0.2",
     "concurrently": "^9.2.1",
+    "cross-env": "^7.0.3",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",
