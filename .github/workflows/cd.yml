@@ -11,7 +11,7 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: ${{ github.ref_name == 'main' || github.ref_name == 'production' && 'production' || 'development' }}
+    environment: ${{ (github.ref_name == 'main' || github.ref_name == 'production') && 'production' || 'development' }}
     permissions:
       contents: read
       packages: write
@@ -48,8 +48,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=${{ github.ref_name == 'main' || github.ref_name == 'production' && 'latest' || 'develop' }},enable=true
-            type=sha,prefix=${{ github.ref_name == 'main' || github.ref_name == 'production' && 'prod-' || 'dev-' }}
+            type=raw,value=${{ (github.ref_name == 'main' || github.ref_name == 'production') && 'latest' || 'develop' }},enable=true
+            type=sha,prefix=${{ (github.ref_name == 'main' || github.ref_name == 'production') && 'prod-' || 'dev-' }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
