@@ -6,7 +6,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: hoanghoan04/wio-api
 
 jobs:
   deploy:
@@ -63,38 +63,44 @@ jobs:
 
       - name: Deploy to Server via SSH
         uses: appleboy/ssh-action@v1
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: DATABASE_URL,JWT_SECRET,POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,GITHUB_TOKEN,GITHUB_ACTOR
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            GITHUB_ACTOR: ${{ github.actor }}
+          envs: DOPPLER_TOKEN,GITHUB_TOKEN,GITHUB_ACTOR
           script: |
             IS_PROD=${{ github.ref_name == 'main' || github.ref_name == 'production' }}
             TARGET_DIR=$(if [ "$IS_PROD" = "true" ]; then echo "/opt/wio/prod"; else echo "/opt/wio/dev"; fi)
             TAG=$(if [ "$IS_PROD" = "true" ]; then echo "latest"; else echo "develop"; fi)
             PORT=$(if [ "$IS_PROD" = "true" ]; then echo "5001"; else echo "4001"; fi)
             CONTAINER_NAME=$(if [ "$IS_PROD" = "true" ]; then echo "wio_api_prod"; else echo "wio_api_dev"; fi)
-            DB_NAME=$(if [ "$IS_PROD" = "true" ]; then echo "wio_prod"; else echo "wio_dev"; fi)
 
             mkdir -p $TARGET_DIR
             cd $TARGET_DIR
 
-            cat <<EOF > .env
-            DATABASE_URL=$DATABASE_URL
-            JWT_SECRET=$JWT_SECRET
-            POSTGRES_USER=$POSTGRES_USER
-            POSTGRES_PASSWORD=$POSTGRES_PASSWORD
-            POSTGRES_DB=$DB_NAME
-            NODE_ENV=production
-            PORT=3000
-            EOF
+            if [ -z "$DOPPLER_TOKEN" ] && [ -f "$HOME/.bashrc" ]; then
+              source "$HOME/.bashrc" || true
+            fi
+
+            if [ -n "$DOPPLER_TOKEN" ]; then
+              doppler secrets download --token "$DOPPLER_TOKEN" --format env --no-file > .env
+            else
+              doppler secrets download --format env --no-file > .env
+            fi
+
+            sed -i '/^PORT=/d' .env 2>/dev/null || true
+            sed -i '/^NODE_ENV=/d' .env 2>/dev/null || true
+            echo "PORT=3000" >> .env
+            echo "NODE_ENV=production" >> .env
 
             docker network create wio_net || true
             echo "$GITHUB_TOKEN" | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
-            docker pull ghcr.io/${{ github.repository }}:$TAG
+            REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+            docker pull ghcr.io/$REPO_LOWER:$TAG
             docker stop $CONTAINER_NAME || true
             docker rm $CONTAINER_NAME || true
             docker run -d \
@@ -103,7 +109,7 @@ jobs:
               --net wio_net \
               -p 127.0.0.1:$PORT:3000 \
               --env-file .env \
-              ghcr.io/${{ github.repository }}:$TAG
+              ghcr.io/$REPO_LOWER:$TAG
 
       - name: Prepare commit info
         id: info
