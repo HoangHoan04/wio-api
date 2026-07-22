@@ -26,10 +26,10 @@ import {
   SendOtpCustomerDto,
   SendOtpVerifyDto,
   UpdatePasswordDto,
+  UpdateProfileDto,
   UserLoginDto,
   VerifyEmailDto,
   VerifyLoginOtpDto,
-  UpdateProfileDto,
 } from '../dto';
 
 @ApiBearerAuth()

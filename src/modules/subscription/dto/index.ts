@@ -15,10 +15,10 @@ export class CreateSubscriptionDto {
   @IsString()
   userId: string;
 
-  @ApiProperty({ description: 'ID Đám cưới sử dụng gói' })
-  @IsNotEmpty()
+  @ApiProperty({ description: 'ID Đám cưới sử dụng gói', required: false })
+  @IsOptional()
   @IsString()
-  weddingId: string;
+  weddingId?: string;
 
   @ApiProperty({ description: 'ID Gói dịch vụ' })
   @IsNotEmpty()

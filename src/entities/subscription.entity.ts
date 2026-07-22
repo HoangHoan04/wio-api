@@ -14,9 +14,9 @@ export class SubscriptionEntity extends BaseEntity {
   userId: string;
 
   // ID đám cưới
-  @Column({ type: 'uuid', nullable: false })
-  @ApiProperty({ description: 'ID đám cưới' })
-  weddingId: string;
+  @Column({ type: 'uuid', nullable: true })
+  @ApiProperty({ description: 'ID đám cưới', required: false })
+  weddingId?: string;
 
   // ID gói dịch vụ
   @Column({ type: 'uuid', nullable: false })
@@ -64,10 +64,10 @@ export class SubscriptionEntity extends BaseEntity {
   user: UserEntity;
 
   // Wedding
-  @ManyToOne(() => WeddingEntity, { onDelete: 'CASCADE' })
+  @ManyToOne(() => WeddingEntity, { onDelete: 'CASCADE', nullable: true })
   @JoinColumn({ name: 'weddingId' })
-  @ApiProperty({ description: 'Wedding' })
-  wedding: WeddingEntity;
+  @ApiProperty({ description: 'Wedding', required: false })
+  wedding?: WeddingEntity;
 
   // Plan
   @ManyToOne(() => ServicePlanEntity, { onDelete: 'RESTRICT' })

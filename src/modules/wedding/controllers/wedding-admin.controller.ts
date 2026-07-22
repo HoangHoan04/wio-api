@@ -43,18 +43,6 @@ export class WeddingAdminController {
     return await this.service.getSlugHistory(body.id);
   }
 
-  @ApiOperation({ summary: 'Publish đám cưới (Admin)' })
-  @Post('publish')
-  async publish(@Body() body: IdDto, @CurrentUser() user: UserDto) {
-    return await this.service.publish(body.id, user);
-  }
-
-  @ApiOperation({ summary: 'Unpublish / archive đám cưới (Admin)' })
-  @Post('unpublish')
-  async unpublish(@Body() body: IdDto, @CurrentUser() user: UserDto) {
-    return await this.service.unpublish(body.id, user);
-  }
-
   @ApiOperation({ summary: 'Thống kê RSVP của một đám cưới (Admin view)' })
   @Post('stats')
   async stats(@Body() body: IdDto, @CurrentUser() user: UserDto) {

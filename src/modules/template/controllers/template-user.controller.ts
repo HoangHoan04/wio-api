@@ -28,4 +28,16 @@ export class TemplateUserController {
   async findById(@Body() body: IdDto) {
     return await this.service.findById(body);
   }
+
+  @ApiOperation({ summary: 'Tăng lượt dùng template (khi user tạo thiệp)' })
+  @Post('increment-view')
+  async incrementView(@Body() body: IdDto) {
+    return await this.service.incrementView(body);
+  }
+
+  @ApiOperation({ summary: 'Tăng lượt xem trước template' })
+  @Post('increment-preview')
+  async incrementPreview(@Body() body: IdDto) {
+    return await this.service.incrementPreview(body);
+  }
 }

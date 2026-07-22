@@ -116,40 +116,20 @@ export const enumData = {
       name: 'Hoa mộc Lan - Hồng',
       slug: 'hoa-moc-lan-hong',
     },
-    DRAGON_PHOENIX_BLUE: {
-      code: 'DRAGON_PHOENIX_BLUE',
-      name: 'Long phụng - Xanh',
-      slug: 'long-phung-xanh',
-    },
-    DRAGON_PHOENIX_GREEN: {
-      code: 'DRAGON_PHOENIX_GREEN',
-      name: 'Long phụng - Xanh lá',
-      slug: 'long-phung-xanh-la',
-    },
     DRAGON_PHOENIX_RED: {
       code: 'DRAGON_PHOENIX_RED',
       name: 'Long phụng - Đỏ',
       slug: 'long-phung-do',
     },
-    ROYAL_BLUE: {
-      code: 'ROYAL_BLUE',
-      name: 'Hoàng gia - Xanh',
-      slug: 'hoang-gia-xanh',
-    },
-    ROYAL_GREEN: {
-      code: 'ROYAL_GREEN',
-      name: 'Hoàng gia - Xanh lá',
-      slug: 'hoang-gia-xanh-la',
+    RED_DOUBLE_HAPPINESS: {
+      code: 'RED_DOUBLE_HAPPINESS',
+      name: 'Song hỷ - Đỏ truyền thống',
+      slug: 'song-hy-do-truyen-thong',
     },
     ROYAL_RED: {
       code: 'ROYAL_RED',
-      name: 'Hoàng gia - Đỏ',
-      slug: 'hoang-gia-do',
-    },
-    RED_DOUBLE_HAPPINESS: {
-      code: 'RED_DOUBLE_HAPPINESS',
-      name: 'Song hỷ - Đỏ',
-      slug: 'song-hy-do',
+      name: 'Hoàng gia - Đỏ nhung',
+      slug: 'hoang-gia-do-nhung',
     },
   },
 };

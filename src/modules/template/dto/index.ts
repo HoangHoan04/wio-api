@@ -4,7 +4,6 @@ import {
   IsBoolean,
   IsNotEmpty,
   IsNumber,
-  IsObject,
   IsOptional,
   IsString,
   IsUUID,
@@ -16,10 +15,10 @@ export class CreateTemplateDto {
   @IsString()
   name: string;
 
-  @ApiProperty({ description: 'Mô tả ngắn' })
-  @IsNotEmpty()
+  @ApiProperty({ description: 'Mô tả ngắn', required: false })
+  @IsOptional()
   @IsString()
-  description: string;
+  description?: string;
 
   @ApiProperty({
     description: 'Tags phong cách',
@@ -33,7 +32,6 @@ export class CreateTemplateDto {
 
   @ApiProperty({ description: 'Cấu hình tính năng dạng JSON', required: false })
   @IsOptional()
-  @IsObject()
   features?: any;
 
   @ApiProperty({ description: 'Đường dẫn ảnh thu nhỏ', required: false })
@@ -46,23 +44,17 @@ export class CreateTemplateDto {
   @IsString()
   themeCode: string;
 
-  @ApiProperty({ description: 'Trạng thái hiển thị', default: true })
-  @IsNotEmpty()
-  @IsBoolean()
-  isShow: boolean;
-
   @ApiProperty({ description: 'Giao diện trả phí?', default: false })
-  @IsNotEmpty()
   @IsBoolean()
   isPremium: boolean;
 
   @ApiProperty({
-    description: 'Gói tối thiểu để sử dụng',
-    default: 'free',
+    description: 'ID gói tối thiểu để sử dụng',
+    required: false,
   })
-  @IsNotEmpty()
-  @IsString()
-  minPlan: string;
+  @IsOptional()
+  @IsUUID()
+  minPlanId?: string;
 
   @ApiProperty({ description: 'Số ngày dùng thử', default: 3 })
   @IsNotEmpty()
@@ -140,10 +132,10 @@ export class FilterTemplateDto {
   isDeleted?: boolean;
 
   @ApiProperty({
-    description: 'Gói tối thiểu để sử dụng (free | basic | premium)',
+    description: 'ID gói tối thiểu để sử dụng',
     required: false,
   })
   @IsOptional()
-  @IsString()
-  minPlan?: string;
+  @IsUUID()
+  minPlanId?: string;
 }

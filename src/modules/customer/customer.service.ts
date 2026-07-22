@@ -16,9 +16,9 @@ export class CustomerService {
     private readonly userRepo: UserRepository,
   ) {}
 
-  async findById(id: string) {
+  async findById(data: IdDto) {
     const customer = await this.repo.findOne({
-      where: { id },
+      where: { id: data.id },
     });
 
     if (!customer) {
@@ -53,7 +53,7 @@ export class CustomerService {
     return res;
   }
 
-  async pagination(user: UserDto, data: PaginationDto) {
+  async pagination(data: PaginationDto) {
     const whereCon: FindOptionsWhere<CustomerEntity> = {};
 
     if (data.where.code) whereCon.code = ILike(`%${data.where.code}%`);
@@ -61,7 +61,6 @@ export class CustomerService {
       whereCon.fullName = ILike(`%${data.where.fullName}%`);
     if (data.where.phone) whereCon.phone = ILike(`%${data.where.phone}%`);
     if (data.where.email) whereCon.email = ILike(`%${data.where.email}%`);
-    if (data.where.gender) whereCon.gender = data.where.gender;
     if ([true, false].includes(data.where.isDeleted))
       whereCon.isDeleted = data.where.isDeleted;
 
@@ -103,7 +102,7 @@ export class CustomerService {
     const actionLogDto: ActionLogCreateDto = {
       entityId: data.id,
       entityName: 'CustomerEntity',
-      actionType: enumData.ACTION_TYPE.UPDATE.code,
+      actionType: enumData.ACTION_TYPE.DEACTIVATE.code,
       createdById: user.id,
       createdByCode: user.id,
       createdByName: user.email,
@@ -141,7 +140,7 @@ export class CustomerService {
     const actionLogDto: ActionLogCreateDto = {
       entityId: data.id,
       entityName: 'CustomerEntity',
-      actionType: enumData.ACTION_TYPE.UPDATE.code,
+      actionType: enumData.ACTION_TYPE.ACTIVATE.code,
       createdById: user.id,
       createdByCode: user.id,
       createdByName: user.email,

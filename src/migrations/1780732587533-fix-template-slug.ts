@@ -14,11 +14,7 @@ export class FixTemplateSlug1780732587533 implements MigrationInterface {
       DOUBLE_DRAGON_BLUE: 'song-long-xanh',
       DOUBLE_DRAGON_GREEN: 'song-long-xanh-la',
       DOUBLE_DRAGON_RED: 'song-long-do',
-      DRAGON_PHOENIX_BLUE: 'long-phung-xanh',
-      DRAGON_PHOENIX_GREEN: 'long-phung-xanh-la',
       DRAGON_PHOENIX_RED: 'long-phung-do',
-      ROYAL_BLUE: 'hoang-gia-xanh',
-      ROYAL_GREEN: 'hoang-gia-xanh-la',
       ROYAL_RED: 'hoang-gia-do',
       RED_DOUBLE_HAPPINESS: 'song-hy-do',
     };
