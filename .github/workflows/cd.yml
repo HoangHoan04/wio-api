@@ -74,7 +74,7 @@ jobs:
           envs: DOPPLER_TOKEN,GITHUB_TOKEN,GITHUB_ACTOR
           script: |
             IS_PROD=${{ github.ref_name == 'main' || github.ref_name == 'production' }}
-            TARGET_DIR=$(if [ "$IS_PROD" = "true" ]; then echo "/opt/wio/prod"; else echo "/opt/wio/dev"; fi)
+            TARGET_DIR=$(if [ "$IS_PROD" = "true" ]; then echo "/opt/wio/prod/api"; else echo "/opt/wio/dev/api"; fi)
             TAG=$(if [ "$IS_PROD" = "true" ]; then echo "latest"; else echo "develop"; fi)
             PORT=$(if [ "$IS_PROD" = "true" ]; then echo "5001"; else echo "4001"; fi)
             CONTAINER_NAME=$(if [ "$IS_PROD" = "true" ]; then echo "wio_api_prod"; else echo "wio_api_dev"; fi)
