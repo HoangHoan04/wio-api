@@ -6,6 +6,8 @@ import {
   WeddingEventEntity,
   WeddingPhotoEntity,
   WeddingTimelineEntity,
+  TemplateEntity,
+  SubscriptionEntity,
 } from '@/entities';
 import {
   GuestRepository,
@@ -133,7 +135,24 @@ export class WeddingService {
     entity.createdBy = user.id;
 
     if (dto.userId !== undefined) entity.userId = dto.userId;
-    if (dto.templateId !== undefined) entity.templateId = dto.templateId;
+    if (dto.templateId !== undefined) {
+      const template = await this.repo.manager.findOne(TemplateEntity, {
+        where: { id: dto.templateId, isDeleted: false },
+      });
+      if (template && template.isPremium) {
+        const sub = await this.repo.manager.createQueryBuilder(SubscriptionEntity, 'sub')
+          .where('sub.userId = :userId', { userId: user.id })
+          .andWhere('sub.status = :status', { status: 'ACTIVE' })
+          .andWhere('sub.expiresAt > :now', { now: new Date() })
+          .getOne();
+        if (!sub) {
+          throw new ForbiddenException(
+            'Giao diện này thuộc gói Premium. Vui lòng đăng ký gói dịch vụ để sử dụng.',
+          );
+        }
+      }
+      entity.templateId = dto.templateId;
+    }
 
     if (dto.slug !== undefined) {
       const isAvailable = await this.checkSlugAvailable(dto.slug);
@@ -221,7 +240,24 @@ export class WeddingService {
     entity.updatedBy = user.id;
 
     if (dto.userId !== undefined) entity.userId = dto.userId;
-    if (dto.templateId !== undefined) entity.templateId = dto.templateId;
+    if (dto.templateId !== undefined && entity.templateId !== dto.templateId) {
+      const template = await this.repo.manager.findOne(TemplateEntity, {
+        where: { id: dto.templateId, isDeleted: false },
+      });
+      if (template && template.isPremium) {
+        const sub = await this.repo.manager.createQueryBuilder(SubscriptionEntity, 'sub')
+          .where('sub.userId = :userId', { userId: user.id })
+          .andWhere('sub.status = :status', { status: 'ACTIVE' })
+          .andWhere('sub.expiresAt > :now', { now: new Date() })
+          .getOne();
+        if (!sub) {
+          throw new ForbiddenException(
+            'Giao diện này thuộc gói Premium. Vui lòng đăng ký gói dịch vụ để sử dụng.',
+          );
+        }
+      }
+      entity.templateId = dto.templateId;
+    }
 
     if (dto.slug !== undefined && entity.slug !== dto.slug) {
       const isAvailable = await this.checkSlugAvailable(dto.slug);

@@ -1,5 +1,5 @@
 import { enumData } from '@/common/constanst/enumData';
-import { CustomerEntity, UserEntity, UserTokenEntity } from '@/entities';
+import { CustomerEntity, UserEntity, UserTokenEntity, SubscriptionEntity } from '@/entities';
 import {
   CustomerRepository,
   UserRepository,
@@ -455,9 +455,16 @@ export class AuthService {
     const customer = await this.customerRepo.findOne({
       where: { userId: userDto.id },
     });
+    const activeSubscription = await this.userRepo.manager.createQueryBuilder(SubscriptionEntity, 'sub')
+      .leftJoinAndSelect('sub.plan', 'plan')
+      .where('sub.userId = :userId', { userId: userDto.id })
+      .andWhere('sub.status = :status', { status: 'ACTIVE' })
+      .andWhere('sub.expiresAt > :now', { now: new Date() })
+      .getOne();
+
     return {
       message: 'Lấy thông tin thành công',
-      data: { ...user, customer },
+      data: { ...user, customer, activeSubscription },
     };
   }
 

@@ -1,9 +1,12 @@
+import { enumData } from '@/common/constanst/enumData';
 import { IdDto, PaginationDto, UserDto } from '@/dto';
 import { ServicePlanEntity } from '@/entities';
 import { ServicePlanRepository } from '@/repositories';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { FindOptionsWhere } from 'typeorm';
+import { FindOptionsWhere, ILike } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
+import { ActionLogCreateDto } from '../action-log/action-log.dto';
+import { ActionLogService } from '../action-log/action-log.service';
 import {
   CreateServicePlanDto,
   FilterServicePlanDto,
@@ -12,13 +15,24 @@ import {
 
 @Injectable()
 export class ServicePlanService {
-  constructor(private readonly repo: ServicePlanRepository) {}
+  constructor(
+    private readonly repo: ServicePlanRepository,
+    private readonly actionLogService: ActionLogService,
+  ) {}
+
+  async findActivePlans() {
+    const list = await this.repo.find({
+      where: { isActive: true, isDeleted: false },
+      order: { priceVnd: 'ASC' },
+    });
+    return { message: 'Thành công', data: list };
+  }
 
   async pagination(data: PaginationDto<FilterServicePlanDto>) {
     const { skip = 0, take = 10, where = {} } = data;
     const whereCon: FindOptionsWhere<ServicePlanEntity> = { isDeleted: false };
 
-    if (where.name !== undefined) whereCon.name = where.name;
+    if (where.name !== undefined) whereCon.name = ILike(`%${where.name}%`);
     if (where.maxGuests !== undefined) whereCon.maxGuests = where.maxGuests;
     if (where.maxPhotos !== undefined) whereCon.maxPhotos = where.maxPhotos;
     if (where.maxTemplates !== undefined)
@@ -47,7 +61,7 @@ export class ServicePlanService {
     const item = await this.repo.findOne({
       where: { id: data.id, isDeleted: false },
     });
-    if (!item) throw new NotFoundException('Không tìm thấy bản ghi');
+    if (!item) throw new NotFoundException('Không tìm thấy gói dịch vụ');
     return { message: 'Thành công', data: item };
   }
 
@@ -69,6 +83,20 @@ export class ServicePlanService {
     if (dto.isActive !== undefined) entity.isActive = dto.isActive;
 
     const saved = await this.repo.save(entity);
+
+    const actionLogDto: ActionLogCreateDto = {
+      entityId: saved.id,
+      entityName: 'ServicePlanEntity',
+      actionType: enumData.ACTION_TYPE.CREATE.code,
+      createdById: user.id,
+      createdByCode: user.id,
+      createdByName: user.fullName || user.email || 'Admin',
+      createdNote: `Tạo mới gói dịch vụ: ${saved.name}`,
+      oldValue: '{}',
+      newValue: JSON.stringify(saved),
+    };
+    await this.actionLogService.create(actionLogDto);
+
     return { message: 'Tạo thành công', data: saved };
   }
 
@@ -76,7 +104,9 @@ export class ServicePlanService {
     const entity = await this.repo.findOne({
       where: { id: dto.id, isDeleted: false },
     });
-    if (!entity) throw new NotFoundException('Không tìm thấy bản ghi');
+    if (!entity) throw new NotFoundException('Không tìm thấy gói dịch vụ');
+
+    const oldValueStr = JSON.stringify(entity);
 
     entity.updatedBy = user.id;
 
@@ -93,6 +123,20 @@ export class ServicePlanService {
     if (dto.isActive !== undefined) entity.isActive = dto.isActive;
 
     const saved = await this.repo.save(entity);
+
+    const actionLogDto: ActionLogCreateDto = {
+      entityId: saved.id,
+      entityName: 'ServicePlanEntity',
+      actionType: enumData.ACTION_TYPE.UPDATE.code,
+      createdById: user.id,
+      createdByCode: user.id,
+      createdByName: user.fullName || user.email || 'Admin',
+      createdNote: `Cập nhật gói dịch vụ: ${saved.name}`,
+      oldValue: oldValueStr,
+      newValue: JSON.stringify(saved),
+    };
+    await this.actionLogService.create(actionLogDto);
+
     return { message: 'Cập nhật thành công', data: saved };
   }
 
@@ -100,11 +144,40 @@ export class ServicePlanService {
     const entity = await this.repo.findOne({
       where: { id: data.id, isDeleted: false },
     });
-    if (!entity) throw new NotFoundException('Không tìm thấy bản ghi');
+    if (!entity) throw new NotFoundException('Không tìm thấy gói dịch vụ');
+
+    const oldValueStr = JSON.stringify(entity);
 
     entity.isDeleted = true;
     entity.updatedBy = user.id;
-    await this.repo.save(entity);
+    const saved = await this.repo.save(entity);
+
+    const actionLogDto: ActionLogCreateDto = {
+      entityId: entity.id,
+      entityName: 'ServicePlanEntity',
+      actionType: enumData.ACTION_TYPE.DELETE.code,
+      createdById: user.id,
+      createdByCode: user.id,
+      createdByName: user.fullName || user.email || 'Admin',
+      createdNote: `Xóa gói dịch vụ: ${entity.name}`,
+      oldValue: oldValueStr,
+      newValue: JSON.stringify(saved),
+    };
+    await this.actionLogService.create(actionLogDto);
+
     return { message: 'Xóa thành công' };
+  }
+
+  async selectBox() {
+    const res: any[] = await this.repo.find({
+      where: { isDeleted: false },
+      select: {
+        id: true,
+        name: true,
+        priceVnd: true,
+      },
+    });
+
+    return { message: 'Thành công', data: res };
   }
 }

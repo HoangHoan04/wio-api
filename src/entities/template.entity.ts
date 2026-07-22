@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from './base.entity';
+import { ServicePlanEntity } from './service-plan.entity';
 
 @Entity('templates')
 export class TemplateEntity extends BaseEntity {
@@ -49,14 +50,27 @@ export class TemplateEntity extends BaseEntity {
   @Column({ type: 'boolean', default: false, nullable: false })
   isPremium: boolean;
 
-  @ApiProperty({ description: 'Gói tối thiểu để sử dụng' })
   // Gói tối thiểu để sử dụng
-  @Column({ type: 'varchar', length: 20, default: 'free', nullable: false })
-  @ApiProperty({ description: 'Gói tối thiểu' })
-  minPlan: string;
+  @ApiProperty({ description: 'ID gói tối thiểu' })
+  @Column({ name: 'min_plan_id', type: 'uuid', nullable: true })
+  minPlanId?: string;
+
+  @ManyToOne(() => ServicePlanEntity, { nullable: true })
+  @JoinColumn({ name: 'min_plan_id' })
+  minPlan: ServicePlanEntity;
 
   // Số ngày dùng thử
   @ApiProperty({ description: 'Số ngày dùng thử' })
   @Column({ type: 'int', default: 3, nullable: false })
   trialDays: number;
+
+  // Số lượt dùng thiệp (khi user tạo wedding từ template)
+  @ApiProperty({ description: 'Số lượt dùng thiệp' })
+  @Column({ type: 'int', default: 0, nullable: false })
+  viewCount: number;
+
+  // Số lượt xem trước thiệp
+  @ApiProperty({ description: 'Số lượt xem trước' })
+  @Column({ type: 'int', default: 0, nullable: false })
+  previewCount: number;
 }

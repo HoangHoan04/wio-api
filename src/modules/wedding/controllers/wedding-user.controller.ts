@@ -11,11 +11,15 @@ import { WeddingService } from '../wedding.service';
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 export class WeddingUserController {
-  constructor(private readonly service: WeddingService) {}
+  constructor(private readonly service: WeddingService) { }
 
   @Post('pagination')
-  @ApiOperation({ summary: 'Lấy danh sách' })
-  async pagination(@Body() body: PaginationDto<FilterWeddingDto>) {
+  @ApiOperation({ summary: 'Lấy danh sách thiệp của người dùng hiện tại' })
+  async pagination(
+    @Body() body: PaginationDto<FilterWeddingDto>,
+    @CurrentUser() user: UserDto,
+  ) {
+    body.where = { ...body.where, userId: user.id };
     return await this.service.pagination(body);
   }
 

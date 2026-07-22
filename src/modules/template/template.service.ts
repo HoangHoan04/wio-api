@@ -32,12 +32,14 @@ export class TemplateService {
     if (data.where.isShow !== undefined) whereCon.isShow = data.where.isShow;
     if (data.where.isPremium !== undefined)
       whereCon.isPremium = data.where.isPremium;
-    if (data.where.minPlan !== undefined) whereCon.minPlan = data.where.minPlan;
+    if (data.where.minPlanId !== undefined)
+      whereCon.minPlanId = data.where.minPlanId;
     if ([true, false].includes(data.where.isDeleted))
       whereCon.isDeleted = data.where.isDeleted;
 
     const [list, total] = await this.repo.findAndCount({
       where: whereCon,
+      relations: ['minPlan'],
       skip: data.skip,
       take: data.take,
       order: { createdAt: 'DESC' },
@@ -49,9 +51,32 @@ export class TemplateService {
   async findById(data: IdDto) {
     const item = await this.repo.findOne({
       where: { id: data.id },
+      relations: ['minPlan'],
     });
     if (!item) throw new NotFoundException('Không tìm thấy mẫu giao diện');
     return { message: 'Thành công', data: item };
+  }
+
+  async incrementView(data: IdDto) {
+    const item = await this.repo.findOne({ where: { id: data.id } });
+    if (!item) throw new NotFoundException('Không tìm thấy mẫu giao diện');
+    item.viewCount = (item.viewCount ?? 0) + 1;
+    await this.repo.save(item);
+    return {
+      message: 'Cập nhật lượt dùng thành công',
+      data: { viewCount: item.viewCount },
+    };
+  }
+
+  async incrementPreview(data: IdDto) {
+    const item = await this.repo.findOne({ where: { id: data.id } });
+    if (!item) throw new NotFoundException('Không tìm thấy mẫu giao diện');
+    item.previewCount = (item.previewCount ?? 0) + 1;
+    await this.repo.save(item);
+    return {
+      message: 'Cập nhật lượt xem trước thành công',
+      data: { previewCount: item.previewCount },
+    };
   }
 
   async create(user: UserDto, dto: CreateTemplateDto) {
@@ -66,9 +91,9 @@ export class TemplateService {
     template.slug =
       enumData.THEME_CODE[dto.themeCode]?.slug ||
       `${dto.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`;
-    template.isShow = dto.isShow;
+    template.isShow = true;
     template.isPremium = dto.isPremium;
-    template.minPlan = dto.minPlan;
+    template.minPlanId = dto.minPlanId;
     template.trialDays = dto.trialDays;
     template.createdBy = user.id;
     template.createdAt = new Date();
@@ -121,9 +146,8 @@ export class TemplateService {
         template.slug = enumData.THEME_CODE[dto.themeCode].slug;
       }
     }
-    if (dto.isShow !== undefined) template.isShow = dto.isShow;
     if (dto.isPremium !== undefined) template.isPremium = dto.isPremium;
-    if (dto.minPlan !== undefined) template.minPlan = dto.minPlan;
+    if (dto.minPlanId !== undefined) template.minPlanId = dto.minPlanId;
     if (dto.trialDays !== undefined) template.trialDays = dto.trialDays;
 
     const saved = await this.repo.save(template);
@@ -139,8 +163,38 @@ export class TemplateService {
       oldValue: oldValueStr,
       newValue: JSON.stringify(saved),
     };
-    await this.actionLogService.create(actionLogDto);
 
+    await this.actionLogService.create(actionLogDto);
+    return { message: 'Cập nhật thành công', data: saved };
+  }
+
+  async setIsShow(dto: SetIsShowTemplateDto, user: UserDto) {
+    const template = await this.repo.findOne({
+      where: { id: dto.id, isDeleted: false },
+    });
+    if (!template) throw new NotFoundException('Không tìm thấy mẫu giao diện');
+
+    const oldValueStr = JSON.stringify(template);
+
+    template.isShow = dto.isShow;
+    template.updatedBy = user.id;
+    template.updatedAt = new Date();
+
+    const saved = await this.repo.save(template);
+
+    const actionLogDto: ActionLogCreateDto = {
+      entityId: template.id,
+      entityName: 'TemplateEntity',
+      actionType: enumData.ACTION_TYPE.UPDATE.code,
+      createdById: user.id,
+      createdByCode: user.id,
+      createdByName: user.fullName || user.email,
+      createdNote: `Nhân viên ${user.fullName} cập nhật trạng thái hiển thị của template: ${template.name} thành ${dto.isShow} `,
+      oldValue: oldValueStr,
+      newValue: JSON.stringify(saved),
+    };
+
+    await this.actionLogService.create(actionLogDto);
     return { message: 'Cập nhật thành công', data: saved };
   }
 
@@ -155,6 +209,7 @@ export class TemplateService {
     template.isPremium = dto.isPremium;
     template.updatedBy = user.id;
     template.updatedAt = new Date();
+
     const saved = await this.repo.save(template);
 
     const actionLogDto: ActionLogCreateDto = {
@@ -164,47 +219,13 @@ export class TemplateService {
       createdById: user.id,
       createdByCode: user.id,
       createdByName: user.fullName || user.email,
-      createdNote: `Nhân viên ${user.fullName} cập nhật trạng thái trả phí template: ${template.name} `,
+      createdNote: `Nhân viên ${user.fullName} cập nhật trạng thái premium của template: ${template.name} thành ${dto.isPremium} `,
       oldValue: oldValueStr,
       newValue: JSON.stringify(saved),
     };
+
     await this.actionLogService.create(actionLogDto);
-
-    return { message: 'Cập nhật trạng thái trả phí thành công', data: saved };
-  }
-
-  async setIsShow(dto: SetIsShowTemplateDto, user: UserDto) {
-    const template = await this.repo.findOne({
-      where: { id: dto.id, isDeleted: false },
-    });
-    if (!template) throw new NotFoundException('Không tìm thấy mẫu giao diện');
-
-    const oldValueStr = JSON.stringify(template);
-
-    template.isShow = dto.isShow;
-    template.updatedBy = user.id;
-    template.updatedAt = new Date();
-    const saved = await this.repo.save(template);
-
-    const actionLogDto: ActionLogCreateDto = {
-      entityId: template.id,
-      entityName: 'TemplateEntity',
-      actionType: enumData.ACTION_TYPE.UPDATE.code,
-      createdById: user.id,
-      createdByCode: user.id,
-      createdByName: user.fullName || user.email,
-      createdNote: `Nhân viên ${user.fullName} cập nhật trạng thái hiển thị template: ${template.name} `,
-      oldValue: oldValueStr,
-      newValue: JSON.stringify(saved),
-    };
-    await this.actionLogService.create(actionLogDto);
-
-    return {
-      message: dto.isShow
-        ? 'Hiển thị mẫu giao diện thành công'
-        : 'Ẩn mẫu giao diện thành công',
-      data: saved,
-    };
+    return { message: 'Cập nhật thành công', data: saved };
   }
 
   async setIsDeleted(dto: SetIsDeletedTemplateDto, user: UserDto) {
@@ -218,6 +239,7 @@ export class TemplateService {
     template.isDeleted = dto.isDeleted;
     template.updatedBy = user.id;
     template.updatedAt = new Date();
+
     const saved = await this.repo.save(template);
 
     const actionLogDto: ActionLogCreateDto = {
@@ -227,20 +249,12 @@ export class TemplateService {
       createdById: user.id,
       createdByCode: user.id,
       createdByName: user.fullName || user.email,
-      createdNote: `Nhân viên ${user.fullName} ${
-        dto.isDeleted
-          ? enumData.ACTION_TYPE.DELETE.code
-          : enumData.ACTION_TYPE.RESTORE.code
-      } template: ${template.name} `,
+      createdNote: `Nhân viên ${user.fullName} cập nhật trạng thái xóa của template: ${template.name} thành ${dto.isDeleted} `,
       oldValue: oldValueStr,
       newValue: JSON.stringify(saved),
     };
+
     await this.actionLogService.create(actionLogDto);
-    return {
-      message: dto.isDeleted
-        ? 'Xóa mềm mẫu giao diện thành công'
-        : 'Khôi phục mẫu giao diện thành công',
-      data: saved,
-    };
+    return { message: 'Cập nhật thành công', data: saved };
   }
 }

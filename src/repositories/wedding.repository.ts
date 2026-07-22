@@ -1,4 +1,5 @@
 import {
+  ContactEntity,
   CustomerEntity,
   GuestEntity,
   MusicBackgroundEntity,
@@ -66,3 +67,6 @@ export class SlugHistoryRepository extends Repository<SlugHistoryEntity> {}
 
 @CustomRepository(MusicBackgroundEntity)
 export class MusicBackgroundRepository extends Repository<MusicBackgroundEntity> {}
+
+@CustomRepository(ContactEntity)
+export class ContactRepository extends Repository<ContactEntity> {}

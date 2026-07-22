@@ -1,5 +1,6 @@
 export * from './action-log.entity';
 export * from './base.entity';
+export * from './contact.entity';
 export * from './customer.entity';
 export * from './guest.entity';
 export * from './music-background.entity';

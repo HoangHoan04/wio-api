@@ -14,14 +14,14 @@ export class CustomerAdminController {
 
   @ApiOperation({ summary: 'Hàm phân trang nhân viên' })
   @Post('pagination')
-  async pagination(@CurrentUser() user: UserDto, @Body() data: PaginationDto) {
-    return this.service.pagination(user, data);
+  async pagination(@Body() data: PaginationDto) {
+    return this.service.pagination(data);
   }
 
   @ApiOperation({ summary: 'Tìm kiếm chi tiết nhân viên theo ID' })
   @Post('find-by-id')
   async findById(@Body() data: IdDto) {
-    return await this.service.findById(data.id);
+    return await this.service.findById(data);
   }
 
   @ApiOperation({ summary: 'Kích hoạt nhân viên' })
