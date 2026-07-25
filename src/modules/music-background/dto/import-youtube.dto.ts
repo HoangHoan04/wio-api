@@ -30,4 +30,9 @@ export class ImportYoutubeDto {
   @IsString()
   @IsIn(['youtube-dl-exec', 'public-api', 'python-yt-dlp'])
   provider?: 'youtube-dl-exec' | 'public-api' | 'python-yt-dlp';
+
+  @ApiProperty({ description: 'Phân loại nguồn', default: 'admin', required: false })
+  @IsOptional()
+  @IsString()
+  type?: string;
 }

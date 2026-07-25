@@ -35,12 +35,14 @@ export class MusicBackgroundAdminController {
     summary: 'Tạo nhạc nền mới (audioUrl đã upload qua /api/upload)',
   })
   create(@Body() createDto: CreateMusicBackgroundDto) {
+    createDto.type = 'admin';
     return this.musicService.create(createDto);
   }
 
   @Post('import-youtube')
   @ApiOperation({ summary: 'Nhập nhạc từ YouTube' })
   importYoutube(@Body() importDto: ImportYoutubeDto) {
+    importDto.type = 'admin';
     return this.musicService.importYoutube(importDto);
   }
 

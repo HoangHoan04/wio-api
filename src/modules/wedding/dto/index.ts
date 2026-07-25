@@ -447,6 +447,10 @@ export class CreateWeddingDto {
   @ApiProperty({ required: false })
   @IsOptional()
   gallery?: string[];
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  customDesign?: any;
 }
 
 export class UpdateWeddingDto extends PartialType(CreateWeddingDto) {

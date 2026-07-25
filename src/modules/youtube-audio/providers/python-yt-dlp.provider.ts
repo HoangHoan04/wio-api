@@ -119,7 +119,15 @@ export class PythonYtDlpProvider implements IYoutubeAudioProvider {
       });
 
       proc.stderr.on('data', (data) => {
-        stderr += data.toString();
+        const raw = data.toString();
+        stderr += raw;
+        const lines = raw.split(/[\r\n]+/);
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (trimmed) {
+            this.logger.log(`[${this.name}][yt-dlp] ${trimmed}`);
+          }
+        }
       });
 
       proc.on('error', (err) => {
@@ -143,15 +151,28 @@ export class PythonYtDlpProvider implements IYoutubeAudioProvider {
         }
 
         try {
-          const parsed = JSON.parse(stdout) as PythonScriptResult;
+          const jsonLine = stdout
+            .split(/[\r\n]+/)
+            .map((l) => l.trim())
+            .find((l) => l.startsWith('{"success"'));
+
+          if (!jsonLine) {
+            this.logger.error(`[${this.name}] Raw Python stdout: ${stdout}`);
+            return resolve({
+              success: false,
+              error: `Không tìm thấy kết quả JSON hợp lệ trong output của Python script.`,
+            });
+          }
+
+          const parsed = JSON.parse(jsonLine) as PythonScriptResult;
           resolve(parsed);
         } catch (err: any) {
           this.logger.error(
-            `[${this.name}] Failed to parse Python output: ${err.message}`,
+            `[${this.name}] Failed to parse Python output line: ${err.message}`,
           );
           resolve({
             success: false,
-            error: `Invalid Python output: ${stdout}`,
+            error: `Invalid Python JSON output: ${err.message}`,
           });
         }
       });
@@ -163,7 +184,6 @@ export class PythonYtDlpProvider implements IYoutubeAudioProvider {
     if (configured) return path.resolve(configured);
 
     const candidates = [
-      // Development (src)
       path.resolve(
         __dirname,
         '..',
@@ -172,7 +192,6 @@ export class PythonYtDlpProvider implements IYoutubeAudioProvider {
         'scripts',
         'youtube_download.py',
       ),
-      // Compiled (dist): scripts copied next to dist or project root
       path.resolve(
         __dirname,
         '..',
@@ -182,7 +201,6 @@ export class PythonYtDlpProvider implements IYoutubeAudioProvider {
         'scripts',
         'youtube_download.py',
       ),
-      // Project root
       path.resolve(process.cwd(), 'scripts', 'youtube_download.py'),
     ];
 
@@ -190,7 +208,6 @@ export class PythonYtDlpProvider implements IYoutubeAudioProvider {
       if (existsSync(candidate)) return candidate;
     }
 
-    // Fallback to project root location
     return path.resolve(process.cwd(), 'scripts', 'youtube_download.py');
   }
 
@@ -198,7 +215,7 @@ export class PythonYtDlpProvider implements IYoutubeAudioProvider {
     try {
       await rm(outputPath, { force: true, recursive: true });
     } catch {
-      // ignore cleanup errors
+      //! ignore cleanup errors
     }
   }
 }

@@ -38,4 +38,8 @@ export class MusicBackgroundEntity extends BaseEntity {
     required: false,
   })
   audioUrl?: string;
+
+  @Column({ type: 'varchar', length: 20, default: 'admin' })
+  @ApiProperty({ description: 'Phân loại nguồn nhạc: admin hoặc user' })
+  type: string;
 }

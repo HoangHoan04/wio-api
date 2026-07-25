@@ -431,6 +431,10 @@ export class WeddingEntity extends BaseEntity {
   @ApiProperty({ description: 'URL ảnh QR poster chia sẻ', required: false })
   shareQrUrl?: string;
 
+  @Column({ type: 'jsonb', nullable: true })
+  @ApiProperty({ description: 'Thiết kế tùy biến riêng (elements, background...)', required: false })
+  customDesign?: any;
+
   @Column({ type: 'timestamptz', nullable: true })
   @ApiProperty({
     description: 'Hết hạn sau bao lâu tùy gói dịch vụ',

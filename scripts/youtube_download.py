@@ -16,6 +16,13 @@ import os
 import re
 import sys
 from pathlib import Path
+import urllib.parse
+
+# Force UTF-8 output on Windows (avoids charmap encoding errors for non-ASCII titles)
+if sys.stdout.encoding != 'utf-8':
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+if sys.stderr.encoding != 'utf-8':
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 
 def parse_args():
@@ -34,6 +41,24 @@ def format_duration(seconds: int) -> str:
     return f"{minutes}:{secs:02d}"
 
 
+def normalize_youtube_url(url: str) -> str:
+    """Strip playlist/list params — only keep the video ID to avoid yt-dlp scanning whole playlists."""
+    try:
+        parsed = urllib.parse.urlparse(url)
+        params = urllib.parse.parse_qs(parsed.query)
+        video_id = params.get('v', [None])[0]
+        if video_id:
+            # Return clean single-video URL
+            return f"https://www.youtube.com/watch?v={video_id}"
+        # For youtu.be short links, just strip query params
+        if 'youtu.be' in parsed.netloc:
+            path = parsed.path.lstrip('/')
+            return f"https://www.youtube.com/watch?v={path}"
+    except Exception:
+        pass
+    return url
+
+
 def extract_info(ydl, url: str):
     info = ydl.extract_info(url, download=False)
     if info is None:
@@ -45,6 +70,11 @@ def extract_info(ydl, url: str):
 
 def main():
     args = parse_args()
+    # Normalize URL to strip playlist params (prevents yt-dlp from scanning full playlists)
+    clean_url = normalize_youtube_url(args.url)
+    if clean_url != args.url:
+        print(f"[normalize] Stripped playlist params: {args.url} -> {clean_url}", file=sys.stderr)
+    args.url = clean_url
 
     try:
         import yt_dlp
@@ -103,47 +133,38 @@ def main():
                 )
                 sys.exit(1)
 
-            ext = args.format if args.format != "bestaudio" else "webm"
-            # Sanitize extension
-            ext = re.sub(r"[^a-zA-Z0-9]", "", ext) or "mp3"
-            output_path = f"{args.output}.{ext}"
-
-            # Download and convert if needed
+            # Download best audio WITHOUT ffmpeg conversion
+            # (ffmpeg may not be available on all machines)
             download_opts = {
-                "quiet": True,
-                "no_warnings": True,
+                "quiet": False,   # show progress to stderr
+                "no_warnings": False,
                 "format": "bestaudio/best",
-                "outtmpl": output_path,
-                "postprocessors": [],
+                "outtmpl": f"{args.output}.%(ext)s",
+                # No postprocessors — avoids ffmpeg dependency
             }
-
-            if args.format == "mp3":
-                download_opts["postprocessors"].append(
-                    {
-                        "key": "FFmpegExtractAudio",
-                        "preferredcodec": "mp3",
-                        "preferredquality": "192",
-                    }
-                )
-                output_path = f"{args.output}.mp3"
-            elif args.format == "m4a":
-                download_opts["postprocessors"].append(
-                    {
-                        "key": "FFmpegExtractAudio",
-                        "preferredcodec": "m4a",
-                        "preferredquality": "192",
-                    }
-                )
-                output_path = f"{args.output}.m4a"
 
             with yt_dlp.YoutubeDL(download_opts) as ydl2:
                 ydl2.download([args.url])
 
-            mime_type = "audio/mpeg"
-            if args.format == "m4a":
-                mime_type = "audio/mp4"
-            elif args.format == "webm" or args.format == "bestaudio":
-                mime_type = "audio/webm"
+            # Find the downloaded file (yt-dlp picks the extension)
+            import glob
+            downloaded = glob.glob(f"{args.output}.*")
+            if not downloaded:
+                raise FileNotFoundError(f"No file found at {args.output}.*")
+            output_path = downloaded[0]
+            ext = os.path.splitext(output_path)[1].lstrip(".")
+
+            # Determine mime type from extension
+            mime_map = {
+                "webm": "audio/webm",
+                "m4a": "audio/mp4",
+                "mp4": "audio/mp4",
+                "ogg": "audio/ogg",
+                "opus": "audio/opus",
+                "mp3": "audio/mpeg",
+                "aac": "audio/aac",
+            }
+            mime_type = mime_map.get(ext, "audio/webm")
 
             print(
                 json.dumps(

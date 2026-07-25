@@ -103,17 +103,17 @@ export const enumData = {
   THEME_CODE: {
     BOHO_FLORAL_BROWN: {
       code: 'BOHO_FLORAL_BROWN',
-      name: 'Hoa mộc Lan - Nâu',
+      name: 'Hoa cỏ - Nâu',
       slug: 'hoa-moc-lan-nau',
     },
     BOHO_FLORAL_GREEN: {
       code: 'BOHO_FLORAL_GREEN',
-      name: 'Hoa mộc Lan - Xanh',
+      name: 'Hoa cỏ - Xanh',
       slug: 'hoa-moc-lan-xanh',
     },
     BOHO_FLORAL_PINK: {
       code: 'BOHO_FLORAL_PINK',
-      name: 'Hoa mộc Lan - Hồng',
+      name: 'Hoa cỏ - Hồng',
       slug: 'hoa-moc-lan-hong',
     },
     DRAGON_PHOENIX_RED: {

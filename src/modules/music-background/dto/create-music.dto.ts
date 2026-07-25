@@ -26,4 +26,9 @@ export class CreateMusicBackgroundDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @ApiProperty({ description: 'Phân loại (admin / user)', default: 'admin' })
+  @IsOptional()
+  @IsString()
+  type?: string;
 }
