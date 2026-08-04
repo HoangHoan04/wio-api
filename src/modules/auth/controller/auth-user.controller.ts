@@ -62,8 +62,19 @@ export class AuthUserController {
 
   @Get('google')
   async getGoogleAuthUrl(@Res() res: Response) {
-    const url = await this.service.getGoogleAuthUrl();
-    return res.redirect(url);
+    try {
+      const url = await this.service.getGoogleAuthUrl();
+      return res.redirect(url);
+    } catch (err: any) {
+      const frontendUrl =
+        process.env.GOOGLE_FRONTEND_REDIRECT_URL || 'http://localhost:2504';
+      const redirectUrl = new URL(frontendUrl);
+      redirectUrl.searchParams.set(
+        'error',
+        err.message || 'Google OAuth chưa được cấu hình',
+      );
+      return res.redirect(redirectUrl.toString());
+    }
   }
 
   @Post('login/facebook')
@@ -81,8 +92,19 @@ export class AuthUserController {
 
   @Get('facebook')
   async getFacebookAuthUrl(@Res() res: Response) {
-    const url = await this.service.getFacebookAuthUrl();
-    return res.redirect(url);
+    try {
+      const url = await this.service.getFacebookAuthUrl();
+      return res.redirect(url);
+    } catch (err: any) {
+      const frontendUrl =
+        process.env.FACEBOOK_FRONTEND_REDIRECT_URL || 'http://localhost:2504';
+      const redirectUrl = new URL(frontendUrl);
+      redirectUrl.searchParams.set(
+        'error',
+        err.message || 'Facebook OAuth chưa được cấu hình',
+      );
+      return res.redirect(redirectUrl.toString());
+    }
   }
 
   @Post('check-phone-email')

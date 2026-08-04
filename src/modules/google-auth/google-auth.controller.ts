@@ -17,7 +17,9 @@ export class GoogleAuthController {
     if (error) {
       const frontendUrl =
         process.env.GOOGLE_FRONTEND_REDIRECT_URL || 'http://localhost:2504';
-      return res.redirect(`${frontendUrl}?error=${error}`);
+      const redirectUrl = new URL(frontendUrl);
+      redirectUrl.searchParams.set('error', error);
+      return res.redirect(redirectUrl.toString());
     }
     try {
       const result = await this.authService.handleGoogleCallback(
@@ -27,14 +29,19 @@ export class GoogleAuthController {
       );
       const frontendUrl =
         process.env.GOOGLE_FRONTEND_REDIRECT_URL || 'http://localhost:2504';
-      const redirectUrl = `${frontendUrl}?accessToken=${result.accessToken}&refreshToken=${result.refreshToken}`;
-      return res.redirect(redirectUrl);
+      const redirectUrl = new URL(frontendUrl);
+      redirectUrl.searchParams.set('accessToken', result.accessToken);
+      redirectUrl.searchParams.set('refreshToken', result.refreshToken);
+      return res.redirect(redirectUrl.toString());
     } catch (err: any) {
       const frontendUrl =
         process.env.GOOGLE_FRONTEND_REDIRECT_URL || 'http://localhost:2504';
-      return res.redirect(
-        `${frontendUrl}?error=${encodeURIComponent(err.message || 'Google đăng nhập thất bại')}`,
+      const redirectUrl = new URL(frontendUrl);
+      redirectUrl.searchParams.set(
+        'error',
+        err.message || 'Google đăng nhập thất bại',
       );
+      return res.redirect(redirectUrl.toString());
     }
   }
 }

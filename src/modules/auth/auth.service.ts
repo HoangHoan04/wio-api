@@ -520,15 +520,23 @@ export class AuthService {
   async getGoogleAuthUrl() {
     const clientId = process.env.GOOGLE_CLIENT_ID;
     const redirectUri = process.env.GOOGLE_CALLBACK_URL;
-    const url =
-      `https://accounts.google.com/o/oauth2/v2/auth?` +
-      `client_id=${clientId}` +
-      `&redirect_uri=${redirectUri}` +
-      `&response_type=code` +
-      `&scope=openid%20email%20profile` +
-      `&access_type=offline` +
-      `&prompt=consent`;
-    return url;
+
+    if (!clientId || !redirectUri) {
+      throw new BadRequestException(
+        'Google OAuth chưa được cấu hình. Vui lòng liên hệ quản trị viên.',
+      );
+    }
+
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      response_type: 'code',
+      scope: 'openid email profile',
+      access_type: 'offline',
+      prompt: 'consent',
+    });
+
+    return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
   }
 
   async handleGoogleCallback(
@@ -569,13 +577,21 @@ export class AuthService {
   async getFacebookAuthUrl() {
     const appId = process.env.FACEBOOK_APP_ID;
     const redirectUri = process.env.FACEBOOK_CALLBACK_URL;
-    const url =
-      `https://www.facebook.com/v18.0/dialog/oauth?` +
-      `client_id=${appId}` +
-      `&redirect_uri=${redirectUri}` +
-      `&scope=email,public_profile` +
-      `&response_type=code`;
-    return url;
+
+    if (!appId || !redirectUri) {
+      throw new BadRequestException(
+        'Facebook OAuth chưa được cấu hình. Vui lòng liên hệ quản trị viên.',
+      );
+    }
+
+    const params = new URLSearchParams({
+      client_id: appId,
+      redirect_uri: redirectUri,
+      scope: 'email,public_profile',
+      response_type: 'code',
+    });
+
+    return `https://www.facebook.com/v18.0/dialog/oauth?${params.toString()}`;
   }
 
   async handleFacebookCallback(
@@ -619,19 +635,35 @@ export class AuthService {
     return data;
   }
 
+  private resolveFacebookEmail(fbUser: { id?: string; email?: string }) {
+    if (fbUser.email) {
+      return fbUser.email;
+    }
+
+    if (!fbUser.id) {
+      throw new BadRequestException(
+        'Không thể lấy email từ Facebook. Vui lòng cấp quyền email hoặc dùng tài khoản khác.',
+      );
+    }
+
+    return `fb_${fbUser.id}@facebook.local`;
+  }
+
   private async handleFacebookUser(
     fbUser: any,
     userAgent?: string,
     ipAddress?: string,
   ) {
+    const email = this.resolveFacebookEmail(fbUser);
+
     let user = await this.userRepo.findOne({
-      where: { email: fbUser.email },
+      where: { email },
     });
 
     if (!user) {
       user = new UserEntity();
       user.id = uuidv4();
-      user.email = fbUser.email;
+      user.email = email;
       user.password = '';
       user.role = enumData.USER_ROLE.COUPLE.code;
       user.isActive = true;
@@ -640,8 +672,8 @@ export class AuthService {
       const customer = new CustomerEntity();
       customer.id = uuidv4();
       customer.userId = user.id;
-      customer.fullName = fbUser.name || fbUser.email;
-      customer.email = fbUser.email;
+      customer.fullName = fbUser.name || email;
+      customer.email = email;
       customer.code = `CUS_${Math.floor(100000 + Math.random() * 900000)}`;
       customer.gender = 'OTHER';
       customer.createdAt = new Date();

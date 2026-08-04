@@ -1,68 +1,75 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:16-alpine
     container_name: wio_postgres
-    restart: always
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: ${POSTGRES_DB:-wio-dev}
     ports:
       - '${POSTGRES_PORT:-5432}:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - api_net
+      - wio_api_net
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-wio-dev}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
     container_name: wio_redis
-    restart: always
+    restart: unless-stopped
+    command: redis-server --appendonly yes
     ports:
       - '${REDIS_PORT:-6379}:6379'
     volumes:
       - redis_data:/data
     networks:
-      - api_net
+      - wio_api_net
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   api:
     build:
       context: .
       dockerfile: Dockerfile
+      target: migration
     container_name: wio_api
-    restart: always
+    restart: unless-stopped
     env_file:
       - .env
     environment:
-      - NODE_ENV=${NODE_ENV:-development}
-      - PORT=${PORT:-4300}
-      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:root@postgres:5432/wio-dev}
-      - TYPEORM_HOST=${TYPEORM_HOST:-postgres}
-      - TYPEORM_PORT=${TYPEORM_PORT:-5432}
-      - TYPEORM_USERNAME=${TYPEORM_USERNAME:-postgres}
-      - TYPEORM_PASSWORD=${TYPEORM_PASSWORD:-root}
-      - TYPEORM_DATABASE=${TYPEORM_DATABASE:-wio-dev}
-      - REDIS_HOST=${REDIS_HOST:-redis}
-      - REDIS_PORT=${REDIS_PORT:-6379}
-      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
-      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID:-}
-      - ENV_MANAGER_BASE_PATH=${ENV_MANAGER_BASE_PATH:-/opt/wio}
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 4300
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-wio-dev}
+      TYPEORM_HOST: postgres
+      TYPEORM_PORT: 5432
+      TYPEORM_USERNAME: ${POSTGRES_USER:-postgres}
+      TYPEORM_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      TYPEORM_DATABASE: ${POSTGRES_DB:-wio-dev}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     ports:
       - '${PORT:-4300}:4300'
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
-      - api_net
+      - wio_api_net
 
 networks:
-  api_net:
+  wio_api_net:
     driver: bridge
 
 volumes:
   postgres_data:
-    driver: local
   redis_data:
-    driver: local
