@@ -3,10 +3,8 @@ import { MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { AuthUserController } from '../auth/controller/auth-user.controller';
 import { PREFIX_MODULE } from '../config-module';
-import { ContactPublicController } from '../contact/controllers/contact-public.controller';
 import { ContactModule } from '../contact/contact.module';
-import { GiphyUserController } from '../giphy/controllers/giphy-user.controller';
-import { GiphyModule } from '../giphy/giphy.module';
+import { ContactPublicController } from '../contact/controllers/contact-public.controller';
 import { GuestPublicController } from '../guest/controllers/guest-public.controller';
 import { GuestUserController } from '../guest/controllers/guest-user.controller';
 import { GuestModule } from '../guest/guest.module';
@@ -50,7 +48,6 @@ import { WishModule } from '../wish/wish.module';
     ServicePlanPublicController,
     SubscriptionUserController,
     MusicBackgroundUserController,
-    GiphyUserController,
     WeddingPublicController,
     ContactPublicController,
   ],
@@ -67,7 +64,6 @@ import { WishModule } from '../wish/wish.module';
     ServicePlanModule,
     SubscriptionModule,
     MusicBackgroundModule,
-    GiphyModule,
     ContactModule,
   ],
   exports: [],

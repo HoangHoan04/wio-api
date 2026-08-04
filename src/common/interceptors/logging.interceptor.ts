@@ -143,7 +143,7 @@ export class LogInterceptor implements NestInterceptor {
 
   private async sendTelegramAlert(message: string): Promise<void> {
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
-    const chatId = process.env.TELEGRAM_GROUP_ID;
+    const chatId = process.env.TELEGRAM_CHAT_ID;
     if (!botToken || !chatId) return;
 
     await axios
