@@ -1,7 +1,11 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
+import { enumData } from '@/common/constanst/enumData';
 import { ContactEmailData } from './dto';
+
+const BRAND_NAME = enumData.BRAND.NAME.name;
+const BRAND_TAGLINE = enumData.BRAND.TAGLINE.name;
 
 @Injectable()
 export class EmailService {
@@ -42,7 +46,7 @@ export class EmailService {
   }): Promise<boolean> {
     try {
       const mailOptions = {
-        from: `"Tiệm cưới tân thời" <${this.senderAddress}>`,
+        from: `"${BRAND_NAME}" <${this.senderAddress}>`,
         to: data.email,
         subject: '[WIO] Mã xác thực đăng ký tài khoản',
         html: this.getOtpEmailTemplate(data.otpCode),
@@ -62,7 +66,7 @@ export class EmailService {
   }): Promise<boolean> {
     try {
       const mailOptions = {
-        from: `"Tiệm cưới tân thời" <${this.senderAddress}>`,
+        from: `"${BRAND_NAME}" <${this.senderAddress}>`,
         to: data.email,
         subject: '[WIO] Khôi phục mật khẩu tài khoản',
         html: this.getForgotPasswordTemplate(data.otpCode),
@@ -84,7 +88,7 @@ export class EmailService {
   }): Promise<boolean> {
     try {
       const mailOptions = {
-        from: `"Tiệm cưới tân thời" <${this.senderAddress}>`,
+        from: `"${BRAND_NAME}" <${this.senderAddress}>`,
         to: data.email,
         subject: '[WIO] Mã OTP đăng nhập hệ thống',
         html: this.getLoginOtpTemplate(data.email, data.otpCode),
@@ -108,7 +112,7 @@ export class EmailService {
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Xác thực tài khoản Tiệm cưới tân thời</title>
+        <title>Xác thực tài khoản ${BRAND_NAME}</title>
         <style>
           body { margin: 0; padding: 0; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
           table, td { border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
@@ -120,8 +124,8 @@ export class EmailService {
         <div style="max-width: 600px; margin: 0 auto; background-color: #251218; border: 1px solid #d4af37; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);">
           
           <div style="text-align: center; padding: 40px 0; background-color: #1a0a0f; border-bottom: 1px solid rgba(212, 175, 55, 0.25);">
-             <h1 style="color: #f5c842; font-size: 28px; margin: 0; font-family: Georgia, serif; letter-spacing: 2px;">Tiệm cưới tân thời</h1>
-             <p style="color: #f5e6d3; font-size: 12px; margin: 5px 0 0 0; opacity: 0.8; letter-spacing: 4px; text-transform: uppercase;">Wedding Invitation Online</p>
+             <h1 style="color: #f5c842; font-size: 28px; margin: 0; font-family: Georgia, serif; letter-spacing: 2px;">${BRAND_NAME}</h1>
+             <p style="color: #f5e6d3; font-size: 12px; margin: 5px 0 0 0; opacity: 0.8; letter-spacing: 4px; text-transform: uppercase;">${BRAND_TAGLINE}</p>
           </div>
 
           <div style="padding: 40px 30px; background-color: #251218;">
@@ -129,7 +133,7 @@ export class EmailService {
             <h2 style="color: #f5c842; text-align: center; font-size: 22px; font-weight: 500; margin-bottom: 30px; font-family: Georgia, serif;">Xác Thực Tài Khoản Đăng Ký</h2>
 
             <p style="color: #f5e6d3; font-size: 16px; line-height: 1.6; margin-bottom: 25px; text-align: center;">
-              Xin chào,<br>Cảm ơn bạn đã lựa chọn Tiệm cưới tân thời để kiến tạo ngày chung đôi. Vui lòng sử dụng mã OTP dưới đây để hoàn tất đăng ký tài khoản:
+              Xin chào,<br>Cảm ơn bạn đã lựa chọn ${BRAND_NAME} để kiến tạo ngày chung đôi. Vui lòng sử dụng mã OTP dưới đây để hoàn tất đăng ký tài khoản:
             </p>
 
             <div style="background-color: rgba(26, 10, 15, 0.6); border: 1px dashed #d4af37; border-radius: 12px; padding: 25px; text-align: center; margin: 30px 0;">
@@ -150,25 +154,25 @@ export class EmailService {
 
             <p style="color: rgba(245, 230, 211, 0.7); font-size: 14px; text-align: center; margin-top: 40px; margin-bottom: 0;">
               Trân trọng,<br>
-              <strong style="color: #f5c842; font-family: Georgia, serif; font-size: 15px;">Đội ngũ Tiệm cưới tân thời</strong>
+              <strong style="color: #f5c842; font-family: Georgia, serif; font-size: 15px;">Đội ngũ ${BRAND_NAME}</strong>
             </p>
           </div>
 
           <div style="padding: 30px 20px; text-align: center; background-color: #1a0a0f; border-top: 1px solid rgba(212, 175, 55, 0.15);">
             <p style="color: rgba(245, 230, 211, 0.5); font-size: 12px; margin-bottom: 10px;">
-              Bạn nhận được email này vì đã yêu cầu đăng ký tại Tiệm cưới tân thời.
+              Bạn nhận được email này vì đã yêu cầu đăng ký tại ${BRAND_NAME}.
             </p>
             
             <div style="margin: 20px 0; border-top: 1px solid rgba(212, 175, 55, 0.15); width: 100%;"></div>
 
             <p style="color: rgba(245, 230, 211, 0.7); font-size: 12px; line-height: 1.6;">
               <strong>HỆ THỐNG THIỆP CƯỚI TRỰC TUYẾN — TIỆM CƯỚI TÂN THỜI</strong><br>
-              📞 Hotline: 1900 123 456 | 📧 Email: support@wedding.vn<br>
-              🌐 Website: <a href="http://localhost:3011" style="color: #f5c842; text-decoration: none;">www.wedding.vn</a>
+              📞 Hotline: 1900 123 456 | 📧 Email: hello@wio.vn<br>
+              🌐 Website: <a href="http://localhost:3011" style="color: #f5c842; text-decoration: none;">wio.vn</a>
             </p>
 
             <p style="color: rgba(245, 230, 211, 0.4); font-size: 11px; margin-top: 20px;">
-              © ${currentYear} Tiệm cưới tân thời. All rights reserved.
+              © ${currentYear} ${BRAND_NAME}. All rights reserved.
             </p>
           </div>
 
@@ -186,7 +190,7 @@ export class EmailService {
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Khôi phục mật khẩu Tiệm cưới tân thời</title>
+        <title>Khôi phục mật khẩu ${BRAND_NAME}</title>
         <style>
           body { margin: 0; padding: 0; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
         </style>
@@ -196,8 +200,8 @@ export class EmailService {
         <div style="max-width: 600px; margin: 0 auto; background-color: #251218; border: 1px solid #d4af37; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);">
           
           <div style="text-align: center; padding: 40px 0; background-color: #1a0a0f; border-bottom: 1px solid rgba(212, 175, 55, 0.25);">
-             <h1 style="color: #f5c842; font-size: 28px; margin: 0; font-family: Georgia, serif; letter-spacing: 2px;">Tiệm cưới tân thời</h1>
-             <p style="color: #f5e6d3; font-size: 12px; margin: 5px 0 0 0; opacity: 0.8; letter-spacing: 4px; text-transform: uppercase;">Wedding Invitation Online</p>
+             <h1 style="color: #f5c842; font-size: 28px; margin: 0; font-family: Georgia, serif; letter-spacing: 2px;">${BRAND_NAME}</h1>
+             <p style="color: #f5e6d3; font-size: 12px; margin: 5px 0 0 0; opacity: 0.8; letter-spacing: 4px; text-transform: uppercase;">${BRAND_TAGLINE}</p>
           </div>
 
           <div style="padding: 40px 30px; background-color: #251218;">
@@ -226,18 +230,18 @@ export class EmailService {
 
             <p style="color: rgba(245, 230, 211, 0.7); font-size: 14px; text-align: center; margin-top: 40px; margin-bottom: 0;">
               Trân trọng,<br>
-              <strong style="color: #f5c842; font-family: Georgia, serif; font-size: 15px;">Đội ngũ bảo mật Tiệm cưới tân thời</strong>
+              <strong style="color: #f5c842; font-family: Georgia, serif; font-size: 15px;">Đội ngũ bảo mật ${BRAND_NAME}</strong>
             </p>
           </div>
 
           <div style="padding: 30px 20px; text-align: center; background-color: #1a0a0f; border-top: 1px solid rgba(212, 175, 55, 0.15);">
             <p style="color: rgba(245, 230, 211, 0.7); font-size: 12px; line-height: 1.6;">
               <strong>HỆ THỐNG THIỆP CƯỚI TRỰC TUYẾN — TIỆM CƯỚI TÂN THỜI</strong><br>
-              📞 Hotline: 1900 123 456 | 📧 Email: support@wedding.vn<br>
-              🌐 Website: <a href="http://localhost:3011" style="color: #f5c842; text-decoration: none;">www.wedding.vn</a>
+              📞 Hotline: 1900 123 456 | 📧 Email: hello@wio.vn<br>
+              🌐 Website: <a href="http://localhost:3011" style="color: #f5c842; text-decoration: none;">wio.vn</a>
             </p>
             <p style="color: rgba(245, 230, 211, 0.4); font-size: 11px; margin-top: 20px;">
-              © ${currentYear} Tiệm cưới tân thời. All rights reserved.
+              © ${currentYear} ${BRAND_NAME}. All rights reserved.
             </p>
           </div>
 
@@ -256,7 +260,7 @@ export class EmailService {
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Mã OTP Đăng Nhập Tiệm cưới tân thời</title>
+        <title>Mã OTP Đăng Nhập ${BRAND_NAME}</title>
         <style>
           body { margin: 0; padding: 0; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
         </style>
@@ -266,8 +270,8 @@ export class EmailService {
         <div style="max-width: 600px; margin: 0 auto; background-color: #251218; border: 1px solid #d4af37; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);">
           
           <div style="text-align: center; padding: 40px 0; background-color: #1a0a0f; border-bottom: 1px solid rgba(212, 175, 55, 0.25);">
-             <h1 style="color: #f5c842; font-size: 28px; margin: 0; font-family: Georgia, serif; letter-spacing: 2px;">Tiệm cưới tân thời</h1>
-             <p style="color: #f5e6d3; font-size: 12px; margin: 5px 0 0 0; opacity: 0.8; letter-spacing: 4px; text-transform: uppercase;">Wedding Invitation Online</p>
+             <h1 style="color: #f5c842; font-size: 28px; margin: 0; font-family: Georgia, serif; letter-spacing: 2px;">${BRAND_NAME}</h1>
+             <p style="color: #f5e6d3; font-size: 12px; margin: 5px 0 0 0; opacity: 0.8; letter-spacing: 4px; text-transform: uppercase;">${BRAND_TAGLINE}</p>
           </div>
 
           <div style="padding: 40px 30px; background-color: #251218;">
@@ -275,7 +279,7 @@ export class EmailService {
             <h2 style="color: #f5c842; text-align: center; font-size: 22px; font-weight: 500; margin-bottom: 30px; font-family: Georgia, serif;">Mã Xác Thực Đăng Nhập (OTP)</h2>
 
             <p style="color: #f5e6d3; font-size: 16px; line-height: 1.6; margin-bottom: 25px; text-align: center;">
-              Xin chào,<br>Bạn đang thực hiện đăng nhập vào hệ thống quản lý thiệp cưới của Tiệm cưới tân thời. Vui lòng nhập mã OTP dưới đây hoặc bấm nút phía dưới để đăng nhập tự động:
+              Xin chào,<br>Bạn đang thực hiện đăng nhập vào hệ thống quản lý thiệp cưới của ${BRAND_NAME}. Vui lòng nhập mã OTP dưới đây hoặc bấm nút phía dưới để đăng nhập tự động:
             </p>
 
             <div style="background-color: rgba(26, 10, 15, 0.6); border: 1px dashed #d4af37; border-radius: 12px; padding: 25px; text-align: center; margin: 30px 0;">
@@ -302,18 +306,18 @@ export class EmailService {
 
             <p style="color: rgba(245, 230, 211, 0.7); font-size: 14px; text-align: center; margin-top: 40px; margin-bottom: 0;">
               Trân trọng,<br>
-              <strong style="color: #f5c842; font-family: Georgia, serif; font-size: 15px;">Đội ngũ Tiệm cưới tân thời</strong>
+              <strong style="color: #f5c842; font-family: Georgia, serif; font-size: 15px;">Đội ngũ ${BRAND_NAME}</strong>
             </p>
           </div>
 
           <div style="padding: 30px 20px; text-align: center; background-color: #1a0a0f; border-top: 1px solid rgba(212, 175, 55, 0.15);">
             <p style="color: rgba(245, 230, 211, 0.7); font-size: 12px; line-height: 1.6;">
               <strong>HỆ THỐNG THIỆP CƯỚI TRỰC TUYẾN — TIỆM CƯỚI TÂN THỜI</strong><br>
-              📞 Hotline: 1900 123 456 | 📧 Email: support@wedding.vn<br>
-              🌐 Website: <a href="http://localhost:3011" style="color: #f5c842; text-decoration: none;">www.wedding.vn</a>
+              📞 Hotline: 1900 123 456 | 📧 Email: hello@wio.vn<br>
+              🌐 Website: <a href="http://localhost:3011" style="color: #f5c842; text-decoration: none;">wio.vn</a>
             </p>
             <p style="color: rgba(245, 230, 211, 0.4); font-size: 11px; margin-top: 20px;">
-              © ${currentYear} Tiệm cưới tân thời. All rights reserved.
+              © ${currentYear} ${BRAND_NAME}. All rights reserved.
             </p>
           </div>
 

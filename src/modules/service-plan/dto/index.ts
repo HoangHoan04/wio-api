@@ -31,7 +31,7 @@ export class CreateServicePlanDto {
   @ApiProperty({ description: 'Số lượng template tối đa' })
   @IsNotEmpty()
   @IsNumber()
-  maxTemplates: number;
+  maxInvitations: number;
 
   @ApiProperty({ description: 'Có tính năng AI?' })
   @IsNotEmpty()
@@ -93,7 +93,7 @@ export class FilterServicePlanDto {
   @ApiProperty({ description: 'Số lượng template tối đa', required: false })
   @IsOptional()
   @IsNumber()
-  maxTemplates?: number;
+  maxInvitations?: number;
 
   @ApiProperty({ description: 'Có tính năng AI?', required: false })
   @IsOptional()

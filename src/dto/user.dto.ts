@@ -48,6 +48,11 @@ export class UserDto {
   @IsBoolean()
   isAdmin?: boolean;
 
+  @ApiProperty({ description: 'Vai trò', required: false })
+  @IsOptional()
+  @IsString()
+  role?: string;
+
   @ApiProperty({ description: 'Lần đăng nhập cuối' })
   @IsOptional()
   @IsDate()

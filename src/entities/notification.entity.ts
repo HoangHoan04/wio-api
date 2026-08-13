@@ -3,81 +3,56 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Column, Entity, Index } from 'typeorm';
 import { BaseEntity } from './base.entity';
 
-// Lịch gửi thông báo tự động - Zalo/SMS/Email qua Cron Job
 @Entity('notifications')
-@Index(['weddingId', 'status'])
+@Index(['invitationId', 'status'])
 @Index(['scheduledAt', 'status'])
 export class NotificationEntity extends BaseEntity {
-  @ApiProperty({ description: 'ID Đám cưới' })
   @Column({ type: 'uuid', nullable: false })
-  weddingId: string;
+  @ApiProperty({ description: 'ID thiệp' })
+  invitationId: string;
 
-  @ApiProperty({
-    description: 'ID Khách mời (Null = gửi broadcast)',
-    required: false,
-  })
-  // Id khách mời
   @Column({ type: 'uuid', nullable: true })
   @Index()
-  @ApiProperty({ description: 'Guest Id' })
+  @ApiProperty({ description: 'Guest Id', required: false })
   guestId?: string;
 
-  // Kênh thông báo
-  @ApiProperty({ description: 'Kênh gửi', enum: enumData.NOTIF_CHANNEL })
   @Column({ type: 'varchar', length: 255, nullable: false })
+  @ApiProperty({ description: 'Kênh gửi', enum: enumData.NOTIF_CHANNEL })
   channel: string;
 
-  // Phân loại
-  @ApiProperty({ description: 'Loại thông báo', enum: enumData.NOTIF_TYPE })
   @Column({ type: 'varchar', length: 255, nullable: false })
+  @ApiProperty({ description: 'Loại thông báo', enum: enumData.NOTIF_TYPE })
   type: string;
 
-  // Chủ đề email
-  @ApiProperty({ description: 'Chủ đề email', required: false })
   @Column({ type: 'varchar', length: 255, nullable: true })
+  @ApiProperty({ description: 'Chủ đề email', required: false })
   subject?: string;
 
-  // Nội dung thông báo
-  @ApiProperty({ description: 'Nội dung thông báo' })
   @Column({ type: 'text', nullable: false })
+  @ApiProperty({ description: 'Nội dung thông báo' })
   content: string;
 
-  @ApiProperty({ description: 'Trạng thái gửi', enum: enumData.NOTIF_STATUS })
   @Column({ type: 'varchar', length: 255, nullable: false })
-  // Trạng thái
-  @ApiProperty({ description: 'Trạng thái' })
+  @ApiProperty({ description: 'Trạng thái', enum: enumData.NOTIF_STATUS })
   status: string;
 
-  // Ngày lên lịch gửi
-  @ApiProperty({ description: 'Thời gian lên lịch gửi' })
   @Column({ type: 'timestamptz', nullable: false })
+  @ApiProperty({ description: 'Thời gian lên lịch gửi' })
   scheduledAt: Date;
 
-  // Ngày gửi
-  @ApiProperty({ description: 'Thời gian đã gửi', required: false })
   @Column({ type: 'timestamptz', nullable: true })
+  @ApiProperty({ description: 'Thời gian đã gửi', required: false })
   sentAt?: Date;
 
-  // Lý do thất bại
-  @ApiProperty({ description: 'Lý do thất bại', required: false })
   @Column({ type: 'text', nullable: true })
+  @ApiProperty({ description: 'Lý do thất bại', required: false })
   failedReason?: string;
 
-  @ApiProperty({
-    description: 'Nhà cung cấp (Zalo ZNS, Twilio...)',
-    required: false,
-  })
-  // Nơi gửi thông báo (Zalo ZNS, Twilio...)
   @Column({ type: 'varchar', length: 50, nullable: true })
-  @ApiProperty({ description: 'Nơi gửi thông báo' })
+  @ApiProperty({ description: 'Nơi gửi thông báo', required: false })
   provider?: string;
 
-  @ApiProperty({
-    description: 'Message ID trả về từ provider',
-    required: false,
-  })
-  // Message ID trả về từ provider
   @Column({ type: 'varchar', length: 255, nullable: true })
-  @ApiProperty({ description: 'Message ID từ provider' })
+  @ApiProperty({ description: 'Message ID từ provider', required: false })
   providerMsgId?: string;
 }

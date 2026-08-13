@@ -88,7 +88,7 @@ export class CustomerService {
     });
 
     const customerUser = await this.userRepo.findOne({
-      where: { customerId: data.id },
+      where: { id: customer.userId },
     });
     if (customerUser) {
       await this.userRepo.update(customerUser.id, {
@@ -126,7 +126,7 @@ export class CustomerService {
     });
 
     const customerUser = await this.userRepo.findOne({
-      where: { customerId: data.id },
+      where: { id: customer.userId },
     });
     if (customerUser) {
       await this.userRepo.update(customerUser.id, {
@@ -163,7 +163,7 @@ export class CustomerService {
     if (!customer) throw new NotFoundException('Không tìm thấy khách hàng');
 
     const customerUser = await this.userRepo.findOne({
-      where: { customerId: data.customerId },
+      where: { id: customer.userId },
     });
     if (!customerUser)
       throw new NotFoundException('Khách hàng chưa có tài khoản hệ thống');

@@ -26,20 +26,11 @@ export class SubscriptionService {
     const whereCon: FindOptionsWhere<SubscriptionEntity> = { isDeleted: false };
 
     if (where.userId !== undefined) whereCon.userId = where.userId;
-    if (where.weddingId !== undefined) whereCon.weddingId = where.weddingId;
     if (where.planId !== undefined) whereCon.planId = where.planId;
-    if (where.status !== undefined) whereCon.status = where.status;
-    if (where.startedAt !== undefined) whereCon.startedAt = where.startedAt;
-    if (where.expiresAt !== undefined) whereCon.expiresAt = where.expiresAt;
-    if (where.paidAmountVnd !== undefined)
-      whereCon.paidAmountVnd = where.paidAmountVnd;
-    if (where.paymentMethod !== undefined)
-      whereCon.paymentMethod = where.paymentMethod;
-    if (where.paymentRef !== undefined) whereCon.paymentRef = where.paymentRef;
 
     const [list, total] = await this.repo.findAndCount({
       where: whereCon,
-      relations: ['user', 'wedding', 'plan'],
+      relations: ['user', 'plan'],
       skip,
       take,
       order: { createdAt: 'DESC' },
@@ -51,7 +42,7 @@ export class SubscriptionService {
   async findById(data: IdDto) {
     const item = await this.repo.findOne({
       where: { id: data.id, isDeleted: false },
-      relations: ['user', 'wedding', 'plan'],
+      relations: ['user', 'plan'],
     });
     if (!item) throw new NotFoundException('Không tìm thấy đăng ký gói dịch vụ');
     return { message: 'Thành công', data: item };
@@ -63,16 +54,7 @@ export class SubscriptionService {
     entity.createdBy = user.id;
 
     if (dto.userId !== undefined) entity.userId = dto.userId;
-    if (dto.weddingId !== undefined) entity.weddingId = dto.weddingId;
     if (dto.planId !== undefined) entity.planId = dto.planId;
-    if (dto.status !== undefined) entity.status = dto.status;
-    if (dto.startedAt !== undefined) entity.startedAt = dto.startedAt;
-    if (dto.expiresAt !== undefined) entity.expiresAt = dto.expiresAt;
-    if (dto.paidAmountVnd !== undefined)
-      entity.paidAmountVnd = dto.paidAmountVnd;
-    if (dto.paymentMethod !== undefined)
-      entity.paymentMethod = dto.paymentMethod;
-    if (dto.paymentRef !== undefined) entity.paymentRef = dto.paymentRef;
 
     const saved = await this.repo.save(entity);
 
@@ -103,16 +85,7 @@ export class SubscriptionService {
     entity.updatedBy = user.id;
 
     if (dto.userId !== undefined) entity.userId = dto.userId;
-    if (dto.weddingId !== undefined) entity.weddingId = dto.weddingId;
     if (dto.planId !== undefined) entity.planId = dto.planId;
-    if (dto.status !== undefined) entity.status = dto.status;
-    if (dto.startedAt !== undefined) entity.startedAt = dto.startedAt;
-    if (dto.expiresAt !== undefined) entity.expiresAt = dto.expiresAt;
-    if (dto.paidAmountVnd !== undefined)
-      entity.paidAmountVnd = dto.paidAmountVnd;
-    if (dto.paymentMethod !== undefined)
-      entity.paymentMethod = dto.paymentMethod;
-    if (dto.paymentRef !== undefined) entity.paymentRef = dto.paymentRef;
 
     const saved = await this.repo.save(entity);
 
@@ -170,12 +143,6 @@ export class SubscriptionService {
 
     entity.planId = dto.planId;
     entity.expiresAt = dto.expiresAt;
-    if (dto.paidAmountVnd !== undefined)
-      entity.paidAmountVnd = dto.paidAmountVnd;
-    if (dto.paymentMethod !== undefined)
-      entity.paymentMethod = dto.paymentMethod;
-    if (dto.paymentRef !== undefined) entity.paymentRef = dto.paymentRef;
-
     entity.updatedBy = user.id;
     const saved = await this.repo.save(entity);
 

@@ -1,51 +1,42 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from './base.entity';
-import { WeddingEntity } from './wedding.entity';
+import { InvitationEntity } from './invitation.entity';
 
 @Entity('wishes')
-@Index(['weddingId', 'isApproved'])
+@Index(['invitationId', 'isApproved'])
 export class WishEntity extends BaseEntity {
-  /** Id đám cưới */
   @Column({ type: 'uuid', nullable: false })
-  @ApiProperty({ description: 'ID đám cưới' })
-  weddingId: string;
+  @ApiProperty({ description: 'ID thiệp' })
+  invitationId: string;
 
-  // Id khách mời
   @Column({ type: 'uuid', nullable: true })
-  @ApiProperty({ description: 'Guest Id' })
+  @ApiProperty({ description: 'Guest Id', required: false })
   guestId?: string;
 
-  // Tên khách mời
   @Column({ type: 'varchar', length: 100, nullable: false })
-  @ApiProperty({ description: 'Guest Name' })
+  @ApiProperty({ description: 'Tên người gửi' })
   guestName: string;
 
-  // Nội dung lời chúc
   @Column({ type: 'text', nullable: false })
-  @ApiProperty({ description: 'Content' })
+  @ApiProperty({ description: 'Nội dung' })
   content: string;
 
-  // Có được duyệt hay không
   @Column({ type: 'boolean', default: true, nullable: false })
-  @ApiProperty({ description: 'Is Approved' })
+  @ApiProperty({ description: 'Đã duyệt' })
   isApproved: boolean;
 
-  // Có được ghim hay không
   @Column({ type: 'boolean', default: false, nullable: false })
-  @ApiProperty({ description: 'Is Pinned' })
+  @ApiProperty({ description: 'Ghim' })
   isPinned: boolean;
 
-  // Ngày được duyệt
   @Column({ type: 'timestamptz', nullable: true })
-  @ApiProperty({ description: 'Approved At' })
+  @ApiProperty({ description: 'Ngày duyệt', required: false })
   approvedAt?: Date;
 
-  // Id người duyệt
-  @ManyToOne(() => WeddingEntity, (wedding) => wedding.wishes, {
+  @ManyToOne(() => InvitationEntity, (invitation) => invitation.wishes, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'weddingId' })
-  @ApiProperty({ description: 'Wedding' })
-  wedding: WeddingEntity;
+  @JoinColumn({ name: 'invitationId' })
+  invitation: InvitationEntity;
 }

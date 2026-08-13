@@ -46,10 +46,10 @@ export class RsvpGuestDto {
 }
 
 export class ImportGuestExcelDto {
-  @ApiProperty({ description: 'ID đám cưới' })
+  @ApiProperty({ description: 'ID thiệp' })
   @IsNotEmpty()
   @IsString()
-  weddingId: string;
+  invitationId: string;
 }
 
 export class GenerateQrGuestDto {
@@ -60,10 +60,10 @@ export class GenerateQrGuestDto {
 }
 
 export class CreateManyGuestsDto {
-  @ApiProperty({ description: 'ID đám cưới' })
+  @ApiProperty({ description: 'ID thiệp' })
   @IsNotEmpty()
   @IsString()
-  weddingId: string;
+  invitationId: string;
 
   @ApiProperty({ description: 'Danh sách khách mờ', type: [CreateGuestDto] })
   @IsArray()

@@ -1,7 +1,7 @@
 import {
   GuestRepository,
   TableRepository,
-  WeddingRepository,
+  InvitationRepository,
 } from '@/repositories';
 import { TypeOrmExModule } from '@/typeorm';
 import { Module } from '@nestjs/common';
@@ -12,7 +12,7 @@ import { TableService } from './table.service';
     TypeOrmExModule.forCustomRepository([
       TableRepository,
       GuestRepository,
-      WeddingRepository,
+      InvitationRepository,
     ]),
   ],
   providers: [TableService],

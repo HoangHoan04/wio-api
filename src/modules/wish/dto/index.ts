@@ -10,10 +10,10 @@ import {
 } from 'class-validator';
 
 export class CreateWishDto {
-  @ApiProperty({ description: 'ID Đám cưới' })
+  @ApiProperty({ description: 'ID thiệp' })
   @IsNotEmpty()
   @IsString()
-  weddingId: string;
+  invitationId: string;
 
   @ApiProperty({
     description: 'ID Khách mời (Null nếu không có mã)',
@@ -33,15 +33,15 @@ export class CreateWishDto {
   @IsString()
   content: string;
 
-  @ApiProperty({ description: 'Đã duyệt?' })
-  @IsNotEmpty()
+  @ApiProperty({ description: 'Đã duyệt?', required: false })
+  @IsOptional()
   @IsBoolean()
-  isApproved: boolean;
+  isApproved?: boolean;
 
-  @ApiProperty({ description: 'Ghim lên đầu?' })
-  @IsNotEmpty()
+  @ApiProperty({ description: 'Ghim lên đầu?', required: false })
+  @IsOptional()
   @IsBoolean()
-  isPinned: boolean;
+  isPinned?: boolean;
 
   @ApiProperty({ description: 'Thời gian duyệt', required: false })
   @IsOptional()
@@ -58,10 +58,10 @@ export class UpdateWishDto extends PartialType(CreateWishDto) {
 }
 
 export class FilterWishDto {
-  @ApiProperty({ description: 'ID Đám cưới', required: false })
+  @ApiProperty({ description: 'ID thiệp', required: false })
   @IsOptional()
   @IsString()
-  weddingId?: string;
+  invitationId?: string;
 
   @ApiProperty({
     description: 'ID Khách mời (Null nếu không có mã)',

@@ -1,7 +1,17 @@
 import { enumData } from '@/common/constanst/enumData';
 import { IdDto, PaginationDto, UserDto } from '@/dto';
 import { GuestEntity } from '@/entities';
-import { GuestRepository, WeddingRepository } from '@/repositories';
+import {
+  GuestGroupRepository,
+  GuestRepository,
+  InvitationRepository,
+} from '@/repositories';
+import {
+  generateInvitationCode,
+  resolveGuestGroupCode,
+} from '@/utils/invitation.utils';
+import { getActivePlanLimits } from '@/utils/quota.utils';
+import { buildShareUrl } from '@/utils/slug.utils';
 import {
   BadRequestException,
   ForbiddenException,
@@ -25,7 +35,8 @@ import {
 export class GuestService {
   constructor(
     private readonly repo: GuestRepository,
-    private readonly weddingRepo: WeddingRepository,
+    private readonly invitationRepo: InvitationRepository,
+    private readonly guestGroupRepo: GuestGroupRepository,
   ) {}
 
   async pagination(data: PaginationDto<FilterGuestDto>, user?: UserDto) {
@@ -33,29 +44,29 @@ export class GuestService {
     const whereCon: FindOptionsWhere<GuestEntity> = { isDeleted: false };
 
     if (user && !user.isAdmin) {
-      if (where.weddingId) {
-        const wedding = await this.weddingRepo.findOne({
-          where: { id: where.weddingId, isDeleted: false },
+      if (where.invitationId) {
+        const invitation = await this.invitationRepo.findOne({
+          where: { id: where.invitationId, isDeleted: false },
         });
-        if (!wedding || wedding.userId !== user.id) {
+        if (!invitation || invitation.userId !== user.id) {
           throw new ForbiddenException(
-            'Bạn không có quyền xem khách mời của đám cưới này',
+            'Bạn không có quyền xem khách mời của thiệp này',
           );
         }
       } else {
-        const weddings = await this.weddingRepo.find({
+        const invitations = await this.invitationRepo.find({
           where: { userId: user.id, isDeleted: false },
           select: ['id'],
         });
-        whereCon.weddingId = weddings.map((w) => w.id) as any;
+        whereCon.invitationId = invitations.map((w) => w.id) as any;
       }
     }
 
-    if (where.weddingId !== undefined) whereCon.weddingId = where.weddingId;
+    if (where.invitationId !== undefined) whereCon.invitationId = where.invitationId;
     if (where.tableId !== undefined) whereCon.tableId = where.tableId;
     if (where.fullName !== undefined) whereCon.fullName = where.fullName;
     if (where.salutation !== undefined) whereCon.salutation = where.salutation;
-    if (where.side !== undefined) whereCon.side = where.side;
+    if (where.groupId !== undefined) whereCon.groupId = where.groupId;
     if (where.isVip !== undefined) whereCon.isVip = where.isVip;
     if (where.invitationCode !== undefined)
       whereCon.invitationCode = where.invitationCode;
@@ -89,10 +100,10 @@ export class GuestService {
     if (!item) throw new NotFoundException('Không tìm thấy bản ghi');
 
     if (user && !user.isAdmin) {
-      const wedding = await this.weddingRepo.findOne({
-        where: { id: item.weddingId, isDeleted: false },
+      const invitation = await this.invitationRepo.findOne({
+        where: { id: item.invitationId, isDeleted: false },
       });
-      if (!wedding || wedding.userId !== user.id) {
+      if (!invitation || invitation.userId !== user.id) {
         throw new ForbiddenException('Bạn không có quyền xem khách mời này');
       }
     }
@@ -101,14 +112,17 @@ export class GuestService {
   }
 
   async create(user: UserDto, dto: CreateGuestDto) {
-    if (dto.weddingId) {
-      const wedding = await this.weddingRepo.findOne({
-        where: { id: dto.weddingId },
+    if (dto.invitationId) {
+      const invitation = await this.invitationRepo.findOne({
+        where: { id: dto.invitationId },
       });
-      if (!user.isAdmin && (!wedding || wedding.userId !== user.id)) {
+      if (!user.isAdmin && (!invitation || invitation.userId !== user.id)) {
         throw new ForbiddenException(
-          'Bạn không có quyền thêm khách mời vào đám cưới này',
+          'Bạn không có quyền thêm khách mời vào thiệp này',
         );
+      }
+      if (invitation) {
+        await this.assertGuestQuota(invitation.userId, dto.invitationId, 1);
       }
     }
 
@@ -116,15 +130,17 @@ export class GuestService {
     entity.id = uuidv4();
     entity.createdBy = user.id;
 
-    if (dto.weddingId !== undefined) entity.weddingId = dto.weddingId;
+    if (dto.invitationId !== undefined) entity.invitationId = dto.invitationId;
     if (dto.tableId !== undefined) entity.tableId = dto.tableId;
     if (dto.fullName !== undefined) entity.fullName = dto.fullName;
     entity.salutation = dto.salutation || 'Kính mời';
-    entity.side = dto.side || enumData.GUEST_SIDE.BOTH.code;
+    entity.groupId = await this.resolveGroupId(
+      dto.invitationId,
+      dto.groupId,
+      dto.groupCode,
+    );
     entity.isVip = dto.isVip ?? false;
-    entity.invitationCode =
-      dto.invitationCode ||
-      Math.random().toString(36).substring(2, 8).toUpperCase();
+    entity.invitationCode = dto.invitationCode || generateInvitationCode();
     if (dto.qrCodeUrl !== undefined) entity.qrCodeUrl = dto.qrCodeUrl;
     entity.rsvpStatus = dto.rsvpStatus || enumData.RSVP_STATUS.PENDING.code;
     entity.attendingCount = dto.attendingCount ?? 1;
@@ -140,36 +156,45 @@ export class GuestService {
   }
 
   async createMany(user: UserDto, dto: CreateManyGuestsDto) {
-    const wedding = await this.weddingRepo.findOne({
-      where: { id: dto.weddingId, isDeleted: false },
+    const invitation = await this.invitationRepo.findOne({
+      where: { id: dto.invitationId, isDeleted: false },
     });
-    if (!wedding) throw new NotFoundException('Không tìm thấy đám cưới');
-    if (!user.isAdmin && wedding.userId !== user.id) {
+    if (!invitation) throw new NotFoundException('Không tìm thấy thiệp');
+    if (!user.isAdmin && invitation.userId !== user.id) {
       throw new ForbiddenException(
-        'Bạn không có quyền thêm khách mời vào đám cưới này',
+        'Bạn không có quyền thêm khách mời vào thiệp này',
       );
     }
 
-    const entities: GuestEntity[] = dto.guests.map((g) => {
+    await this.assertGuestQuota(
+      invitation.userId,
+      dto.invitationId,
+      dto.guests.length,
+    );
+
+    const entities: GuestEntity[] = [];
+    for (const g of dto.guests) {
       const entity = new GuestEntity();
       entity.id = uuidv4();
       entity.createdBy = user.id;
-      entity.weddingId = dto.weddingId;
+      entity.invitationId = dto.invitationId;
       if (g.tableId !== undefined) entity.tableId = g.tableId;
       entity.fullName = g.fullName;
       entity.salutation = g.salutation || 'Kính mời';
-      entity.side = g.side || enumData.GUEST_SIDE.BOTH.code;
+      entity.groupId = await this.resolveGroupId(
+        dto.invitationId,
+        g.groupId,
+        g.groupCode,
+      );
       entity.isVip = g.isVip ?? false;
-      entity.invitationCode =
-        g.invitationCode ||
-        Math.random().toString(36).substring(2, 8).toUpperCase();
+      entity.invitationCode = g.invitationCode || generateInvitationCode();
       if (g.qrCodeUrl !== undefined) entity.qrCodeUrl = g.qrCodeUrl;
       entity.rsvpStatus = g.rsvpStatus || enumData.RSVP_STATUS.PENDING.code;
       entity.attendingCount = g.attendingCount ?? 1;
       entity.needsTransport = g.needsTransport ?? false;
       if (g.rsvpNote !== undefined) entity.rsvpNote = g.rsvpNote;
-      return entity;
-    });
+      entities.push(entity);
+    }
 
     const saved = await this.repo.save(entities);
     return {
@@ -186,7 +211,7 @@ export class GuestService {
       { header: 'Số điện thoại', key: 'phone', width: 20 },
       { header: 'Email', key: 'email', width: 30 },
       { header: 'Danh xưng', key: 'salutation', width: 15 },
-      { header: 'Bên (Chú rể/Cô dâu/Cả hai)', key: 'side', width: 22 },
+      { header: 'Nhóm khách (mã)', key: 'groupCode', width: 22 },
       { header: 'VIP (true/false)', key: 'isVip', width: 18 },
       { header: 'Cần đưa đón (true/false)', key: 'needsTransport', width: 22 },
     ];
@@ -196,7 +221,7 @@ export class GuestService {
       phone: '0901234567',
       email: 'a@example.com',
       salutation: 'Anh',
-      side: 'groom',
+      groupCode: enumData.GUEST_GROUP.GROOM.code,
       isVip: 'false',
       needsTransport: 'false',
     });
@@ -206,7 +231,7 @@ export class GuestService {
       phone: '0912345678',
       email: 'b@example.com',
       salutation: 'Chị',
-      side: 'bride',
+      groupCode: enumData.GUEST_GROUP.BRIDE.code,
       isVip: 'true',
       needsTransport: 'true',
     });
@@ -221,22 +246,28 @@ export class GuestService {
     });
     if (!entity) throw new NotFoundException('Không tìm thấy bản ghi');
 
-    const wedding = await this.weddingRepo.findOne({
-      where: { id: entity.weddingId },
+    const invitation = await this.invitationRepo.findOne({
+      where: { id: entity.invitationId },
     });
-    if (!user.isAdmin && (!wedding || wedding.userId !== user.id)) {
+    if (!user.isAdmin && (!invitation || invitation.userId !== user.id)) {
       throw new ForbiddenException(
-        'Bạn không có quyền chỉnh sửa khách mời của đám cưới này',
+        'Bạn không có quyền chỉnh sửa khách mời của thiệp này',
       );
     }
 
     entity.updatedBy = user.id;
 
-    if (dto.weddingId !== undefined) entity.weddingId = dto.weddingId;
+    if (dto.invitationId !== undefined) entity.invitationId = dto.invitationId;
     if (dto.tableId !== undefined) entity.tableId = dto.tableId;
     if (dto.fullName !== undefined) entity.fullName = dto.fullName;
     if (dto.salutation !== undefined) entity.salutation = dto.salutation;
-    if (dto.side !== undefined) entity.side = dto.side;
+    if (dto.groupId !== undefined || dto.groupCode !== undefined) {
+      entity.groupId = await this.resolveGroupId(
+        entity.invitationId,
+        dto.groupId,
+        dto.groupCode,
+      );
+    }
     if (dto.isVip !== undefined) entity.isVip = dto.isVip;
     if (dto.invitationCode !== undefined)
       entity.invitationCode = dto.invitationCode;
@@ -262,10 +293,10 @@ export class GuestService {
     });
     if (!entity) throw new NotFoundException('Không tìm thấy bản ghi');
 
-    const wedding = await this.weddingRepo.findOne({
-      where: { id: entity.weddingId },
+    const invitation = await this.invitationRepo.findOne({
+      where: { id: entity.invitationId },
     });
-    if (!user.isAdmin && (!wedding || wedding.userId !== user.id)) {
+    if (!user.isAdmin && (!invitation || invitation.userId !== user.id)) {
       throw new ForbiddenException('Bạn không có quyền xóa khách mời này');
     }
 
@@ -303,13 +334,16 @@ export class GuestService {
     guest.invitationViewedAt = new Date();
     await this.repo.save(guest);
 
-    const wedding = await this.weddingRepo.findOne({
-      where: { id: guest.weddingId, isDeleted: false },
+    const invitation = await this.invitationRepo.findOne({
+      where: { id: guest.invitationId, isDeleted: false },
       relations: {
         events: true,
         timelines: true,
         photos: true,
         template: true,
+        hosts: true,
+        gifts: true,
+        guestGroups: true,
       },
     });
 
@@ -317,14 +351,14 @@ export class GuestService {
       message: 'Nhận diện khách mời thành công',
       data: {
         guest,
-        wedding,
+        invitation,
       },
     };
   }
 
-  async getStats(weddingId: string) {
+  async getStats(invitationId: string) {
     const guests = await this.repo.find({
-      where: { weddingId, isDeleted: false },
+      where: { invitationId, isDeleted: false },
     });
 
     const total = guests.length;
@@ -361,21 +395,21 @@ export class GuestService {
     });
     if (!guest) throw new NotFoundException('Không tìm thấy khách mời');
 
-    const wedding = await this.weddingRepo.findOne({
-      where: { id: guest.weddingId, isDeleted: false },
+    const invitation = await this.invitationRepo.findOne({
+      where: { id: guest.invitationId, isDeleted: false },
     });
 
-    if (!wedding) {
-      throw new NotFoundException('Không tìm thấy đám cưới của khách mời này');
+    if (!invitation) {
+      throw new NotFoundException('Không tìm thấy thiệp của khách mời này');
     }
 
-    if (!user.isAdmin && wedding.userId !== user.id) {
+    if (!user.isAdmin && invitation.userId !== user.id) {
       throw new ForbiddenException(
         'Bạn không có quyền tạo mã QR cho khách mời này',
       );
     }
 
-    const invitationUrl = `https://wedding.vn/thiep/${wedding.slug}?code=${guest.invitationCode}`;
+    const invitationUrl = `${buildShareUrl(invitation.slug)}?code=${guest.invitationCode}`;
     let qrCodeBase64 = '';
     try {
       qrCodeBase64 = await QRCode.toDataURL(invitationUrl);
@@ -390,18 +424,18 @@ export class GuestService {
   }
 
   async importExcel(
-    weddingId: string,
+    invitationId: string,
     buffer: Buffer,
     user: UserDto,
   ): Promise<any> {
-    const wedding = await this.weddingRepo.findOne({
-      where: { id: weddingId, isDeleted: false },
+    const invitation = await this.invitationRepo.findOne({
+      where: { id: invitationId, isDeleted: false },
     });
-    if (!wedding) throw new NotFoundException('Không tìm thấy đám cưới');
+    if (!invitation) throw new NotFoundException('Không tìm thấy thiệp');
 
-    if (!user.isAdmin && wedding.userId !== user.id) {
+    if (!user.isAdmin && invitation.userId !== user.id) {
       throw new ForbiddenException(
-        'Bạn không có quyền thêm khách mời vào đám cưới này',
+        'Bạn không có quyền thêm khách mời vào thiệp này',
       );
     }
 
@@ -430,39 +464,51 @@ export class GuestService {
       return val.toString().trim();
     };
 
-    const guests: GuestEntity[] = [];
+    const rows: Array<{
+      fullName: string;
+      salutation: string;
+      groupCode?: string;
+      isVip: boolean;
+    }> = [];
     worksheet.eachRow((row, rowNumber) => {
       if (rowNumber === 1) return;
       const fullName = getCellValueString(row.getCell(1).value);
       if (!fullName) return;
-
-      const salutation = getCellValueString(row.getCell(4).value) || 'Kính mời';
-      const sideStr = getCellValueString(row.getCell(5).value).toLowerCase();
       const isVipStr = getCellValueString(row.getCell(6).value).toLowerCase();
-
-      const guest = new GuestEntity();
-      guest.id = uuidv4();
-      guest.weddingId = weddingId;
-      guest.fullName = fullName;
-      guest.salutation = salutation;
-      guest.side =
-        sideStr === 'groom'
-          ? enumData.GUEST_SIDE.GROOM.code
-          : sideStr === 'bride'
-            ? enumData.GUEST_SIDE.BRIDE.code
-            : enumData.GUEST_SIDE.BOTH.code;
-      guest.isVip =
-        isVipStr === 'true' || isVipStr === '1' || isVipStr === 'yes';
-      guest.invitationCode = Math.random()
-        .toString(36)
-        .substring(2, 8)
-        .toUpperCase();
-      guest.createdBy = user.id;
-
-      guests.push(guest);
+      rows.push({
+        fullName,
+        salutation: getCellValueString(row.getCell(4).value) || 'Kính mời',
+        groupCode: resolveGuestGroupCode(
+          getCellValueString(row.getCell(5).value),
+        ),
+        isVip:
+          isVipStr === 'true' || isVipStr === '1' || isVipStr === 'yes',
+      });
     });
 
+    const guests: GuestEntity[] = [];
+    for (const row of rows) {
+      const guest = new GuestEntity();
+      guest.id = uuidv4();
+      guest.invitationId = invitationId;
+      guest.fullName = row.fullName;
+      guest.salutation = row.salutation;
+      guest.groupId = await this.resolveGroupId(
+        invitationId,
+        undefined,
+        row.groupCode,
+      );
+      guest.rsvpStatus = enumData.RSVP_STATUS.PENDING.code;
+      guest.attendingCount = 1;
+      guest.needsTransport = false;
+      guest.isVip = row.isVip;
+      guest.invitationCode = generateInvitationCode();
+      guest.createdBy = user.id;
+      guests.push(guest);
+    }
+
     if (guests.length > 0) {
+      await this.assertGuestQuota(invitation.userId, invitationId, guests.length);
       await this.repo.save(guests);
     }
 
@@ -470,5 +516,35 @@ export class GuestService {
       message: `Import thành công ${guests.length} khách mời`,
       data: guests,
     };
+  }
+
+  private async resolveGroupId(
+    invitationId: string | undefined,
+    groupId?: string,
+    groupCode?: string,
+  ): Promise<string | undefined> {
+    if (groupId) return groupId;
+    const code = resolveGuestGroupCode(groupCode) || groupCode;
+    if (!invitationId || !code) return undefined;
+    const group = await this.guestGroupRepo.findOne({
+      where: { invitationId, code, isDeleted: false },
+    });
+    return group?.id;
+  }
+
+  private async assertGuestQuota(
+    userId: string,
+    invitationId: string,
+    incoming: number,
+  ) {
+    const current = await this.repo.count({
+      where: { invitationId, isDeleted: false },
+    });
+    const { maxGuests } = await getActivePlanLimits(this.repo.manager, userId);
+    if (current + incoming > maxGuests) {
+      throw new ForbiddenException(
+        `Gói hiện tại cho phép tối đa ${maxGuests} khách mời`,
+      );
+    }
   }
 }

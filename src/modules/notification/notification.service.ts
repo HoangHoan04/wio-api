@@ -18,7 +18,7 @@ export class NotificationService {
     const { skip = 0, take = 10, where = {} } = data;
     const whereCon: FindOptionsWhere<NotificationEntity> = { isDeleted: false };
 
-    if (where.weddingId !== undefined) whereCon.weddingId = where.weddingId;
+    if (where.invitationId !== undefined) whereCon.invitationId = where.invitationId;
     if (where.guestId !== undefined) whereCon.guestId = where.guestId;
     if (where.channel !== undefined) whereCon.channel = where.channel;
     if (where.type !== undefined) whereCon.type = where.type;
@@ -57,7 +57,7 @@ export class NotificationService {
     entity.id = uuidv4();
     entity.createdBy = user.id;
 
-    if (dto.weddingId !== undefined) entity.weddingId = dto.weddingId;
+    if (dto.invitationId !== undefined) entity.invitationId = dto.invitationId;
     if (dto.guestId !== undefined) entity.guestId = dto.guestId;
     if (dto.channel !== undefined) entity.channel = dto.channel;
     if (dto.type !== undefined) entity.type = dto.type;
@@ -83,7 +83,7 @@ export class NotificationService {
 
     entity.updatedBy = user.id;
 
-    if (dto.weddingId !== undefined) entity.weddingId = dto.weddingId;
+    if (dto.invitationId !== undefined) entity.invitationId = dto.invitationId;
     if (dto.guestId !== undefined) entity.guestId = dto.guestId;
     if (dto.channel !== undefined) entity.channel = dto.channel;
     if (dto.type !== undefined) entity.type = dto.type;

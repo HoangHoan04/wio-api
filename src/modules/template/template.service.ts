@@ -1,9 +1,8 @@
 import { enumData } from '@/common/constanst/enumData';
 import { IdDto, PaginationDto, UserDto } from '@/dto';
-import { TemplateEntity } from '@/entities';
-import { TemplateRepository } from '@/repositories';
+import { TemplateCardTypeEntity, TemplateEntity } from '@/entities';
+import { TemplateCardTypeRepository, TemplateRepository } from '@/repositories';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { FindOptionsWhere, ILike } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { ActionLogCreateDto } from '../action-log/action-log.dto';
 import { ActionLogService } from '../action-log/action-log.service';
@@ -19,31 +18,53 @@ import {
 export class TemplateService {
   constructor(
     private readonly repo: TemplateRepository,
+    private readonly cardTypeRepo: TemplateCardTypeRepository,
     private readonly actionLogService: ActionLogService,
   ) {}
 
   async pagination(data: PaginationDto) {
-    const whereCon: FindOptionsWhere<TemplateEntity> = {};
+    const qb = this.repo
+      .createQueryBuilder('tpl')
+      .leftJoinAndSelect('tpl.minPlan', 'minPlan')
+      .leftJoinAndSelect('tpl.cardTypes', 'cardTypes');
 
-    if (data.where.name !== undefined)
-      whereCon.name = ILike(`%${data.where.name}%`);
-    if (data.where.themeCode !== undefined)
-      whereCon.themeCode = data.where.themeCode;
-    if (data.where.isShow !== undefined) whereCon.isShow = data.where.isShow;
-    if (data.where.isPremium !== undefined)
-      whereCon.isPremium = data.where.isPremium;
-    if (data.where.minPlanId !== undefined)
-      whereCon.minPlanId = data.where.minPlanId;
-    if ([true, false].includes(data.where.isDeleted))
-      whereCon.isDeleted = data.where.isDeleted;
+    if (data.where?.name !== undefined)
+      qb.andWhere('tpl.name ILIKE :name', { name: `%${data.where.name}%` });
+    if (data.where?.themeCode !== undefined)
+      qb.andWhere('tpl.themeCode = :themeCode', {
+        themeCode: data.where.themeCode,
+      });
+    if (data.where?.isShow !== undefined)
+      qb.andWhere('tpl.isShow = :isShow', { isShow: data.where.isShow });
+    if (data.where?.isPremium !== undefined)
+      qb.andWhere('tpl.isPremium = :isPremium', {
+        isPremium: data.where.isPremium,
+      });
+    if (data.where?.minPlanId !== undefined)
+      qb.andWhere('tpl.minPlanId = :minPlanId', {
+        minPlanId: data.where.minPlanId,
+      });
+    if ([true, false].includes(data.where?.isDeleted))
+      qb.andWhere('tpl.isDeleted = :isDeleted', {
+        isDeleted: data.where.isDeleted,
+      });
+    if (data.where?.cardType) {
+      qb.andWhere(
+        `EXISTS (
+          SELECT 1 FROM template_card_types tct
+          WHERE tct."templateId" = tpl.id
+            AND tct."cardType" = :cardType
+            AND tct."isDeleted" = false
+        )`,
+        { cardType: data.where.cardType },
+      );
+    }
 
-    const [list, total] = await this.repo.findAndCount({
-      where: whereCon,
-      relations: ['minPlan'],
-      skip: data.skip,
-      take: data.take,
-      order: { createdAt: 'DESC' },
-    });
+    const [list, total] = await qb
+      .skip(data.skip)
+      .take(data.take)
+      .orderBy('tpl.createdAt', 'DESC')
+      .getManyAndCount();
 
     return { data: list, total };
   }
@@ -99,6 +120,7 @@ export class TemplateService {
     template.createdAt = new Date();
 
     const saved = await this.repo.save(template);
+    await this.syncCardTypes(saved.id, dto.cardTypes);
 
     const actionLogDto: ActionLogCreateDto = {
       entityId: template.id,
@@ -151,6 +173,7 @@ export class TemplateService {
     if (dto.trialDays !== undefined) template.trialDays = dto.trialDays;
 
     const saved = await this.repo.save(template);
+    await this.syncCardTypes(saved.id, dto.cardTypes);
 
     const actionLogDto: ActionLogCreateDto = {
       entityId: template.id,
@@ -256,5 +279,17 @@ export class TemplateService {
 
     await this.actionLogService.create(actionLogDto);
     return { message: 'Cập nhật thành công', data: saved };
+  }
+
+  private async syncCardTypes(templateId: string, cardTypes?: string[]) {
+    if (cardTypes === undefined) return;
+    await this.cardTypeRepo.delete({ templateId });
+    for (const cardType of cardTypes) {
+      const row = new TemplateCardTypeEntity();
+      row.id = uuidv4();
+      row.templateId = templateId;
+      row.cardType = cardType;
+      await this.cardTypeRepo.save(row);
+    }
   }
 }

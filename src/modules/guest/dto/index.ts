@@ -13,10 +13,10 @@ import {
 } from 'class-validator';
 
 export class CreateGuestDto {
-  @ApiProperty({ description: 'ID Đám cưới' })
+  @ApiProperty({ description: 'ID Thiệp' })
   @IsNotEmpty()
   @IsString()
-  weddingId: string;
+  invitationId: string;
 
   @ApiProperty({
     description: 'ID Bàn tiệc (Null nếu chưa xếp)',
@@ -36,10 +36,15 @@ export class CreateGuestDto {
   @IsString()
   salutation?: string;
 
-  @ApiProperty({ description: 'Khách của ai', required: false })
+  @ApiProperty({ description: 'ID nhóm khách', required: false })
+  @IsOptional()
+  @IsUUID()
+  groupId?: string;
+
+  @ApiProperty({ description: 'Mã nhóm khách (GUEST_GROUP)', required: false })
   @IsOptional()
   @IsString()
-  side?: string;
+  groupCode?: string;
 
   @ApiProperty({ description: 'Khách VIP?', required: false })
   @IsOptional()
@@ -106,10 +111,10 @@ export class UpdateGuestDto extends PartialType(CreateGuestDto) {
 }
 
 export class FilterGuestDto {
-  @ApiProperty({ description: 'ID Đám cưới', required: false })
+  @ApiProperty({ description: 'ID Thiệp', required: false })
   @IsOptional()
   @IsString()
-  weddingId?: string;
+  invitationId?: string;
 
   @ApiProperty({
     description: 'ID Bàn tiệc (Null nếu chưa xếp)',
@@ -130,11 +135,17 @@ export class FilterGuestDto {
   salutation?: string;
 
   @ApiProperty({
-    description: 'Khách của ai',
+    description: 'ID nhóm khách',
     required: false,
   })
   @IsOptional()
-  side?: string;
+  @IsUUID()
+  groupId?: string;
+
+  @ApiProperty({ description: 'Mã nhóm khách', required: false })
+  @IsOptional()
+  @IsString()
+  groupCode?: string;
 
   @ApiProperty({ description: 'Khách VIP?', required: false })
   @IsOptional()

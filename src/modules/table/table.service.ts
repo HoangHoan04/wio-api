@@ -1,10 +1,12 @@
+import { enumData } from '@/common/constanst/enumData';
 import { IdDto, PaginationDto, UserDto } from '@/dto';
 import { TableEntity } from '@/entities';
 import {
   GuestRepository,
   TableRepository,
-  WeddingRepository,
+  InvitationRepository,
 } from '@/repositories';
+import { hasModule } from '@/utils/invitation.utils';
 import {
   BadRequestException,
   ForbiddenException,
@@ -20,14 +22,14 @@ export class TableService {
   constructor(
     private readonly repo: TableRepository,
     private readonly guestRepo: GuestRepository,
-    private readonly weddingRepo: WeddingRepository,
+    private readonly invitationRepo: InvitationRepository,
   ) {}
 
   async pagination(data: PaginationDto<FilterTableDto>) {
     const { skip = 0, take = 10, where = {} } = data;
     const whereCon: FindOptionsWhere<TableEntity> = { isDeleted: false };
 
-    if (where.weddingId !== undefined) whereCon.weddingId = where.weddingId;
+    if (where.invitationId !== undefined) whereCon.invitationId = where.invitationId;
     if (where.name !== undefined) whereCon.name = where.name;
     if (where.maxSeats !== undefined) whereCon.maxSeats = where.maxSeats;
     if (where.currentSeats !== undefined)
@@ -56,14 +58,23 @@ export class TableService {
   }
 
   async create(user: UserDto, dto: CreateTableDto) {
-    if (dto.weddingId) {
-      const wedding = await this.weddingRepo.findOne({
-        where: { id: dto.weddingId },
+    if (dto.invitationId) {
+      const invitation = await this.invitationRepo.findOne({
+        where: { id: dto.invitationId },
       });
-      if (!user.isAdmin && (!wedding || wedding.userId !== user.id)) {
+      if (!user.isAdmin && (!invitation || invitation.userId !== user.id)) {
         throw new ForbiddenException(
-          'Bạn không có quyền thêm bàn tiệc vào đám cưới này',
+          'Bạn không có quyền thêm bàn tiệc vào thiệp này',
         );
+      }
+      if (
+        invitation &&
+        !hasModule(
+          invitation.enabledModules,
+          enumData.INVITATION_MODULE.SEATING.code,
+        )
+      ) {
+        throw new ForbiddenException('Thiệp này không bật sơ đồ bàn');
       }
     }
 
@@ -71,7 +82,7 @@ export class TableService {
     entity.id = uuidv4();
     entity.createdBy = user.id;
 
-    if (dto.weddingId !== undefined) entity.weddingId = dto.weddingId;
+    if (dto.invitationId !== undefined) entity.invitationId = dto.invitationId;
     if (dto.name !== undefined) entity.name = dto.name;
     if (dto.maxSeats !== undefined) entity.maxSeats = dto.maxSeats;
     if (dto.currentSeats !== undefined) entity.currentSeats = dto.currentSeats;
@@ -89,18 +100,18 @@ export class TableService {
     });
     if (!entity) throw new NotFoundException('Không tìm thấy bản ghi');
 
-    const wedding = await this.weddingRepo.findOne({
-      where: { id: entity.weddingId },
+    const invitation = await this.invitationRepo.findOne({
+      where: { id: entity.invitationId },
     });
-    if (!user.isAdmin && (!wedding || wedding.userId !== user.id)) {
+    if (!user.isAdmin && (!invitation || invitation.userId !== user.id)) {
       throw new ForbiddenException(
-        'Bạn không có quyền chỉnh sửa bàn tiệc của đám cưới này',
+        'Bạn không có quyền chỉnh sửa bàn tiệc của thiệp này',
       );
     }
 
     entity.updatedBy = user.id;
 
-    if (dto.weddingId !== undefined) entity.weddingId = dto.weddingId;
+    if (dto.invitationId !== undefined) entity.invitationId = dto.invitationId;
     if (dto.name !== undefined) entity.name = dto.name;
     if (dto.maxSeats !== undefined) entity.maxSeats = dto.maxSeats;
     if (dto.currentSeats !== undefined) entity.currentSeats = dto.currentSeats;
@@ -118,10 +129,10 @@ export class TableService {
     });
     if (!entity) throw new NotFoundException('Không tìm thấy bản ghi');
 
-    const wedding = await this.weddingRepo.findOne({
-      where: { id: entity.weddingId },
+    const invitation = await this.invitationRepo.findOne({
+      where: { id: entity.invitationId },
     });
-    if (!user.isAdmin && (!wedding || wedding.userId !== user.id)) {
+    if (!user.isAdmin && (!invitation || invitation.userId !== user.id)) {
       throw new ForbiddenException('Bạn không có quyền xóa bàn tiệc này');
     }
 
@@ -141,10 +152,10 @@ export class TableService {
     });
     if (!table) throw new NotFoundException('Không tìm thấy bàn tiệc');
 
-    const wedding = await this.weddingRepo.findOne({
-      where: { id: table.weddingId },
+    const invitation = await this.invitationRepo.findOne({
+      where: { id: table.invitationId },
     });
-    if (!user.isAdmin && (!wedding || wedding.userId !== user.id)) {
+    if (!user.isAdmin && (!invitation || invitation.userId !== user.id)) {
       throw new ForbiddenException(
         'Bạn không có quyền xếp chỗ cho bàn tiệc này',
       );
@@ -155,9 +166,9 @@ export class TableService {
     });
     if (!guest) throw new NotFoundException('Không tìm thấy khách mời');
 
-    if (guest.weddingId !== table.weddingId) {
+    if (guest.invitationId !== table.invitationId) {
       throw new BadRequestException(
-        'Khách mời và bàn tiệc phải thuộc cùng một đám cưới',
+        'Khách mời và bàn tiệc phải thuộc cùng một thiệp',
       );
     }
 
@@ -208,10 +219,10 @@ export class TableService {
     });
     if (!guest) throw new NotFoundException('Không tìm thấy khách mời');
 
-    const wedding = await this.weddingRepo.findOne({
-      where: { id: guest.weddingId },
+    const invitation = await this.invitationRepo.findOne({
+      where: { id: guest.invitationId },
     });
-    if (!user.isAdmin && (!wedding || wedding.userId !== user.id)) {
+    if (!user.isAdmin && (!invitation || invitation.userId !== user.id)) {
       throw new ForbiddenException(
         'Bạn không có quyền xếp chỗ cho khách mời này',
       );

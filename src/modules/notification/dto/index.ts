@@ -9,10 +9,10 @@ import {
 } from 'class-validator';
 
 export class CreateNotificationDto {
-  @ApiProperty({ description: 'ID Đám cưới' })
+  @ApiProperty({ description: 'ID Thiệp' })
   @IsNotEmpty()
   @IsString()
-  weddingId: string;
+  invitationId: string;
 
   @ApiProperty({
     description: 'ID Khách mời (Null = gửi broadcast)',
@@ -86,10 +86,10 @@ export class UpdateNotificationDto extends PartialType(CreateNotificationDto) {
 }
 
 export class FilterNotificationDto {
-  @ApiProperty({ description: 'ID Đám cưới', required: false })
+  @ApiProperty({ description: 'ID Thiệp', required: false })
   @IsOptional()
   @IsString()
-  weddingId?: string;
+  invitationId?: string;
 
   @ApiProperty({
     description: 'ID Khách mời (Null = gửi broadcast)',

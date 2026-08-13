@@ -28,7 +28,7 @@ async function bootstrap() {
   addTransactionalDataSource(dataSource);
 
   const options = new DocumentBuilder()
-    .setTitle('WIO API')
+    .setTitle('Wio API')
     .setVersion('1.0.0')
     .addBearerAuth()
     .build();

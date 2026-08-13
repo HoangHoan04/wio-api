@@ -5,73 +5,67 @@ import {
   BeforeUpdate,
   Column,
   Entity,
-  JoinColumn,
   OneToMany,
   OneToOne,
 } from 'typeorm';
+import { enumData } from '@/common/constanst/enumData';
 import { BaseEntity } from './base.entity';
 import { CustomerEntity } from './customer.entity';
-import { WeddingEntity } from './wedding.entity';
+import { InvitationEntity } from './invitation.entity';
 
 @Entity('users')
 export class UserEntity extends BaseEntity {
-  // Password
   @Column({ type: 'varchar', length: 255, nullable: false })
   @ApiProperty({ description: 'Mật khẩu đã mã hóa' })
   password: string;
 
-  // Email
   @Column({ type: 'varchar', length: 255, unique: true, nullable: false })
   @ApiProperty({ description: 'Địa chỉ email (Dùng để đăng nhập)' })
   email: string;
 
-  // Customer Id
-  @Column({ type: 'uuid', nullable: true })
-  @ApiProperty({ description: 'Mã khách hàng (nếu user là khách hàng)' })
-  customerId?: string;
-
-  // Is Admin
   @Column({ type: 'boolean', default: false })
   @ApiProperty({ description: 'Tài khoản có là admin không' })
   isAdmin: boolean;
 
-  // Refresh Token
   @Column({ type: 'text', nullable: true })
   @ApiProperty({ description: 'Refresh token đã mã hóa' })
   refreshToken?: string;
 
-  // Last Login
   @Column({ type: 'timestamptz', nullable: true })
   @ApiProperty({ description: 'Lần đăng nhập gần nhất' })
   lastLogin?: Date;
 
-  // Số điện thoại
   @Column({ type: 'varchar', length: 20, nullable: true })
   @ApiProperty({ description: 'Số điện thoại', required: false })
   phone?: string;
 
-  // Vai trò
   @Column({ type: 'varchar', length: 20, nullable: true })
-  @ApiProperty({ description: 'Quyền' })
+  @ApiProperty({ description: 'Quyền', enum: enumData.USER_ROLE })
   role?: string;
 
-  // Is Active
   @Column({ type: 'boolean', default: true, nullable: false })
   @ApiProperty({ description: 'Trạng thái hoạt động' })
   isActive: boolean;
 
-  // Setup Mối quan hệ vật lý
   @OneToOne(() => CustomerEntity, (customer) => customer.user, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'customerId' })
   @ApiProperty({ description: 'Customer' })
   customer: Promise<CustomerEntity>;
 
-  // Weddings
-  @OneToMany(() => WeddingEntity, (wedding) => wedding.user)
-  @ApiProperty({ description: 'Weddings' })
-  weddings: WeddingEntity[];
+  @OneToMany(() => InvitationEntity, (invitation) => invitation.user)
+  @ApiProperty({ description: 'Invitations' })
+  invitations: InvitationEntity[];
+
+  @BeforeInsert()
+  @BeforeUpdate()
+  syncAdminFlag() {
+    if (this.role === enumData.USER_ROLE.ADMIN.code) {
+      this.isAdmin = true;
+    } else if (this.role === enumData.USER_ROLE.CUSTOMER.code) {
+      this.isAdmin = false;
+    }
+  }
 
   @BeforeInsert()
   async hashPasswordBeforeInsert() {

@@ -8,10 +8,10 @@ import {
 } from 'class-validator';
 
 export class CreateTableDto {
-  @ApiProperty({ description: 'ID Đám cưới' })
+  @ApiProperty({ description: 'ID Thiệp' })
   @IsNotEmpty()
   @IsString()
-  weddingId: string;
+  invitationId: string;
 
   @ApiProperty({ description: 'Tên bàn (Bàn 1, Bàn VIP...)' })
   @IsNotEmpty()
@@ -58,10 +58,10 @@ export class UpdateTableDto extends PartialType(CreateTableDto) {
 }
 
 export class FilterTableDto {
-  @ApiProperty({ description: 'ID Đám cưới', required: false })
+  @ApiProperty({ description: 'ID Thiệp', required: false })
   @IsOptional()
   @IsString()
-  weddingId?: string;
+  invitationId?: string;
 
   @ApiProperty({ description: 'Tên bàn (Bàn 1, Bàn VIP...)', required: false })
   @IsOptional()

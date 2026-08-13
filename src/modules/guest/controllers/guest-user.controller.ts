@@ -81,7 +81,7 @@ export class GuestUserController {
     @Body() data: ImportGuestExcelDto,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    return await this.service.importExcel(data.weddingId, file.buffer, user);
+    return await this.service.importExcel(data.invitationId, file.buffer, user);
   }
 
   @ApiOperation({ summary: 'Tạo nhiều khách mời từ danh sách' })

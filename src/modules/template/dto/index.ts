@@ -60,6 +60,12 @@ export class CreateTemplateDto {
   @IsNotEmpty()
   @IsNumber()
   trialDays: number;
+
+  @ApiProperty({ description: 'Loại thiệp áp dụng', required: false, type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  cardTypes?: string[];
 }
 
 export class UpdateTemplateDto extends PartialType(CreateTemplateDto) {
@@ -138,4 +144,9 @@ export class FilterTemplateDto {
   @IsOptional()
   @IsUUID()
   minPlanId?: string;
+
+  @ApiProperty({ description: 'Loại thiệp', required: false })
+  @IsOptional()
+  @IsString()
+  cardType?: string;
 }

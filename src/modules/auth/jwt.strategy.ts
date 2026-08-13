@@ -1,3 +1,4 @@
+import { enumData } from '@/common/constanst/enumData';
 import { UserRepository } from '@/repositories';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -41,6 +42,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       email: user.email,
       isActive: user.isActive,
       role: user.role,
+      isAdmin:
+        user.isAdmin || user.role === enumData.USER_ROLE.ADMIN.code,
     };
   }
 }

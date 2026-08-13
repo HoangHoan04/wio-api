@@ -8,32 +8,26 @@ import {
 } from 'typeorm';
 
 export abstract class BaseEntity extends TypeOrmBase {
-  // Id
   @ApiProperty({ description: 'Id khóa chính' })
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  // Ngày tạo
   @CreateDateColumn({ type: 'timestamptz', nullable: false })
   @ApiProperty({ description: 'Ngày tạo' })
   createdAt: Date;
 
-  // Người tạo
   @Column({ type: 'uuid', nullable: true })
   @ApiProperty({ description: 'Người tạo, lưu user.id' })
   createdBy?: string;
 
-  // Ngày cập nhật
   @UpdateDateColumn({ type: 'timestamptz', nullable: true })
   @ApiProperty({ description: 'Ngày sửa cuối' })
   updatedAt?: Date;
 
-  // Người cập nhật
   @Column({ type: 'uuid', nullable: true })
   @ApiProperty({ description: 'Người sửa cuối, lưu user.id' })
   updatedBy?: string;
 
-  // Đã xóa mềm
   @Column({ name: 'isDeleted', type: 'boolean', default: false })
   @ApiProperty({ description: 'Xóa mềm?' })
   isDeleted: boolean;

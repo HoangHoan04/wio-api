@@ -14,7 +14,7 @@ export class WishService {
     const { skip = 0, take = 10, where = {} } = data;
     const whereCon: FindOptionsWhere<WishEntity> = { isDeleted: false };
 
-    if (where.weddingId !== undefined) whereCon.weddingId = where.weddingId;
+    if (where.invitationId !== undefined) whereCon.invitationId = where.invitationId;
     if (where.guestId !== undefined) whereCon.guestId = where.guestId;
     if (where.guestName !== undefined) whereCon.guestName = where.guestName;
     if (where.content !== undefined) whereCon.content = where.content;
@@ -45,7 +45,7 @@ export class WishService {
     entity.id = uuidv4();
     entity.createdBy = user.id;
 
-    if (dto.weddingId !== undefined) entity.weddingId = dto.weddingId;
+    if (dto.invitationId !== undefined) entity.invitationId = dto.invitationId;
     if (dto.guestId !== undefined) entity.guestId = dto.guestId;
     if (dto.guestName !== undefined) entity.guestName = dto.guestName;
     if (dto.content !== undefined) entity.content = dto.content;
@@ -57,6 +57,19 @@ export class WishService {
     return { message: 'Tạo thành công', data: saved };
   }
 
+  async createPublic(dto: CreateWishDto) {
+    const entity = new WishEntity();
+    entity.id = uuidv4();
+    entity.invitationId = dto.invitationId;
+    entity.guestId = dto.guestId;
+    entity.guestName = dto.guestName;
+    entity.content = dto.content;
+    entity.isApproved = dto.isApproved ?? true;
+    entity.isPinned = false;
+    const saved = await this.repo.save(entity);
+    return { message: 'Gửi lời chúc thành công', data: saved };
+  }
+
   async update(dto: UpdateWishDto, user: UserDto) {
     const entity = await this.repo.findOne({
       where: { id: dto.id, isDeleted: false },
@@ -65,7 +78,7 @@ export class WishService {
 
     entity.updatedBy = user.id;
 
-    if (dto.weddingId !== undefined) entity.weddingId = dto.weddingId;
+    if (dto.invitationId !== undefined) entity.invitationId = dto.invitationId;
     if (dto.guestId !== undefined) entity.guestId = dto.guestId;
     if (dto.guestName !== undefined) entity.guestName = dto.guestName;
     if (dto.content !== undefined) entity.content = dto.content;

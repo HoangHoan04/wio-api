@@ -3,7 +3,6 @@ import { Type } from 'class-transformer';
 import {
   IsDate,
   IsNotEmpty,
-  IsNumber,
   IsOptional,
   IsString,
   IsUUID,
@@ -15,20 +14,15 @@ export class CreateSubscriptionDto {
   @IsString()
   userId: string;
 
-  @ApiProperty({ description: 'ID Đám cưới sử dụng gói', required: false })
-  @IsOptional()
-  @IsString()
-  weddingId?: string;
-
   @ApiProperty({ description: 'ID Gói dịch vụ' })
   @IsNotEmpty()
   @IsString()
   planId: string;
 
-  @ApiProperty({ description: 'Trạng thái gói' })
-  @IsNotEmpty()
+  @ApiProperty({ description: 'Trạng thái gói', required: false })
+  @IsOptional()
   @IsString()
-  status: string;
+  status?: string;
 
   @ApiProperty({ description: 'Ngày bắt đầu' })
   @IsNotEmpty()
@@ -41,21 +35,6 @@ export class CreateSubscriptionDto {
   @Type(() => Date)
   @IsDate()
   expiresAt: Date;
-
-  @ApiProperty({ description: 'Số tiền đã thanh toán', required: false })
-  @IsOptional()
-  @IsNumber()
-  paidAmountVnd?: number;
-
-  @ApiProperty({ description: 'Phương thức thanh toán', required: false })
-  @IsOptional()
-  @IsString()
-  paymentMethod?: string;
-
-  @ApiProperty({ description: 'Mã giao dịch', required: false })
-  @IsOptional()
-  @IsString()
-  paymentRef?: string;
 }
 
 export class UpdateSubscriptionDto extends PartialType(CreateSubscriptionDto) {
@@ -71,20 +50,12 @@ export class FilterSubscriptionDto {
   @IsString()
   userId?: string;
 
-  @ApiProperty({ description: 'ID Đám cưới sử dụng gói', required: false })
-  @IsOptional()
-  @IsString()
-  weddingId?: string;
-
   @ApiProperty({ description: 'ID Gói dịch vụ', required: false })
   @IsOptional()
   @IsString()
   planId?: string;
 
-  @ApiProperty({
-    description: 'Trạng thái gói',
-    required: false,
-  })
+  @ApiProperty({ description: 'Trạng thái gói', required: false })
   @IsOptional()
   @IsString()
   status?: string;
@@ -100,21 +71,6 @@ export class FilterSubscriptionDto {
   @Type(() => Date)
   @IsDate()
   expiresAt?: Date;
-
-  @ApiProperty({ description: 'Số tiền đã thanh toán', required: false })
-  @IsOptional()
-  @IsNumber()
-  paidAmountVnd?: number;
-
-  @ApiProperty({ description: 'Phương thức thanh toán', required: false })
-  @IsOptional()
-  @IsString()
-  paymentMethod?: string;
-
-  @ApiProperty({ description: 'Mã giao dịch', required: false })
-  @IsOptional()
-  @IsString()
-  paymentRef?: string;
 }
 
 export class AdminChangeSubscriptionPlanDto {
@@ -133,19 +89,4 @@ export class AdminChangeSubscriptionPlanDto {
   @Type(() => Date)
   @IsDate()
   expiresAt: Date;
-
-  @ApiProperty({ description: 'Số tiền thanh toán mới', required: false })
-  @IsOptional()
-  @IsNumber()
-  paidAmountVnd?: number;
-
-  @ApiProperty({ description: 'Phương thức thanh toán mới', required: false })
-  @IsOptional()
-  @IsString()
-  paymentMethod?: string;
-
-  @ApiProperty({ description: 'Mã giao dịch mới', required: false })
-  @IsOptional()
-  @IsString()
-  paymentRef?: string;
 }

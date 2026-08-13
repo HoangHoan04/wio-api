@@ -10,10 +10,10 @@ import {
 } from 'class-validator';
 
 export class CreatePhotoWallDto {
-  @ApiProperty({ description: 'ID Đám cưới' })
+  @ApiProperty({ description: 'ID Thiệp' })
   @IsNotEmpty()
   @IsString()
-  weddingId: string;
+  invitationId: string;
 
   @ApiProperty({
     description: 'ID Khách mời (Null nếu upload ẩn danh)',
@@ -43,10 +43,10 @@ export class CreatePhotoWallDto {
   @IsString()
   caption?: string;
 
-  @ApiProperty({ description: 'Đã duyệt?' })
-  @IsNotEmpty()
+  @ApiProperty({ description: 'Đã duyệt?', required: false })
+  @IsOptional()
   @IsBoolean()
-  isApproved: boolean;
+  isApproved?: boolean;
 
   @ApiProperty({ description: 'Thời gian duyệt', required: false })
   @IsOptional()
@@ -63,10 +63,10 @@ export class UpdatePhotoWallDto extends PartialType(CreatePhotoWallDto) {
 }
 
 export class FilterPhotoWallDto {
-  @ApiProperty({ description: 'ID Đám cưới', required: false })
+  @ApiProperty({ description: 'ID Thiệp', required: false })
   @IsOptional()
   @IsString()
-  weddingId?: string;
+  invitationId?: string;
 
   @ApiProperty({
     description: 'ID Khách mời (Null nếu upload ẩn danh)',

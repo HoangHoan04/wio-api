@@ -140,7 +140,7 @@ export class AuthService {
     user.email = data.email;
     user.phone = data.phone;
     user.password = hashedPassword;
-    user.role = enumData.USER_ROLE.COUPLE.code;
+    user.role = enumData.USER_ROLE.CUSTOMER.code;
     user.isActive = true;
     user.createdAt = new Date();
     user.createdBy = undefined;
@@ -377,7 +377,7 @@ export class AuthService {
         user.phone = data.identifier;
       }
       user.password = '';
-      user.role = enumData.USER_ROLE.COUPLE.code;
+      user.role = enumData.USER_ROLE.CUSTOMER.code;
       user.isActive = true;
       user.createdAt = new Date();
       user.createdBy = undefined;
@@ -665,7 +665,7 @@ export class AuthService {
       user.id = uuidv4();
       user.email = email;
       user.password = '';
-      user.role = enumData.USER_ROLE.COUPLE.code;
+      user.role = enumData.USER_ROLE.CUSTOMER.code;
       user.isActive = true;
       await this.userRepo.save(user);
 
@@ -714,7 +714,7 @@ export class AuthService {
       user.id = uuidv4();
       user.email = googleUser.email;
       user.password = '';
-      user.role = enumData.USER_ROLE.COUPLE.code;
+      user.role = enumData.USER_ROLE.CUSTOMER.code;
       user.isActive = true;
       await this.userRepo.save(user);
 

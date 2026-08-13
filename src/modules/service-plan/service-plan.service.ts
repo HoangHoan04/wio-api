@@ -35,8 +35,8 @@ export class ServicePlanService {
     if (where.name !== undefined) whereCon.name = ILike(`%${where.name}%`);
     if (where.maxGuests !== undefined) whereCon.maxGuests = where.maxGuests;
     if (where.maxPhotos !== undefined) whereCon.maxPhotos = where.maxPhotos;
-    if (where.maxTemplates !== undefined)
-      whereCon.maxTemplates = where.maxTemplates;
+    if (where.maxInvitations !== undefined)
+      whereCon.maxInvitations = where.maxInvitations;
     if (where.hasAi !== undefined) whereCon.hasAi = where.hasAi;
     if (where.hasAnalytics !== undefined)
       whereCon.hasAnalytics = where.hasAnalytics;
@@ -73,7 +73,7 @@ export class ServicePlanService {
     if (dto.name !== undefined) entity.name = dto.name;
     if (dto.maxGuests !== undefined) entity.maxGuests = dto.maxGuests;
     if (dto.maxPhotos !== undefined) entity.maxPhotos = dto.maxPhotos;
-    if (dto.maxTemplates !== undefined) entity.maxTemplates = dto.maxTemplates;
+    if (dto.maxInvitations !== undefined) entity.maxInvitations = dto.maxInvitations;
     if (dto.hasAi !== undefined) entity.hasAi = dto.hasAi;
     if (dto.hasAnalytics !== undefined) entity.hasAnalytics = dto.hasAnalytics;
     if (dto.hasCustomSlug !== undefined)
@@ -113,7 +113,7 @@ export class ServicePlanService {
     if (dto.name !== undefined) entity.name = dto.name;
     if (dto.maxGuests !== undefined) entity.maxGuests = dto.maxGuests;
     if (dto.maxPhotos !== undefined) entity.maxPhotos = dto.maxPhotos;
-    if (dto.maxTemplates !== undefined) entity.maxTemplates = dto.maxTemplates;
+    if (dto.maxInvitations !== undefined) entity.maxInvitations = dto.maxInvitations;
     if (dto.hasAi !== undefined) entity.hasAi = dto.hasAi;
     if (dto.hasAnalytics !== undefined) entity.hasAnalytics = dto.hasAnalytics;
     if (dto.hasCustomSlug !== undefined)

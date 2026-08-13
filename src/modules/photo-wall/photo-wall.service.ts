@@ -18,7 +18,7 @@ export class PhotoWallService {
     const { skip = 0, take = 10, where = {} } = data;
     const whereCon: FindOptionsWhere<PhotoWallEntity> = { isDeleted: false };
 
-    if (where.weddingId !== undefined) whereCon.weddingId = where.weddingId;
+    if (where.invitationId !== undefined) whereCon.invitationId = where.invitationId;
     if (where.guestId !== undefined) whereCon.guestId = where.guestId;
     if (where.uploaderName !== undefined)
       whereCon.uploaderName = where.uploaderName;
@@ -51,7 +51,7 @@ export class PhotoWallService {
     entity.id = uuidv4();
     entity.createdBy = user.id;
 
-    if (dto.weddingId !== undefined) entity.weddingId = dto.weddingId;
+    if (dto.invitationId !== undefined) entity.invitationId = dto.invitationId;
     if (dto.guestId !== undefined) entity.guestId = dto.guestId;
     if (dto.uploaderName !== undefined) entity.uploaderName = dto.uploaderName;
     if (dto.url !== undefined) entity.url = dto.url;
@@ -64,6 +64,20 @@ export class PhotoWallService {
     return { message: 'Tạo thành công', data: saved };
   }
 
+  async createPublic(dto: CreatePhotoWallDto) {
+    const entity = new PhotoWallEntity();
+    entity.id = uuidv4();
+    entity.invitationId = dto.invitationId;
+    entity.guestId = dto.guestId;
+    entity.uploaderName = dto.uploaderName;
+    entity.url = dto.url;
+    entity.storageKey = dto.storageKey;
+    entity.caption = dto.caption;
+    entity.isApproved = dto.isApproved ?? false;
+    const saved = await this.repo.save(entity);
+    return { message: 'Tải ảnh thành công, chờ duyệt', data: saved };
+  }
+
   async update(dto: UpdatePhotoWallDto, user: UserDto) {
     const entity = await this.repo.findOne({
       where: { id: dto.id, isDeleted: false },
@@ -72,7 +86,7 @@ export class PhotoWallService {
 
     entity.updatedBy = user.id;
 
-    if (dto.weddingId !== undefined) entity.weddingId = dto.weddingId;
+    if (dto.invitationId !== undefined) entity.invitationId = dto.invitationId;
     if (dto.guestId !== undefined) entity.guestId = dto.guestId;
     if (dto.uploaderName !== undefined) entity.uploaderName = dto.uploaderName;
     if (dto.url !== undefined) entity.url = dto.url;

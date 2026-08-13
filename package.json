@@ -1,7 +1,7 @@
 {
   "name": "wio-api",
   "version": "0.0.1",
-  "description": "",
+  "description": "Wio API",
   "author": "",
   "private": true,
   "license": "UNLICENSED",
@@ -30,7 +30,9 @@
     "migration:revert": "yarn typeorm migration:revert",
     "migration:run:dev": "cross-env NODE_ENV=development yarn migration:run",
     "migration:run:prod": "cross-env NODE_ENV=production yarn migration:run",
-    "migration:show": "yarn typeorm migration:show"
+    "migration:show": "yarn typeorm migration:show",
+    "db:reset": "yarn db:create && yarn typeorm schema:drop && yarn migration:run && yarn seed",
+    "seed": "ts-node -r tsconfig-paths/register ./src/database/seed.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.52",
