@@ -1,4 +1,5 @@
 import { enumData } from '@/common/constanst/enumData';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { getEnumByCode } from './enum.utils';
 
 export type SectionConfig = Record<string, boolean>;
@@ -94,6 +95,27 @@ export function hasModule(
   moduleCode: string,
 ): boolean {
   return (enabledModules || []).includes(moduleCode);
+}
+
+export function assertPublishedInvitation(
+  invitation: { status?: string } | null | undefined,
+) {
+  if (
+    !invitation ||
+    invitation.status !== enumData.INVITATION_STATUS.PUBLISHED.code
+  ) {
+    throw new NotFoundException('Không tìm thấy thiệp');
+  }
+}
+
+export function assertInvitationModule(
+  invitation: { enabledModules?: string[] },
+  moduleCode: string,
+  message = 'Thiệp này không bật chức năng này',
+) {
+  if (!hasModule(invitation.enabledModules, moduleCode)) {
+    throw new ForbiddenException(message);
+  }
 }
 
 export function toCardViewModel(invitation: any) {

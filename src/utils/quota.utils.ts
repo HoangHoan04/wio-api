@@ -21,9 +21,12 @@ export async function getActivePlanLimits(
     relations: ['plan'],
     order: { createdAt: 'DESC' },
   });
+  const expired =
+    sub?.expiresAt && new Date(sub.expiresAt).getTime() < Date.now();
+  const plan = expired ? null : sub?.plan;
   return {
-    maxInvitations: sub?.plan?.maxInvitations ?? 1,
-    maxGuests: sub?.plan?.maxGuests ?? 30,
-    maxPhotos: sub?.plan?.maxPhotos ?? 10,
+    maxInvitations: plan?.maxInvitations ?? 1,
+    maxGuests: plan?.maxGuests ?? 30,
+    maxPhotos: plan?.maxPhotos ?? 10,
   };
 }

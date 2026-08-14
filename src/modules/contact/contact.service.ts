@@ -34,7 +34,8 @@ export class ContactService {
 
     const saved = await this.repo.save(entity);
     return {
-      message: 'Gửi lời nhắn liên hệ thành công. Tiệm cưới tân thời sẽ phản hồi bạn sớm nhất!',
+      message:
+        'Gửi lời nhắn liên hệ thành công. InviGo sẽ phản hồi bạn sớm nhất!',
       data: saved,
     };
   }

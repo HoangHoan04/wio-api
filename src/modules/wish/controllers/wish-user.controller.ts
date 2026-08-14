@@ -15,8 +15,11 @@ export class WishUserController {
 
   @Post('pagination')
   @ApiOperation({ summary: 'Lấy danh sách' })
-  async pagination(@Body() body: PaginationDto<FilterWishDto>) {
-    return await this.service.pagination(body);
+  async pagination(
+    @Body() body: PaginationDto<FilterWishDto>,
+    @CurrentUser() user: UserDto,
+  ) {
+    return await this.service.pagination(body, user);
   }
 
   @Post('find-by-id')

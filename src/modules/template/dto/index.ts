@@ -1,4 +1,5 @@
 import { ApiProperty, PartialType } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
@@ -53,6 +54,7 @@ export class CreateTemplateDto {
     required: false,
   })
   @IsOptional()
+  @Transform(({ value }) => (value === '' || value === null ? undefined : value))
   @IsUUID()
   minPlanId?: string;
 
@@ -142,6 +144,7 @@ export class FilterTemplateDto {
     required: false,
   })
   @IsOptional()
+  @Transform(({ value }) => (value === '' || value === null ? undefined : value))
   @IsUUID()
   minPlanId?: string;
 

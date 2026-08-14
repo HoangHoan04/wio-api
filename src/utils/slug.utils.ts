@@ -11,7 +11,7 @@ export const RESERVED_SLUGS = [
   'pricing',
   'logout',
   'thiep',
-  'wio',
+  'invigo',
   'mau-thiep',
   'bang-gia',
 ];

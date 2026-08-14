@@ -48,7 +48,7 @@ export class EmailService {
       const mailOptions = {
         from: `"${BRAND_NAME}" <${this.senderAddress}>`,
         to: data.email,
-        subject: '[WIO] Mã xác thực đăng ký tài khoản',
+        subject: '[InviGo] Mã xác thực đăng ký tài khoản',
         html: this.getOtpEmailTemplate(data.otpCode),
       };
 
@@ -68,7 +68,7 @@ export class EmailService {
       const mailOptions = {
         from: `"${BRAND_NAME}" <${this.senderAddress}>`,
         to: data.email,
-        subject: '[WIO] Khôi phục mật khẩu tài khoản',
+        subject: '[InviGo] Khôi phục mật khẩu tài khoản',
         html: this.getForgotPasswordTemplate(data.otpCode),
       };
 
@@ -90,7 +90,7 @@ export class EmailService {
       const mailOptions = {
         from: `"${BRAND_NAME}" <${this.senderAddress}>`,
         to: data.email,
-        subject: '[WIO] Mã OTP đăng nhập hệ thống',
+        subject: '[InviGo] Mã OTP đăng nhập hệ thống',
         html: this.getLoginOtpTemplate(data.email, data.otpCode),
       };
 
@@ -167,8 +167,8 @@ export class EmailService {
 
             <p style="color: rgba(245, 230, 211, 0.7); font-size: 12px; line-height: 1.6;">
               <strong>HỆ THỐNG THIỆP CƯỚI TRỰC TUYẾN — TIỆM CƯỚI TÂN THỜI</strong><br>
-              📞 Hotline: 1900 123 456 | 📧 Email: hello@wio.vn<br>
-              🌐 Website: <a href="http://localhost:3011" style="color: #f5c842; text-decoration: none;">wio.vn</a>
+              📞 Hotline: 1900 123 456 | 📧 Email: hello@InviGo.vn<br>
+              🌐 Website: <a href="http://localhost:3011" style="color: #f5c842; text-decoration: none;">InviGo.vn</a>
             </p>
 
             <p style="color: rgba(245, 230, 211, 0.4); font-size: 11px; margin-top: 20px;">
@@ -237,8 +237,8 @@ export class EmailService {
           <div style="padding: 30px 20px; text-align: center; background-color: #1a0a0f; border-top: 1px solid rgba(212, 175, 55, 0.15);">
             <p style="color: rgba(245, 230, 211, 0.7); font-size: 12px; line-height: 1.6;">
               <strong>HỆ THỐNG THIỆP CƯỚI TRỰC TUYẾN — TIỆM CƯỚI TÂN THỜI</strong><br>
-              📞 Hotline: 1900 123 456 | 📧 Email: hello@wio.vn<br>
-              🌐 Website: <a href="http://localhost:3011" style="color: #f5c842; text-decoration: none;">wio.vn</a>
+              📞 Hotline: 1900 123 456 | 📧 Email: hello@InviGo.vn<br>
+              🌐 Website: <a href="http://localhost:3011" style="color: #f5c842; text-decoration: none;">InviGo.vn</a>
             </p>
             <p style="color: rgba(245, 230, 211, 0.4); font-size: 11px; margin-top: 20px;">
               © ${currentYear} ${BRAND_NAME}. All rights reserved.
@@ -279,7 +279,7 @@ export class EmailService {
             <h2 style="color: #f5c842; text-align: center; font-size: 22px; font-weight: 500; margin-bottom: 30px; font-family: Georgia, serif;">Mã Xác Thực Đăng Nhập (OTP)</h2>
 
             <p style="color: #f5e6d3; font-size: 16px; line-height: 1.6; margin-bottom: 25px; text-align: center;">
-              Xin chào,<br>Bạn đang thực hiện đăng nhập vào hệ thống quản lý thiệp cưới của ${BRAND_NAME}. Vui lòng nhập mã OTP dưới đây hoặc bấm nút phía dưới để đăng nhập tự động:
+              Xin chào,<br>Bạn đang thực hiện đăng nhập vào hệ thống quản lý thiệp mời của ${BRAND_NAME}. Vui lòng nhập mã OTP dưới đây hoặc bấm nút phía dưới để đăng nhập tự động:
             </p>
 
             <div style="background-color: rgba(26, 10, 15, 0.6); border: 1px dashed #d4af37; border-radius: 12px; padding: 25px; text-align: center; margin: 30px 0;">
@@ -313,8 +313,8 @@ export class EmailService {
           <div style="padding: 30px 20px; text-align: center; background-color: #1a0a0f; border-top: 1px solid rgba(212, 175, 55, 0.15);">
             <p style="color: rgba(245, 230, 211, 0.7); font-size: 12px; line-height: 1.6;">
               <strong>HỆ THỐNG THIỆP CƯỚI TRỰC TUYẾN — TIỆM CƯỚI TÂN THỜI</strong><br>
-              📞 Hotline: 1900 123 456 | 📧 Email: hello@wio.vn<br>
-              🌐 Website: <a href="http://localhost:3011" style="color: #f5c842; text-decoration: none;">wio.vn</a>
+              📞 Hotline: 1900 123 456 | 📧 Email: hello@InviGo.vn<br>
+              🌐 Website: <a href="http://localhost:3011" style="color: #f5c842; text-decoration: none;">InviGo.vn</a>
             </p>
             <p style="color: rgba(245, 230, 211, 0.4); font-size: 11px; margin-top: 20px;">
               © ${currentYear} ${BRAND_NAME}. All rights reserved.

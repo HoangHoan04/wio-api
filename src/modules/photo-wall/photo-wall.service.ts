@@ -1,9 +1,16 @@
+import { enumData } from '@/common/constanst/enumData';
 import { IdDto, PaginationDto, UserDto } from '@/dto';
 import { PhotoWallEntity } from '@/entities';
-import { PhotoWallRepository } from '@/repositories';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { InvitationRepository, PhotoWallRepository } from '@/repositories';
+import {
+  assertInvitationModule,
+  assertPublishedInvitation,
+} from '@/utils/invitation.utils';
+import { assertOwner } from '@/utils/owner.utils';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { FindOptionsWhere } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
+import { getActivePlanLimits } from '@/utils/quota.utils';
 import {
   CreatePhotoWallDto,
   FilterPhotoWallDto,
@@ -12,7 +19,10 @@ import {
 
 @Injectable()
 export class PhotoWallService {
-  constructor(private readonly repo: PhotoWallRepository) {}
+  constructor(
+    private readonly repo: PhotoWallRepository,
+    private readonly invitationRepo: InvitationRepository,
+  ) {}
 
   async pagination(data: PaginationDto<FilterPhotoWallDto>) {
     const { skip = 0, take = 10, where = {} } = data;
@@ -65,6 +75,29 @@ export class PhotoWallService {
   }
 
   async createPublic(dto: CreatePhotoWallDto) {
+    const invitation = await this.invitationRepo.findOne({
+      where: { id: dto.invitationId, isDeleted: false },
+    });
+    assertPublishedInvitation(invitation);
+    assertInvitationModule(
+      invitation!,
+      enumData.INVITATION_MODULE.PHOTO_WALL.code,
+      'Thiệp này không bật tường ảnh',
+    );
+
+    const { maxPhotos } = await getActivePlanLimits(
+      this.repo.manager,
+      invitation!.userId,
+    );
+    const count = await this.repo.count({
+      where: { invitationId: dto.invitationId, isDeleted: false },
+    });
+    if (count >= maxPhotos) {
+      throw new ForbiddenException(
+        `Gói hiện tại cho phép tối đa ${maxPhotos} ảnh`,
+      );
+    }
+
     const entity = new PhotoWallEntity();
     entity.id = uuidv4();
     entity.invitationId = dto.invitationId;
@@ -79,11 +112,7 @@ export class PhotoWallService {
   }
 
   async update(dto: UpdatePhotoWallDto, user: UserDto) {
-    const entity = await this.repo.findOne({
-      where: { id: dto.id, isDeleted: false },
-    });
-    if (!entity) throw new NotFoundException('Không tìm thấy bản ghi');
-
+    const entity = await this.requireOwnedPhoto(dto.id, user);
     entity.updatedBy = user.id;
 
     if (dto.invitationId !== undefined) entity.invitationId = dto.invitationId;
@@ -100,11 +129,7 @@ export class PhotoWallService {
   }
 
   async delete(data: IdDto, user: UserDto) {
-    const entity = await this.repo.findOne({
-      where: { id: data.id, isDeleted: false },
-    });
-    if (!entity) throw new NotFoundException('Không tìm thấy bản ghi');
-
+    const entity = await this.requireOwnedPhoto(data.id, user);
     entity.isDeleted = true;
     entity.updatedBy = user.id;
     await this.repo.save(entity);
@@ -112,11 +137,7 @@ export class PhotoWallService {
   }
 
   async approve(data: IdDto, user: UserDto) {
-    const entity = await this.repo.findOne({
-      where: { id: data.id, isDeleted: false },
-    });
-    if (!entity) throw new NotFoundException('Không tìm thấy bản ghi');
-
+    const entity = await this.requireOwnedPhoto(data.id, user);
     entity.isApproved = true;
     entity.approvedAt = new Date();
     entity.updatedBy = user.id;
@@ -125,15 +146,28 @@ export class PhotoWallService {
   }
 
   async reject(data: IdDto, user: UserDto) {
-    const entity = await this.repo.findOne({
-      where: { id: data.id, isDeleted: false },
-    });
-    if (!entity) throw new NotFoundException('Không tìm thấy bản ghi');
-
+    const entity = await this.requireOwnedPhoto(data.id, user);
     entity.isApproved = false;
     entity.approvedAt = null as any;
     entity.updatedBy = user.id;
     const saved = await this.repo.save(entity);
     return { message: 'Từ chối duyệt ảnh thành công', data: saved };
+  }
+
+  private async requireOwnedPhoto(id: string, user: UserDto) {
+    const entity = await this.repo.findOne({
+      where: { id, isDeleted: false },
+    });
+    if (!entity) throw new NotFoundException('Không tìm thấy bản ghi');
+    const invitation = await this.invitationRepo.findOne({
+      where: { id: entity.invitationId, isDeleted: false },
+    });
+    if (!invitation) throw new NotFoundException('Không tìm thấy thiệp');
+    assertOwner(
+      user,
+      invitation.userId,
+      'Bạn không có quyền thực hiện thao tác này',
+    );
+    return entity;
   }
 }

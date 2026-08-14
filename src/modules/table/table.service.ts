@@ -7,6 +7,7 @@ import {
   InvitationRepository,
 } from '@/repositories';
 import { hasModule } from '@/utils/invitation.utils';
+import { isAdminUser } from '@/utils/owner.utils';
 import {
   BadRequestException,
   ForbiddenException,
@@ -62,7 +63,7 @@ export class TableService {
       const invitation = await this.invitationRepo.findOne({
         where: { id: dto.invitationId },
       });
-      if (!user.isAdmin && (!invitation || invitation.userId !== user.id)) {
+      if (!isAdminUser(user) && (!invitation || invitation.userId !== user.id)) {
         throw new ForbiddenException(
           'Bạn không có quyền thêm bàn tiệc vào thiệp này',
         );
@@ -103,10 +104,19 @@ export class TableService {
     const invitation = await this.invitationRepo.findOne({
       where: { id: entity.invitationId },
     });
-    if (!user.isAdmin && (!invitation || invitation.userId !== user.id)) {
+    if (!isAdminUser(user) && (!invitation || invitation.userId !== user.id)) {
       throw new ForbiddenException(
         'Bạn không có quyền chỉnh sửa bàn tiệc của thiệp này',
       );
+    }
+    if (
+      invitation &&
+      !hasModule(
+        invitation.enabledModules,
+        enumData.INVITATION_MODULE.SEATING.code,
+      )
+    ) {
+      throw new ForbiddenException('Thiệp này không bật sơ đồ bàn');
     }
 
     entity.updatedBy = user.id;
@@ -132,8 +142,17 @@ export class TableService {
     const invitation = await this.invitationRepo.findOne({
       where: { id: entity.invitationId },
     });
-    if (!user.isAdmin && (!invitation || invitation.userId !== user.id)) {
+    if (!isAdminUser(user) && (!invitation || invitation.userId !== user.id)) {
       throw new ForbiddenException('Bạn không có quyền xóa bàn tiệc này');
+    }
+    if (
+      invitation &&
+      !hasModule(
+        invitation.enabledModules,
+        enumData.INVITATION_MODULE.SEATING.code,
+      )
+    ) {
+      throw new ForbiddenException('Thiệp này không bật sơ đồ bàn');
     }
 
     entity.isDeleted = true;
@@ -155,10 +174,19 @@ export class TableService {
     const invitation = await this.invitationRepo.findOne({
       where: { id: table.invitationId },
     });
-    if (!user.isAdmin && (!invitation || invitation.userId !== user.id)) {
+    if (!isAdminUser(user) && (!invitation || invitation.userId !== user.id)) {
       throw new ForbiddenException(
         'Bạn không có quyền xếp chỗ cho bàn tiệc này',
       );
+    }
+    if (
+      invitation &&
+      !hasModule(
+        invitation.enabledModules,
+        enumData.INVITATION_MODULE.SEATING.code,
+      )
+    ) {
+      throw new ForbiddenException('Thiệp này không bật sơ đồ bàn');
     }
 
     const guest = await this.guestRepo.findOne({
@@ -222,10 +250,19 @@ export class TableService {
     const invitation = await this.invitationRepo.findOne({
       where: { id: guest.invitationId },
     });
-    if (!user.isAdmin && (!invitation || invitation.userId !== user.id)) {
+    if (!isAdminUser(user) && (!invitation || invitation.userId !== user.id)) {
       throw new ForbiddenException(
         'Bạn không có quyền xếp chỗ cho khách mời này',
       );
+    }
+    if (
+      invitation &&
+      !hasModule(
+        invitation.enabledModules,
+        enumData.INVITATION_MODULE.SEATING.code,
+      )
+    ) {
+      throw new ForbiddenException('Thiệp này không bật sơ đồ bàn');
     }
 
     const oldTableId = guest.tableId;

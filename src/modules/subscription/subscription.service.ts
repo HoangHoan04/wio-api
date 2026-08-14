@@ -53,8 +53,20 @@ export class SubscriptionService {
     entity.id = uuidv4();
     entity.createdBy = user.id;
 
-    if (dto.userId !== undefined) entity.userId = dto.userId;
-    if (dto.planId !== undefined) entity.planId = dto.planId;
+    entity.userId = dto.userId;
+    entity.planId = dto.planId;
+    entity.status = dto.status || enumData.SUB_STATUS.ACTIVE.code;
+    entity.startedAt = dto.startedAt ? new Date(dto.startedAt) : new Date();
+
+    if (dto.expiresAt) {
+      entity.expiresAt = new Date(dto.expiresAt);
+    } else {
+      const plan = await this.repo.manager.findOne(SubscriptionEntity, {
+        where: { id: dto.planId },
+      }) as any;
+      const durationDays = plan?.durationDays || 30;
+      entity.expiresAt = new Date(entity.startedAt.getTime() + durationDays * 86400000);
+    }
 
     const saved = await this.repo.save(entity);
 
@@ -86,6 +98,9 @@ export class SubscriptionService {
 
     if (dto.userId !== undefined) entity.userId = dto.userId;
     if (dto.planId !== undefined) entity.planId = dto.planId;
+    if (dto.status !== undefined) entity.status = dto.status;
+    if (dto.startedAt !== undefined) entity.startedAt = new Date(dto.startedAt);
+    if (dto.expiresAt !== undefined) entity.expiresAt = new Date(dto.expiresAt);
 
     const saved = await this.repo.save(entity);
 

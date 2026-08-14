@@ -54,20 +54,20 @@ export class CustomerService {
   }
 
   async pagination(data: PaginationDto) {
+    const { skip = 0, take = 10, where = {} } = data || {};
     const whereCon: FindOptionsWhere<CustomerEntity> = {};
 
-    if (data.where.code) whereCon.code = ILike(`%${data.where.code}%`);
-    if (data.where.fullName)
-      whereCon.fullName = ILike(`%${data.where.fullName}%`);
-    if (data.where.phone) whereCon.phone = ILike(`%${data.where.phone}%`);
-    if (data.where.email) whereCon.email = ILike(`%${data.where.email}%`);
-    if ([true, false].includes(data.where.isDeleted))
-      whereCon.isDeleted = data.where.isDeleted;
+    if (where.code) whereCon.code = ILike(`%${where.code}%`);
+    if (where.fullName) whereCon.fullName = ILike(`%${where.fullName}%`);
+    if (where.phone) whereCon.phone = ILike(`%${where.phone}%`);
+    if (where.email) whereCon.email = ILike(`%${where.email}%`);
+    if ([true, false].includes(where.isDeleted))
+      whereCon.isDeleted = where.isDeleted;
 
     const [customers, total] = await this.repo.findAndCount({
       where: whereCon,
-      skip: data.skip,
-      take: data.take,
+      skip,
+      take,
       order: { createdAt: 'DESC' },
       relations: {
         user: true,

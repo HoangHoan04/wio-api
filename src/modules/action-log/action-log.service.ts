@@ -52,27 +52,24 @@ export class ActionLogService {
   }
 
   async pagination(data: PaginationDto) {
-    const { skip = 0, take = 10, where } = data;
-    const whereCon: FindOptionsWhere<ActionLogEntity> = {
-      entityName: where.entityName,
-      entityId: where.entityId,
-    };
-    if (where.createdBy) {
-      whereCon.createdBy = where.createdBy;
-    }
-    if (where.actionType) {
-      whereCon.actionType = where.actionType;
-    }
-    const res: any = await this.repo.findAndCount({
-      where: data.where,
+    const { skip = 0, take = 10, where = {} } = data || {};
+    const whereCon: FindOptionsWhere<ActionLogEntity> = {};
+
+    if (where.entityName) whereCon.entityName = where.entityName;
+    if (where.entityId) whereCon.entityId = where.entityId;
+    if (where.createdBy) whereCon.createdById = where.createdBy;
+    if (where.actionType) whereCon.actionType = where.actionType;
+
+    const [list, total] = await this.repo.findAndCount({
+      where: whereCon,
       skip,
       take,
       order: { createdAt: 'DESC' },
     });
 
     return {
-      data: res[0],
-      total: res[1],
+      data: list,
+      total,
     };
   }
 }

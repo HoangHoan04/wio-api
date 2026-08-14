@@ -7,9 +7,13 @@ import {
   InvitationRepository,
 } from '@/repositories';
 import {
+  assertInvitationModule,
+  assertPublishedInvitation,
   generateInvitationCode,
   resolveGuestGroupCode,
+  toCardViewModel,
 } from '@/utils/invitation.utils';
+import { isAdminUser } from '@/utils/owner.utils';
 import { getActivePlanLimits } from '@/utils/quota.utils';
 import { buildShareUrl } from '@/utils/slug.utils';
 import {
@@ -43,7 +47,7 @@ export class GuestService {
     const { skip = 0, take = 10, where = {} } = data;
     const whereCon: FindOptionsWhere<GuestEntity> = { isDeleted: false };
 
-    if (user && !user.isAdmin) {
+    if (user && !isAdminUser(user)) {
       if (where.invitationId) {
         const invitation = await this.invitationRepo.findOne({
           where: { id: where.invitationId, isDeleted: false },
@@ -85,6 +89,7 @@ export class GuestService {
 
     const [list, total] = await this.repo.findAndCount({
       where: whereCon,
+      relations: ['group', 'invitation'],
       skip,
       take,
       order: { createdAt: 'DESC' },
@@ -96,10 +101,11 @@ export class GuestService {
   async findById(data: IdDto, user?: UserDto) {
     const item = await this.repo.findOne({
       where: { id: data.id, isDeleted: false },
+      relations: ['group', 'invitation'],
     });
     if (!item) throw new NotFoundException('Không tìm thấy bản ghi');
 
-    if (user && !user.isAdmin) {
+    if (user && !isAdminUser(user)) {
       const invitation = await this.invitationRepo.findOne({
         where: { id: item.invitationId, isDeleted: false },
       });
@@ -116,7 +122,7 @@ export class GuestService {
       const invitation = await this.invitationRepo.findOne({
         where: { id: dto.invitationId },
       });
-      if (!user.isAdmin && (!invitation || invitation.userId !== user.id)) {
+      if (!isAdminUser(user) && (!invitation || invitation.userId !== user.id)) {
         throw new ForbiddenException(
           'Bạn không có quyền thêm khách mời vào thiệp này',
         );
@@ -160,7 +166,7 @@ export class GuestService {
       where: { id: dto.invitationId, isDeleted: false },
     });
     if (!invitation) throw new NotFoundException('Không tìm thấy thiệp');
-    if (!user.isAdmin && invitation.userId !== user.id) {
+    if (!isAdminUser(user) && invitation.userId !== user.id) {
       throw new ForbiddenException(
         'Bạn không có quyền thêm khách mời vào thiệp này',
       );
@@ -249,7 +255,7 @@ export class GuestService {
     const invitation = await this.invitationRepo.findOne({
       where: { id: entity.invitationId },
     });
-    if (!user.isAdmin && (!invitation || invitation.userId !== user.id)) {
+    if (!isAdminUser(user) && (!invitation || invitation.userId !== user.id)) {
       throw new ForbiddenException(
         'Bạn không có quyền chỉnh sửa khách mời của thiệp này',
       );
@@ -296,7 +302,7 @@ export class GuestService {
     const invitation = await this.invitationRepo.findOne({
       where: { id: entity.invitationId },
     });
-    if (!user.isAdmin && (!invitation || invitation.userId !== user.id)) {
+    if (!isAdminUser(user) && (!invitation || invitation.userId !== user.id)) {
       throw new ForbiddenException('Bạn không có quyền xóa khách mời này');
     }
 
@@ -312,6 +318,16 @@ export class GuestService {
     });
     if (!guest)
       throw new NotFoundException('Không tìm thấy khách mời với mã này');
+
+    const invitation = await this.invitationRepo.findOne({
+      where: { id: guest.invitationId, isDeleted: false },
+    });
+    assertPublishedInvitation(invitation);
+    assertInvitationModule(
+      invitation!,
+      enumData.INVITATION_MODULE.RSVP.code,
+      'Thiệp này không bật xác nhận tham dự',
+    );
 
     if (dto.rsvpStatus !== undefined) guest.rsvpStatus = dto.rsvpStatus;
     if (dto.attendingCount !== undefined)
@@ -346,12 +362,13 @@ export class GuestService {
         guestGroups: true,
       },
     });
+    assertPublishedInvitation(invitation);
 
     return {
       message: 'Nhận diện khách mời thành công',
       data: {
         guest,
-        invitation,
+        invitation: toCardViewModel(invitation),
       },
     };
   }
@@ -403,7 +420,7 @@ export class GuestService {
       throw new NotFoundException('Không tìm thấy thiệp của khách mời này');
     }
 
-    if (!user.isAdmin && invitation.userId !== user.id) {
+    if (!isAdminUser(user) && invitation.userId !== user.id) {
       throw new ForbiddenException(
         'Bạn không có quyền tạo mã QR cho khách mời này',
       );
@@ -433,7 +450,7 @@ export class GuestService {
     });
     if (!invitation) throw new NotFoundException('Không tìm thấy thiệp');
 
-    if (!user.isAdmin && invitation.userId !== user.id) {
+    if (!isAdminUser(user) && invitation.userId !== user.id) {
       throw new ForbiddenException(
         'Bạn không có quyền thêm khách mời vào thiệp này',
       );

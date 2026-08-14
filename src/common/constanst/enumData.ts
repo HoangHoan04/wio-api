@@ -510,7 +510,7 @@ export const enumData = {
   },
 
   BRAND: {
-    NAME: { code: 'WIO', name: 'Wio' },
+    NAME: { code: 'InviGo', name: 'InviGo' },
     TAGLINE: { code: 'TAGLINE', name: 'Thiệp đẹp cho mọi dịp' },
   },
 };

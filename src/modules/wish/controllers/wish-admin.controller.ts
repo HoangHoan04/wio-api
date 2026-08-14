@@ -1,6 +1,7 @@
 import { CurrentUser, RequireRoles } from '@/common/decorators';
+import { JwtAuthGuard } from '@/common/guards';
 import { IdDto, PaginationDto, UserDto } from '@/dto';
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateWishDto, FilterWishDto, UpdateWishDto } from '../dto';
 import { WishService } from '../wish.service';
@@ -8,6 +9,7 @@ import { WishService } from '../wish.service';
 @ApiTags('Admin - Wish')
 @Controller('wish')
 @ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @RequireRoles('ADMIN')
 export class WishAdminController {
   constructor(private readonly service: WishService) {}
