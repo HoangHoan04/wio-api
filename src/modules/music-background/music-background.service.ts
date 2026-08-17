@@ -8,6 +8,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Queue } from 'bull';
 import { FindOptionsWhere } from 'typeorm';
 import { UploadFileService } from '../upload-file/upload-file.service';
@@ -20,6 +21,10 @@ import {
   ImportYoutubeDto,
   UpdateMusicBackgroundDto,
 } from './dto';
+import {
+  extractYoutubeVideoId,
+  normalizeYoutubeUrl,
+} from './utils/youtube-url.util';
 
 @Injectable()
 export class MusicBackgroundService {
@@ -29,6 +34,7 @@ export class MusicBackgroundService {
     private readonly musicRepo: MusicBackgroundRepository,
     private readonly uploadFileService: UploadFileService,
     private readonly youtubeAudioService: YoutubeAudioService,
+    private readonly configService: ConfigService,
     @InjectQueue('youtube-import') private readonly youtubeQueue: Queue,
   ) {}
 
@@ -106,8 +112,12 @@ export class MusicBackgroundService {
   }
 
   async importYoutube(dto: ImportYoutubeDto, user?: UserDto) {
-    const provider = dto.provider || 'python-yt-dlp';
-    const videoId = this.extractYoutubeVideoId(dto.youtubeUrl);
+    const youtubeUrl = normalizeYoutubeUrl(dto.youtubeUrl);
+    const provider =
+      dto.provider ||
+      this.configService.get<YoutubeAudioProviderType>('YOUTUBE_AUDIO_PROVIDER') ||
+      'youtube-dl-exec';
+    const videoId = extractYoutubeVideoId(youtubeUrl);
     if (!videoId) {
       throw new BadRequestException('Link YouTube không hợp lệ');
     }
@@ -119,7 +129,7 @@ export class MusicBackgroundService {
       const oEmbedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
       const res = await fetch(oEmbedUrl);
       if (res.ok) {
-        const data = await res.json() as any;
+        const data = await res.json();
         title = data.title || title;
         author = data.author_name || author;
       }
@@ -128,13 +138,13 @@ export class MusicBackgroundService {
     }
 
     const jobData = {
-      youtubeUrl: dto.youtubeUrl,
+      youtubeUrl,
       title,
       author,
       duration: '—',
       provider,
       userId: user?.id,
-      type: dto.type || 'user',
+      type: dto.type || (user ? 'user' : 'admin'),
     };
 
     this.logger.log(`[IMPORT] Attempting to add job to queue (provider=${provider})...`);
@@ -151,7 +161,7 @@ export class MusicBackgroundService {
         queueTimeout,
       ]);
       this.logger.log(
-        `[IMPORT] Enqueued job via Redis queue. URL=${dto.youtubeUrl} provider=${provider}`,
+        `[IMPORT] Enqueued job via Redis queue. URL=${youtubeUrl} provider=${provider}`,
       );
     } catch (queueError: any) {
       this.logger.warn(
@@ -288,7 +298,8 @@ export class MusicBackgroundService {
   }
 
   async getYoutubeInfo(url: string, provider?: YoutubeAudioProviderType) {
-    const videoId = this.extractYoutubeVideoId(url);
+    const normalizedUrl = normalizeYoutubeUrl(url);
+    const videoId = extractYoutubeVideoId(normalizedUrl);
     if (!videoId) {
       throw new BadRequestException('Link YouTube không hợp lệ');
     }
@@ -303,7 +314,7 @@ export class MusicBackgroundService {
       const oEmbedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
       const res = await fetch(oEmbedUrl);
       if (res.ok) {
-        const data = await res.json() as any;
+        const data = await res.json();
         title = data.title || title;
         author = data.author_name || author;
         thumbnailUrl = data.thumbnail_url || thumbnailUrl;
@@ -319,7 +330,7 @@ export class MusicBackgroundService {
       const res = await fetch(lemnoUrl, { signal: controller.signal });
       clearTimeout(timeout);
       if (res.ok) {
-        const data = await res.json() as any;
+        const data = await res.json();
         const iso = data?.items?.[0]?.contentDetails?.duration;
         if (iso) {
           const match = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
@@ -342,8 +353,8 @@ export class MusicBackgroundService {
 
     if (durationSeconds === 0 || durationText === '—') {
       try {
-        this.logger.log(`[INFO FALLBACK] Lemnoslife duration missing, falling back to python-yt-dlp info for: ${url}`);
-        const info = await this.youtubeAudioService.getInfo(url, 'python-yt-dlp');
+        this.logger.log(`[INFO FALLBACK] Lemnoslife duration missing, falling back to python-yt-dlp info for: ${normalizedUrl}`);
+        const info = await this.youtubeAudioService.getInfo(normalizedUrl, provider || 'python-yt-dlp');
         if (info) {
           title = info.title || title;
           author = info.author || author;
@@ -356,17 +367,24 @@ export class MusicBackgroundService {
       }
     }
 
-    return { id: videoId, title, author, durationSeconds, durationText, thumbnail: thumbnailUrl, thumbnailUrl, youtubeUrl: url };
+    return { id: videoId, title, author, durationSeconds, durationText, thumbnail: thumbnailUrl, thumbnailUrl, youtubeUrl: normalizedUrl };
   }
 
   async cancelImport(url: string) {
-    this.logger.log(`[IMPORT CANCEL] Request to cancel import for: ${url}`);
+    const normalizedUrl = normalizeYoutubeUrl(url);
+    this.logger.log(`[IMPORT CANCEL] Request to cancel import for: ${normalizedUrl}`);
     
     const music = await this.musicRepo.findOne({
-      where: {
-        youtubeUrl: url,
-        status: enumData.MUSIC_PROCESS_STATUS.PROCESSING.code,
-      },
+      where: [
+        {
+          youtubeUrl: normalizedUrl,
+          status: enumData.MUSIC_PROCESS_STATUS.PROCESSING.code,
+        },
+        {
+          youtubeUrl: url,
+          status: enumData.MUSIC_PROCESS_STATUS.PROCESSING.code,
+        },
+      ],
     });
 
     if (music) {
@@ -378,17 +396,5 @@ export class MusicBackgroundService {
     }
 
     return { success: false, message: 'Không tìm thấy bài hát đang xử lý' };
-  }
-
-  private extractYoutubeVideoId(url: string): string | null {
-    const patterns = [
-      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
-      /youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]{11})/,
-    ];
-    for (const pattern of patterns) {
-      const match = url.match(pattern);
-      if (match?.[1]) return match[1];
-    }
-    return null;
   }
 }

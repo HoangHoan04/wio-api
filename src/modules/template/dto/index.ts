@@ -68,6 +68,14 @@ export class CreateTemplateDto {
   @IsArray()
   @IsString({ each: true })
   cardTypes?: string[];
+
+  @ApiProperty({ description: 'Bố cục section mặc định', required: false })
+  @IsOptional()
+  themeLayout?: Record<string, any>;
+
+  @ApiProperty({ description: 'Design tokens preset', required: false })
+  @IsOptional()
+  presetTokens?: Record<string, any>;
 }
 
 export class UpdateTemplateDto extends PartialType(CreateTemplateDto) {

@@ -99,6 +99,10 @@ export class InvitationEntity extends BaseEntity {
   @ApiProperty({ description: 'Cấu hình envelope/cover', required: false })
   coverConfig?: Record<string, any>;
 
+  @Column({ type: 'jsonb', nullable: true })
+  @ApiProperty({ description: 'Ghi đè layout preset của template', required: false })
+  presetLayoutOverride?: Record<string, any>;
+
   @Column({ type: 'timestamptz', nullable: true })
   @ApiProperty({ description: 'Ngày xuất bản', required: false })
   publishedAt?: Date;

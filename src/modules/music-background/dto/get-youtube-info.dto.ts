@@ -1,9 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { YoutubeAudioProviderType } from '../../youtube-audio';
 import { normalizeYoutubeUrl } from '../utils/youtube-url.util';
 
-export class ImportYoutubeDto {
+export class GetYoutubeInfoDto {
   @ApiProperty({
     description: 'URL của video YouTube',
     example: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
@@ -11,21 +12,15 @@ export class ImportYoutubeDto {
   @Transform(({ value }) => normalizeYoutubeUrl(String(value ?? '')))
   @IsNotEmpty({ message: 'Link YouTube không được để trống' })
   @IsString()
-  youtubeUrl: string;
+  url: string;
 
   @ApiProperty({
     description:
-      'Provider tải nhạc: youtube-dl-exec | public-api | python-yt-dlp',
-    example: 'youtube-dl-exec',
+      'Provider lấy metadata: youtube-dl-exec | public-api | python-yt-dlp',
     required: false,
   })
   @IsOptional()
   @IsString()
   @IsIn(['youtube-dl-exec', 'public-api', 'python-yt-dlp'])
-  provider?: 'youtube-dl-exec' | 'public-api' | 'python-yt-dlp';
-
-  @ApiProperty({ description: 'Phân loại nguồn', default: 'admin', required: false })
-  @IsOptional()
-  @IsString()
-  type?: string;
+  provider?: YoutubeAudioProviderType;
 }

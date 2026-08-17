@@ -13,6 +13,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { redisStore } from 'cache-manager-redis-yet';
 import { AppController } from './app.controller';
+import { validateEnvironment } from './config/env.validation';
 import { CustomThrottlerGuard } from './common/guards';
 import { ContextMiddleware, LoggerMiddleware } from './middlewares';
 
@@ -59,6 +60,7 @@ const modules = Object.values(allModules);
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
+      validate: validateEnvironment,
     }),
   ],
   controllers: [AppController],

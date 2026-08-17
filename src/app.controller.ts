@@ -1,6 +1,28 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import axios from 'axios';
+
+const MAP_HOSTS = new Set([
+  'maps.app.goo.gl',
+  'goo.gl',
+  'maps.google.com',
+  'www.google.com',
+  'google.com',
+]);
+
+function isAllowedMapUrl(value: string): URL {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new BadRequestException('Invalid map URL');
+  }
+
+  if (url.protocol !== 'https:' || !MAP_HOSTS.has(url.hostname.toLowerCase())) {
+    throw new BadRequestException('Only approved HTTPS map URLs are supported');
+  }
+
+  return url;
+}
 
 @ApiTags('Root')
 @Controller()
@@ -8,7 +30,7 @@ export class AppController {
   @Get()
   root() {
     return {
-      message: 'Tiệm cưới tân thời API is running',
+      message: 'Wio API is running',
       version: '1.0.0',
       timestamp: new Date().toISOString(),
     };
@@ -21,7 +43,6 @@ export class AppController {
       message: 'API is healthy',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
-      memory: process.memoryUsage(),
     };
   }
 
@@ -32,19 +53,22 @@ export class AppController {
 
   @Post('resolve-map-url')
   async resolveMapUrl(@Body() body: { url: string }) {
-    if (!body.url) {
-      return { message: 'Đường dẫn trống', data: { url: '' } };
-    }
-    try {
-      const res = await fetch(body.url, {
-        headers: {
-          'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        },
+    let url = isAllowedMapUrl(body.url);
+
+    for (let redirectCount = 0; redirectCount < 4; redirectCount += 1) {
+      const response = await fetch(url, {
+        method: 'GET',
+        redirect: 'manual',
+        signal: AbortSignal.timeout(5_000),
+        headers: { 'User-Agent': 'WioMapResolver/1.0' },
       });
-      return { message: 'Thành công', data: { url: res.url } };
-    } catch (e) {
-      return { message: 'Lỗi', data: { url: body.url } };
+      const location = response.headers.get('location');
+      if (!location || response.status < 300 || response.status >= 400) {
+        return { message: 'Success', data: { url: url.toString() } };
+      }
+      url = isAllowedMapUrl(new URL(location, url).toString());
     }
+
+    throw new BadRequestException('Too many map URL redirects');
   }
 }

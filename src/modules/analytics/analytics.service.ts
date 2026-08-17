@@ -3,6 +3,7 @@ import { enumOptions } from '@/utils/enum.utils';
 import {
   GuestRepository,
   InvitationRepository,
+  ReviewRepository,
   TemplateRepository,
   UserRepository,
   WishRepository,
@@ -18,6 +19,7 @@ export class AnalyticsService {
     private readonly wishRepo: WishRepository,
     private readonly userRepo: UserRepository,
     private readonly templateRepo: TemplateRepository,
+    private readonly reviewRepo: ReviewRepository,
   ) {}
 
   async overview() {
@@ -99,17 +101,27 @@ export class AnalyticsService {
   }
 
   async publicOverview() {
-    const [publishedInvitations, templates, guests] = await Promise.all([
+    const [publishedInvitations, templates, reviews] = await Promise.all([
       this.invitationRepo.count({
         where: {
           isDeleted: false,
           status: enumData.INVITATION_STATUS.PUBLISHED.code,
         },
       }),
-      this.templateRepo.count({
-        where: { isDeleted: false, isShow: true },
+      this.templateRepo
+        .createQueryBuilder('tpl')
+        .where('tpl.isDeleted = :isDeleted', { isDeleted: false })
+        .andWhere('tpl.isShow = :isShow', { isShow: true })
+        .andWhere('tpl.themeCode != :customDesign', {
+          customDesign: enumData.THEME_CODE.CUSTOM_DESIGN.code,
+        })
+        .getCount(),
+      this.reviewRepo.count({
+        where: {
+          isDeleted: false,
+          status: enumData.REVIEW_STATUS.APPROVED.code,
+        },
       }),
-      this.guestRepo.count({ where: { isDeleted: false } }),
     ]);
 
     return {
@@ -117,7 +129,7 @@ export class AnalyticsService {
       data: {
         publishedInvitations,
         templates,
-        guests,
+        reviews,
       },
     };
   }

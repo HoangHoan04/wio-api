@@ -17,6 +17,9 @@ export class TemplateUserController {
       body.where = {};
     }
     body.where.isShow = true;
+    if (body.where.isDeleted === undefined) {
+      body.where.isDeleted = false;
+    }
 
     return await this.service.pagination(body);
   }

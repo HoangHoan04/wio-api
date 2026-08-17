@@ -10,15 +10,7 @@ export const databaseProvider = {
         await dataSource.initialize();
         console.log('Database connected successfully!');
 
-        if (process.env.NODE_ENV !== 'development') {
-          try {
-            console.log('Running migrations...');
-            await dataSource.runMigrations();
-            console.log('Migrations completed!');
-          } catch (error: any) {
-            console.error('Migration Error:', error.message);
-          }
-        }
+        // Migrations are a one-off deployment job, never a side effect of a web replica boot.
       }
       return dataSource;
     } catch (error: any) {

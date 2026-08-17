@@ -34,6 +34,18 @@ export class TemplateEntity extends BaseEntity {
   @Column({ type: 'json', nullable: true })
   features?: any;
 
+  @ApiProperty({ description: 'Bố cục section mặc định của theme', required: false })
+  @Column({ type: 'jsonb', nullable: true })
+  themeLayout?: Record<string, any>;
+
+  @ApiProperty({ description: 'Layout preset dạng JSON', required: false })
+  @Column({ type: 'jsonb', nullable: true })
+  presetLayout?: Record<string, any>;
+
+  @ApiProperty({ description: 'Design tokens preset', required: false })
+  @Column({ type: 'jsonb', nullable: true })
+  presetTokens?: Record<string, any>;
+
   @ApiProperty({ description: 'Đường dẫn ảnh thu nhỏ', required: false })
   @Column({ type: 'text', nullable: true })
   thumbnailUrl?: string;

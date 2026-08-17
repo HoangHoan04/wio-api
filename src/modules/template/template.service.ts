@@ -116,6 +116,8 @@ export class TemplateService {
     template.isPremium = dto.isPremium;
     template.minPlanId = dto.minPlanId;
     template.trialDays = dto.trialDays;
+    template.themeLayout = dto.themeLayout;
+    template.presetTokens = dto.presetTokens;
     template.createdBy = user.id;
     template.createdAt = new Date();
 
@@ -171,6 +173,8 @@ export class TemplateService {
     if (dto.isPremium !== undefined) template.isPremium = dto.isPremium;
     if (dto.minPlanId !== undefined) template.minPlanId = dto.minPlanId;
     if (dto.trialDays !== undefined) template.trialDays = dto.trialDays;
+    if (dto.themeLayout !== undefined) template.themeLayout = dto.themeLayout;
+    if (dto.presetTokens !== undefined) template.presetTokens = dto.presetTokens;
 
     const saved = await this.repo.save(template);
     await this.syncCardTypes(saved.id, dto.cardTypes);

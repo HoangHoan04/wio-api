@@ -497,6 +497,11 @@ export const enumData = {
       name: 'Tốt nghiệp - Navy',
       slug: 'tot-nghiep-navy',
     },
+    GRADUATION_ACADEMIC: {
+      code: 'GRADUATION_ACADEMIC',
+      name: 'Tốt nghiệp - Navy',
+      slug: 'tot-nghiep-navy',
+    },
     BABY_BLUSH: {
       code: 'BABY_BLUSH',
       name: 'Thôi nôi - Blush',

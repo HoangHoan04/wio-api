@@ -4,6 +4,123 @@ import { getEnumByCode } from './enum.utils';
 
 export type SectionConfig = Record<string, boolean>;
 
+export type SectionConfigEntryValue =
+  | boolean
+  | { enabled: boolean; order?: number; variant?: string };
+
+export type SectionConfigEntry = SectionConfigEntryValue;
+
+export type ExtendedSectionConfig = Record<string, SectionConfigEntryValue>;
+
+export interface ThemeLayoutConfig {
+  envelopeStyle?: string;
+  heroStyle?: string;
+  sectionOrder?: string[];
+  sectionVariants?: Record<string, string>;
+}
+
+const DEFAULT_SECTION_ORDER = [
+  'hero',
+  'divider',
+  'familyInfo',
+  'hosts',
+  'intro',
+  'ceremonies',
+  'countdown',
+  'gallery',
+  'partyInfo',
+  'timeline',
+  'rsvp',
+  'map',
+  'guestbook',
+  'giftBox',
+  'dressCode',
+  'thankYou',
+];
+
+const SECTION_FLAG_MAP: Record<string, string | null> = {
+  hero: enumData.SECTION_FLAG.SHOW_HERO.code,
+  divider: null,
+  familyInfo: null,
+  hosts: null,
+  intro: enumData.SECTION_FLAG.SHOW_INTRO.code,
+  ceremonies: null,
+  countdown: enumData.SECTION_FLAG.SHOW_COUNTDOWN.code,
+  gallery: enumData.SECTION_FLAG.SHOW_GALLERY.code,
+  partyInfo: null,
+  timeline: enumData.SECTION_FLAG.SHOW_TIMELINE.code,
+  rsvp: enumData.SECTION_FLAG.SHOW_RSVP.code,
+  map: enumData.SECTION_FLAG.SHOW_MAP.code,
+  guestbook: enumData.SECTION_FLAG.SHOW_GUESTBOOK.code,
+  giftBox: enumData.SECTION_FLAG.SHOW_GIFTS.code,
+  dressCode: enumData.SECTION_FLAG.SHOW_DRESS_CODE.code,
+  thankYou: enumData.SECTION_FLAG.SHOW_THANK_YOU.code,
+};
+
+export function defaultThemeLayout(): string[] {
+  return [...DEFAULT_SECTION_ORDER];
+}
+
+function normalizeSectionEntry(
+  value: SectionConfigEntryValue | undefined,
+): { enabled: boolean; order?: number; variant?: string } {
+  if (typeof value === 'boolean') return { enabled: value };
+  if (value && typeof value === 'object') {
+    return {
+      enabled: value.enabled !== false,
+      order: value.order,
+      variant: value.variant,
+    };
+  }
+  return { enabled: true };
+}
+
+export function resolveSectionConfig(
+  sectionConfig?: SectionConfig | ExtendedSectionConfig,
+  themeLayout?: ThemeLayoutConfig | null,
+): {
+  sectionOrder: string[];
+  sectionConfig: ExtendedSectionConfig;
+} {
+  const normalizedConfig: ExtendedSectionConfig = {};
+  for (const [key, value] of Object.entries(sectionConfig || {})) {
+    normalizedConfig[key] = value as SectionConfigEntryValue;
+  }
+
+  const baseOrder = themeLayout?.sectionOrder?.length
+    ? [...themeLayout.sectionOrder]
+    : defaultThemeLayout();
+
+  const sortedOrder = [...baseOrder].sort((a, b) => {
+    const flagA = SECTION_FLAG_MAP[a];
+    const flagB = SECTION_FLAG_MAP[b];
+    const orderA =
+      (flagA ? normalizeSectionEntry(normalizedConfig[flagA]).order : undefined) ??
+      baseOrder.indexOf(a);
+    const orderB =
+      (flagB ? normalizeSectionEntry(normalizedConfig[flagB]).order : undefined) ??
+      baseOrder.indexOf(b);
+    return orderA - orderB;
+  });
+
+  const seen = new Set<string>();
+  const mergedOrder: string[] = [];
+  for (const sectionId of sortedOrder) {
+    if (seen.has(sectionId)) continue;
+    seen.add(sectionId);
+    mergedOrder.push(sectionId);
+  }
+
+  for (const sectionId of DEFAULT_SECTION_ORDER) {
+    if (!seen.has(sectionId)) mergedOrder.push(sectionId);
+  }
+
+  return {
+    sectionOrder: mergedOrder,
+    sectionConfig: normalizedConfig,
+  };
+}
+
 export function getCardTypeConfig(cardType: string) {
   return getEnumByCode(enumData.CARD_TYPE, cardType);
 }

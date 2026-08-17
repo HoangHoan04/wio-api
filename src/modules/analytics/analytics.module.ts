@@ -1,6 +1,7 @@
 import {
   GuestRepository,
   InvitationRepository,
+  ReviewRepository,
   TemplateRepository,
   UserRepository,
   WishRepository,
@@ -17,6 +18,7 @@ import { AnalyticsService } from './analytics.service';
       WishRepository,
       UserRepository,
       TemplateRepository,
+      ReviewRepository,
     ]),
   ],
   providers: [AnalyticsService],

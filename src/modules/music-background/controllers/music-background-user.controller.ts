@@ -1,9 +1,8 @@
 import { IdDto, UserDto } from '@/dto';
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { CreateMusicBackgroundDto, ImportYoutubeDto } from '../dto';
+import { CreateMusicBackgroundDto, GetYoutubeInfoDto, ImportYoutubeDto } from '../dto';
 import { MusicBackgroundService } from '../music-background.service';
-import { YoutubeAudioProviderType } from '../../youtube-audio';
 import { CurrentUser } from '@/common/decorators';
 import { JwtAuthGuard } from '@/common/guards';
 
@@ -35,11 +34,8 @@ export class MusicBackgroundUserController {
 
   @Post('info')
   @ApiOperation({ summary: 'Lấy metadata YouTube (không tải)' })
-  getYoutubeInfo(
-    @Body('url') url: string,
-    @Body('provider') provider?: YoutubeAudioProviderType,
-  ) {
-    return this.musicService.getYoutubeInfo(url, provider);
+  getYoutubeInfo(@Body() body: GetYoutubeInfoDto) {
+    return this.musicService.getYoutubeInfo(body.url, body.provider);
   }
 
   @Post('increment-usage')

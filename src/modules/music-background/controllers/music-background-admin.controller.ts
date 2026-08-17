@@ -5,6 +5,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { YoutubeAudioProviderType } from '../../youtube-audio';
 import {
   CreateMusicBackgroundDto,
+  GetYoutubeInfoDto,
   ImportYoutubeDto,
   UpdateMusicBackgroundDto,
 } from '../dto';
@@ -77,11 +78,8 @@ export class MusicBackgroundAdminController {
 
   @Post('info')
   @ApiOperation({ summary: 'Lấy metadata YouTube (không tải)' })
-  getYoutubeInfo(
-    @Body('url') url: string,
-    @Body('provider') provider?: YoutubeAudioProviderType,
-  ) {
-    return this.musicService.getYoutubeInfo(url, provider);
+  getYoutubeInfo(@Body() body: GetYoutubeInfoDto) {
+    return this.musicService.getYoutubeInfo(body.url, body.provider);
   }
 
   @Post('update')

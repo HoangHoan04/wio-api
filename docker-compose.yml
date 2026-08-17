@@ -40,7 +40,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: migration
+      target: production
     container_name: wio_api
     restart: unless-stopped
     env_file:
@@ -65,6 +65,23 @@ services:
         condition: service_healthy
     networks:
       - wio_api_net
+
+  migration:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: migration
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-wio-dev}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - wio_api_net
+    profiles: ["tools"]
 
 networks:
   wio_api_net:

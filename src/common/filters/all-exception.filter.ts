@@ -76,7 +76,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
       const status = err?.status || HttpStatus.INTERNAL_SERVER_ERROR;
       const name = err?.name || err?.statusText || 'INTERNAL_SERVER_ERROR';
       let message =
-        err?.message || err?.data?.message || 'INTERNAL_SERVER_ERROR';
+        process.env.NODE_ENV === 'production'
+          ? 'INTERNAL_SERVER_ERROR'
+          : err?.message || err?.data?.message || 'INTERNAL_SERVER_ERROR';
       if (message.message) {
         message = message.message;
       }

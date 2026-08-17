@@ -12,7 +12,7 @@ RUN yarn install --frozen-lockfile
 COPY . .
 RUN yarn build
 
-# Stage 2: Migration + runtime (default for Docker Compose)
+# Stage 2: one-off migration job. Do not deploy this target as an API replica.
 FROM node:22-alpine AS migration
 
 WORKDIR /app
@@ -31,7 +31,7 @@ ENV NODE_ENV=production
 
 EXPOSE 4300
 
-CMD ["sh", "-c", "yarn migration:run:prod && node dist/main"]
+CMD ["yarn", "migration:run:prod"]
 
 # Stage 3: Production runtime (no auto-migration)
 FROM node:22-alpine AS production

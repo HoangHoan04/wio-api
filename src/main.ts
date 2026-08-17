@@ -20,9 +20,44 @@ async function bootstrap() {
     exclude: ['health', '/'],
   });
 
-  app.enableCors();
-  app.use(json({ limit: '10mb' }));
-  app.use(urlencoded({ extended: true, limit: '10mb' }));
+  const environment = configService.get<string>('NODE_ENV') || 'development';
+  const configuredOrigins = (configService.get<string>('CORS_ORIGINS') || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+  const developmentOrigins = [
+    'http://localhost:2504',
+    'http://localhost:3005',
+    'http://localhost:3000',
+  ];
+  const allowedOrigins =
+    configuredOrigins.length > 0 ? configuredOrigins : developmentOrigins;
+
+  app.enableCors({
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error(`CORS origin not allowed: ${origin}`), false);
+    },
+    credentials: true,
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Authorization', 'Content-Type', 'X-Request-Id'],
+  });
+  if (configService.get<string>('TRUST_PROXY') === 'true') {
+    app.getHttpAdapter().getInstance().set('trust proxy', 1);
+  }
+  app.getHttpAdapter().getInstance().disable('x-powered-by');
+  app.use((_req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    if (environment === 'production') {
+      res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    }
+    next();
+  });
+  app.use(json({ limit: '5mb' }));
+  app.use(urlencoded({ extended: true, limit: '5mb' }));
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
   app.useGlobalFilters(new AllExceptionsFilter());
   addTransactionalDataSource(dataSource);
@@ -34,7 +69,12 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, options);
-  SwaggerModule.setup('api-docs', app, document);
+  if (
+    environment !== 'production' ||
+    configService.get<string>('ENABLE_SWAGGER') === 'true'
+  ) {
+    SwaggerModule.setup('api-docs', app, document);
+  }
 
   const port = parseInt(
     process.env.PORT || configService.get('PORT') || '4300',
