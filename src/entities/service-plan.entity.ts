@@ -1,46 +1,70 @@
+import { enumData } from '@/common/constanst/enumData';
 import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, Index } from 'typeorm';
 import { BaseEntity } from './base.entity';
 
 @Entity('service_plans')
+@Index(['isActive'])
 export class ServicePlanEntity extends BaseEntity {
+  @ApiProperty({ description: 'Tên gói dịch vụ' })
   @Column({ type: 'varchar', length: 50, nullable: false })
-  @ApiProperty({ description: 'Tên' })
   name: string;
 
+  @ApiProperty({
+    description: 'Mã gói dịch vụ',
+    enum: enumData.SERVICE_PLAN_CODE,
+  })
+  @Column({ type: 'varchar', length: 20, nullable: false })
+  code: string;
+
+  @ApiProperty({ description: 'Số thiệp tối đa được tạo' })
   @Column({ type: 'int', nullable: false, default: 1 })
-  @ApiProperty({ description: 'Số thiệp tối đa' })
   maxInvitations: number;
 
+  @ApiProperty({ description: 'Số khách mời tối đa' })
   @Column({ type: 'int', nullable: false })
-  @ApiProperty({ description: 'Tối đa khách mời' })
   maxGuests: number;
 
-  @Column({ type: 'int', nullable: false })
   @ApiProperty({ description: 'Số ảnh tối đa' })
+  @Column({ type: 'int', nullable: false })
   maxPhotos: number;
 
+  @ApiProperty({ description: 'Có sử dụng tính năng AI không' })
   @Column({ type: 'boolean', default: false, nullable: false })
-  @ApiProperty({ description: 'Có sử dụng AI không' })
   hasAi: boolean;
 
-  @Column({ type: 'boolean', default: false, nullable: false })
   @ApiProperty({ description: 'Có phân tích dữ liệu không' })
+  @Column({ type: 'boolean', default: false, nullable: false })
   hasAnalytics: boolean;
 
+  @ApiProperty({ description: 'Có cho phép custom slug không' })
   @Column({ type: 'boolean', default: false, nullable: false })
-  @ApiProperty({ description: 'Có slug tùy chỉnh không' })
   hasCustomSlug: boolean;
 
+  @ApiProperty({ description: 'Có cho phép tự thiết kế (Canva) không' })
+  @Column({ type: 'boolean', default: false, nullable: false })
+  hasCustomDesign: boolean;
+
+  @ApiProperty({ description: 'Số ngày hiệu lực của gói' })
   @Column({ type: 'int', nullable: false })
-  @ApiProperty({ description: 'Số ngày hiệu lực' })
   durationDays: number;
 
-  @Column({ type: 'bigint', nullable: false })
-  @ApiProperty({ description: 'Price Vnd' })
+  @ApiProperty({ description: 'Giá gói (VND)' })
+  @Column({
+    type: 'bigint',
+    nullable: false,
+    transformer: {
+      to: (v: number) => v,
+      from: (v: string) => Number(v),
+    },
+  })
   priceVnd: number;
 
+  @ApiProperty({ description: 'Trạng thái hoạt động' })
   @Column({ type: 'boolean', default: true, nullable: false })
-  @ApiProperty({ description: 'Có hoạt động không' })
   isActive: boolean;
+
+  @ApiProperty({ description: 'Thứ tự hiển thị' })
+  @Column({ type: 'int', default: 0, nullable: false })
+  sortOrder: number;
 }

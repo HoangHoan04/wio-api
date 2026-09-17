@@ -4,31 +4,31 @@ import { JwtAuthGuard } from '@/common/guards';
 import { IdDto, PaginationDto, UserDto } from '@/dto';
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { CardTypeService } from '../card-type.service';
+import { TemplateCategoryService } from '../template-category.service';
 
-@ApiTags('Admin - CardType')
-@Controller('card-type')
+@ApiTags('Admin - TemplateCategory')
+@Controller('template-category')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @RequireRoles(enumData.USER_ROLE.ADMIN.code)
-export class CardTypeAdminController {
-  constructor(private readonly service: CardTypeService) {}
+export class TemplateCategoryAdminController {
+  constructor(private readonly service: TemplateCategoryService) {}
 
   @Post('pagination')
-  @ApiOperation({ summary: 'Phân trang loại thiệp' })
+  @ApiOperation({ summary: 'Phân trang phong cách cưới' })
   async pagination(@Body() body: PaginationDto) {
-    return await this.service.pagination(body);
+    return this.service.pagination(body);
   }
 
   @Post('find-by-id')
-  @ApiOperation({ summary: 'Chi tiết loại thiệp' })
+  @ApiOperation({ summary: 'Chi tiết phong cách cưới' })
   async findById(@Body() body: IdDto) {
-    return await this.service.findById(body);
+    return this.service.findById(body);
   }
 
   @Post('sync-enum')
-  @ApiOperation({ summary: 'Đồng bộ loại thiệp từ enum' })
+  @ApiOperation({ summary: 'Đồng bộ phong cách cưới từ enum' })
   async syncEnum(@CurrentUser() user: UserDto) {
-    return await this.service.upsertFromEnum(user);
+    return this.service.syncFromEnum(user);
   }
 }

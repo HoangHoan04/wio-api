@@ -7,8 +7,8 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { spawn } from 'child_process';
 import { existsSync } from 'fs';
-import * as path from 'path';
 import { mkdir, rm } from 'fs/promises';
+import * as path from 'path';
 import {
   DownloadOptions,
   IYoutubeAudioProvider,

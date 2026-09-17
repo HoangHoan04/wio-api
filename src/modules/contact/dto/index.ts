@@ -1,8 +1,19 @@
+import { enumData } from '@/common/constanst/enumData';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
 
+/* ============================================================
+ * CREATE
+ * ============================================================ */
 export class CreateContactDto {
-  @ApiProperty({ description: 'Họ và tên' })
+  @ApiProperty({ description: 'Họ và tên người liên hệ' })
   @IsString()
   @IsNotEmpty()
   name: string;
@@ -17,7 +28,7 @@ export class CreateContactDto {
   @IsOptional()
   phone?: string;
 
-  @ApiPropertyOptional({ description: 'Tiêu đề' })
+  @ApiPropertyOptional({ description: 'Tiêu đề liên hệ' })
   @IsString()
   @IsOptional()
   subject?: string;
@@ -28,40 +39,52 @@ export class CreateContactDto {
   message: string;
 }
 
+/* ============================================================
+ * FILTER
+ * ============================================================ */
 export class FilterContactDto {
   @ApiPropertyOptional({ description: 'Mã liên hệ' })
   @IsString()
   @IsOptional()
   code?: string;
 
-  @ApiPropertyOptional({ description: 'Họ tên' })
+  @ApiPropertyOptional({ description: 'Họ tên người liên hệ' })
   @IsString()
   @IsOptional()
   name?: string;
 
-  @ApiPropertyOptional({ description: 'Email' })
+  @ApiPropertyOptional({ description: 'Email liên hệ' })
   @IsString()
   @IsOptional()
   email?: string;
 
-  @ApiPropertyOptional({ description: 'Trạng thái (PENDING | IN_PROGRESS | RESOLVED | CLOSED)' })
-  @IsString()
+  @ApiPropertyOptional({
+    description: 'Trạng thái xử lý',
+    enum: enumData.CONTACT_STATUS,
+  })
   @IsOptional()
+  @IsEnum(enumData.CONTACT_STATUS)
   status?: string;
 }
 
+/* ============================================================
+ * UPDATE STATUS
+ * ============================================================ */
 export class UpdateContactStatusDto {
-  @ApiProperty({ description: 'Mã ID liên hệ' })
-  @IsString()
+  @ApiProperty({ description: 'ID liên hệ' })
+  @IsUUID()
   @IsNotEmpty()
   id: string;
 
-  @ApiProperty({ description: 'Trạng thái mới' })
-  @IsString()
+  @ApiProperty({
+    description: 'Trạng thái mới',
+    enum: enumData.CONTACT_STATUS,
+  })
+  @IsEnum(enumData.CONTACT_STATUS)
   @IsNotEmpty()
   status: string;
 
-  @ApiPropertyOptional({ description: 'Ghi chú / Phản hồi từ Admin' })
+  @ApiPropertyOptional({ description: 'Ghi chú / phản hồi từ admin' })
   @IsString()
   @IsOptional()
   adminNote?: string;

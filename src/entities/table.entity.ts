@@ -1,45 +1,51 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  Column,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+} from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { GuestEntity } from './guest.entity';
 import { InvitationEntity } from './invitation.entity';
 
 @Entity('tables')
+@Index(['invitationId', 'name'])
 export class TableEntity extends BaseEntity {
+  @ApiProperty({ description: 'ID thiệp cưới' })
   @Column({ type: 'uuid', nullable: false })
-  @ApiProperty({ description: 'ID thiệp' })
   invitationId: string;
 
+  @ApiProperty({ description: 'Tên bàn tiệc' })
   @Column({ type: 'varchar', length: 50, nullable: false })
-  @ApiProperty({ description: 'Tên bàn' })
   name: string;
 
+  @ApiProperty({ description: 'Số ghế tối đa' })
   @Column({ type: 'smallint', default: 10, nullable: false })
-  @ApiProperty({ description: 'Số lượng ghế tối đa' })
   maxSeats: number;
 
-  @Column({ type: 'smallint', default: 0, nullable: true })
-  @ApiProperty({ description: 'Số ghế hiện tại' })
-  currentSeats?: number;
+  @ApiProperty({ description: 'Số ghế hiện tại đã có khách' })
+  @Column({ type: 'smallint', default: 0, nullable: false })
+  currentSeats: number;
 
+  @ApiPropertyOptional({ description: 'Mô tả bàn tiệc' })
   @Column({ type: 'varchar', length: 255, nullable: true })
-  @ApiProperty({ description: 'Mô tả', required: false })
   description?: string;
 
+  @ApiPropertyOptional({ description: 'Vị trí X trên sơ đồ' })
   @Column({ type: 'int', nullable: true })
-  @ApiProperty({ description: 'Vị trí X', required: false })
   positionX?: number;
 
+  @ApiPropertyOptional({ description: 'Vị trí Y trên sơ đồ' })
   @Column({ type: 'int', nullable: true })
-  @ApiProperty({ description: 'Vị trí Y', required: false })
   positionY?: number;
 
-  @ManyToOne(() => InvitationEntity, (invitation) => invitation.tables, {
-    onDelete: 'CASCADE',
-  })
+  @ManyToOne(() => InvitationEntity, (i) => i.tables, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'invitationId' })
   invitation: InvitationEntity;
 
-  @OneToMany(() => GuestEntity, (guest) => guest.table)
+  @OneToMany(() => GuestEntity, (g) => g.table)
   guests: GuestEntity[];
 }

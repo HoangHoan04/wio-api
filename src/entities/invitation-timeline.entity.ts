@@ -1,35 +1,42 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { InvitationEntity } from './invitation.entity';
 
 @Entity('invitation_timelines')
+@Index(['invitationId', 'sortOrder'])
 export class InvitationTimelineEntity extends BaseEntity {
+  @ApiProperty({ description: 'ID thiệp cưới' })
   @Column({ type: 'uuid', nullable: false })
-  @ApiProperty({ description: 'ID thiệp' })
   invitationId: string;
 
+  @ApiPropertyOptional({ description: 'ID sự kiện cưới liên kết' })
   @Column({ type: 'uuid', nullable: true })
-  @ApiProperty({ description: 'ID sự kiện', required: false })
   eventId?: string;
 
+  @ApiPropertyOptional({
+    description: 'Nhãn thời gian hiển thị (VD: 08:00, 10:30…)',
+  })
   @Column({ type: 'varchar', length: 50, nullable: true })
-  @ApiProperty({ description: 'Nhãn giờ', required: false })
   timeLabel?: string;
 
+  @ApiProperty({ description: 'Tiêu đề mốc lịch trình' })
   @Column({ type: 'varchar', length: 255, nullable: false })
-  @ApiProperty({ description: 'Tiêu đề' })
   title: string;
 
+  @ApiPropertyOptional({ description: 'Mô tả chi tiết mốc lịch trình' })
   @Column({ type: 'text', nullable: true })
-  @ApiProperty({ description: 'Mô tả', required: false })
   description?: string;
 
+  @ApiPropertyOptional({ description: 'URL icon hiển thị' })
+  @Column({ type: 'text', nullable: true })
+  iconUrl?: string;
+
+  @ApiProperty({ description: 'Thứ tự hiển thị' })
   @Column({ type: 'int', default: 0, nullable: false })
-  @ApiProperty({ description: 'Thứ tự' })
   sortOrder: number;
 
-  @ManyToOne(() => InvitationEntity, (invitation) => invitation.timelines, {
+  @ManyToOne(() => InvitationEntity, (i) => i.timelines, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'invitationId' })

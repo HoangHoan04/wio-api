@@ -1,163 +1,230 @@
-import { ApiProperty, PartialType } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
+import { enumData } from '@/common/constanst/enumData';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
+import { Transform, Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
+  IsEnum,
+  IsInt,
   IsNotEmpty,
-  IsNumber,
+  IsObject,
   IsOptional,
   IsString,
   IsUUID,
+  Max,
+  MaxLength,
+  Min,
 } from 'class-validator';
 
+/* ============================================================
+ * CREATE
+ * ============================================================ */
 export class CreateTemplateDto {
   @ApiProperty({ description: 'Tên mẫu giao diện' })
   @IsNotEmpty()
   @IsString()
+  @MaxLength(100)
   name: string;
 
-  @ApiProperty({ description: 'Mô tả ngắn', required: false })
+  @ApiPropertyOptional({ description: 'Slug định danh template' })
   @IsOptional()
   @IsString()
+  @MaxLength(100)
+  slug?: string;
+
+  @ApiPropertyOptional({ description: 'Mô tả ngắn' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
   description?: string;
 
   @ApiProperty({
-    description: 'Tags phong cách',
-    type: [String],
-    required: false,
+    description: 'Phong cách cưới',
+    enum: enumData.WEDDING_THEME,
   })
+  @IsNotEmpty()
+  @IsEnum(enumData.WEDDING_THEME)
+  weddingTheme: string;
+
+  @ApiPropertyOptional({ description: 'Từ khoá tìm kiếm', type: [String] })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
   tags?: string[];
 
-  @ApiProperty({ description: 'Cấu hình tính năng dạng JSON', required: false })
+  @ApiPropertyOptional({ description: 'Tông màu chủ đạo' })
   @IsOptional()
-  features?: any;
+  @IsString()
+  @MaxLength(50)
+  colorMood?: string;
 
-  @ApiProperty({ description: 'Đường dẫn ảnh thu nhỏ', required: false })
+  @ApiPropertyOptional({ description: 'Cấu hình tính năng' })
+  @IsOptional()
+  @IsObject()
+  features?: Record<string, boolean>;
+
+  @ApiPropertyOptional({ description: 'Bố cục section mặc định' })
+  @IsOptional()
+  @IsObject()
+  themeLayout?: Record<string, any>;
+
+  @ApiPropertyOptional({ description: 'Design tokens preset' })
+  @IsOptional()
+  @IsObject()
+  presetTokens?: Record<string, any>;
+
+  @ApiPropertyOptional({ description: 'URL ảnh thumbnail' })
   @IsOptional()
   @IsString()
   thumbnailUrl?: string;
 
-  @ApiProperty({ description: 'Mã giao diện (Frontend Component Mapping)' })
+  @ApiPropertyOptional({ description: 'URL xem trước' })
+  @IsOptional()
+  @IsString()
+  previewUrl?: string;
+
+  @ApiProperty({ description: 'Mã giao diện (theme)' })
   @IsNotEmpty()
   @IsString()
+  @MaxLength(100)
   themeCode: string;
 
-  @ApiProperty({ description: 'Giao diện trả phí?', default: false })
-  @IsBoolean()
-  isPremium: boolean;
-
-  @ApiProperty({
-    description: 'ID gói tối thiểu để sử dụng',
-    required: false,
-  })
+  @ApiPropertyOptional({ description: 'Hiển thị template?', default: true })
   @IsOptional()
-  @Transform(({ value }) => (value === '' || value === null ? undefined : value))
+  @IsBoolean()
+  isShow?: boolean;
+
+  @ApiPropertyOptional({ description: 'Template trả phí?', default: false })
+  @IsOptional()
+  @IsBoolean()
+  isPremium?: boolean;
+
+  @ApiPropertyOptional({ description: 'ID gói tối thiểu' })
+  @IsOptional()
+  @Transform(({ value }) =>
+    value === '' || value === null ? undefined : value,
+  )
   @IsUUID()
   minPlanId?: string;
 
-  @ApiProperty({ description: 'Số ngày dùng thử', default: 3 })
-  @IsNotEmpty()
-  @IsNumber()
-  trialDays: number;
+  @ApiPropertyOptional({ description: 'Số ngày dùng thử', default: 3 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @Max(30)
+  trialDays?: number;
 
-  @ApiProperty({ description: 'Loại thiệp áp dụng', required: false, type: [String] })
+  @ApiPropertyOptional({ description: 'Thứ tự hiển thị', default: 0 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  sortOrder?: number;
+
+  @ApiPropertyOptional({
+    description: 'Phong cách cưới áp dụng cho template',
+    type: [String],
+    enum: enumData.WEDDING_THEME,
+    isArray: true,
+  })
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
-  cardTypes?: string[];
-
-  @ApiProperty({ description: 'Bố cục section mặc định', required: false })
-  @IsOptional()
-  themeLayout?: Record<string, any>;
-
-  @ApiProperty({ description: 'Design tokens preset', required: false })
-  @IsOptional()
-  presetTokens?: Record<string, any>;
+  @IsEnum(enumData.WEDDING_THEME, { each: true })
+  categories?: string[];
 }
 
+/* ============================================================
+ * UPDATE
+ * ============================================================ */
 export class UpdateTemplateDto extends PartialType(CreateTemplateDto) {
-  @ApiProperty({ description: 'ID mẫu giao diện' })
+  @ApiProperty({ description: 'ID template' })
   @IsUUID()
   @IsNotEmpty()
   id: string;
 }
 
+/* ============================================================
+ * SET STATUS
+ * ============================================================ */
 export class SetPremiumTemplateDto {
-  @ApiProperty({ description: 'ID mẫu giao diện' })
+  @ApiProperty({ description: 'ID template' })
   @IsUUID()
   @IsNotEmpty()
   id: string;
 
-  @ApiProperty({ description: 'Giao diện trả phí?' })
+  @ApiProperty({ description: 'Template trả phí?' })
   @IsNotEmpty()
   @IsBoolean()
   isPremium: boolean;
 }
 
 export class SetIsShowTemplateDto {
-  @ApiProperty({ description: 'ID mẫu giao diện' })
+  @ApiProperty({ description: 'ID template' })
   @IsUUID()
   @IsNotEmpty()
   id: string;
 
-  @ApiProperty({ description: 'Trạng thái hiển thị' })
+  @ApiProperty({ description: 'Hiển thị?' })
   @IsNotEmpty()
   @IsBoolean()
   isShow: boolean;
 }
 
 export class SetIsDeletedTemplateDto {
-  @ApiProperty({ description: 'ID mẫu giao diện' })
+  @ApiProperty({ description: 'ID template' })
   @IsUUID()
   @IsNotEmpty()
   id: string;
 
-  @ApiProperty({ description: 'Trạng thái xóa mềm' })
+  @ApiProperty({ description: 'Xoá mềm?' })
   @IsNotEmpty()
   @IsBoolean()
   isDeleted: boolean;
 }
 
+/* ============================================================
+ * FILTER
+ * ============================================================ */
 export class FilterTemplateDto {
-  @ApiProperty({ description: 'Tên mẫu giao diện', required: false })
+  @ApiPropertyOptional({ description: 'Tên template' })
   @IsOptional()
   @IsString()
   name?: string;
 
-  @ApiProperty({ description: 'Mã giao diện', required: false })
+  @ApiPropertyOptional({ description: 'Mã giao diện' })
   @IsOptional()
   @IsString()
   themeCode?: string;
 
-  @ApiProperty({ description: 'Trạng thái hiển thị', required: false })
+  @ApiPropertyOptional({
+    description: 'Phong cách cưới',
+    enum: enumData.WEDDING_THEME,
+  })
+  @IsOptional()
+  @IsEnum(enumData.WEDDING_THEME)
+  weddingTheme?: string;
+
+  @ApiPropertyOptional({ description: 'Đang hiển thị?' })
   @IsOptional()
   @IsBoolean()
   isShow?: boolean;
 
-  @ApiProperty({ description: 'Giao diện trả phí?', required: false })
+  @ApiPropertyOptional({ description: 'Trả phí?' })
   @IsOptional()
   @IsBoolean()
   isPremium?: boolean;
 
-  @ApiProperty({ description: 'Trạng thái xóa mềm', required: false })
+  @ApiPropertyOptional({ description: 'Xoá mềm?' })
   @IsOptional()
   @IsBoolean()
   isDeleted?: boolean;
 
-  @ApiProperty({
-    description: 'ID gói tối thiểu để sử dụng',
-    required: false,
-  })
+  @ApiPropertyOptional({ description: 'ID gói tối thiểu' })
   @IsOptional()
-  @Transform(({ value }) => (value === '' || value === null ? undefined : value))
+  @Transform(({ value }) =>
+    value === '' || value === null ? undefined : value,
+  )
   @IsUUID()
   minPlanId?: string;
-
-  @ApiProperty({ description: 'Loại thiệp', required: false })
-  @IsOptional()
-  @IsString()
-  cardType?: string;
 }

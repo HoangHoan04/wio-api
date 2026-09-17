@@ -29,6 +29,9 @@ async function bootstrap() {
     'http://localhost:2504',
     'http://localhost:3005',
     'http://localhost:3000',
+    'http://127.0.0.1:2504',
+    'http://127.0.0.1:3005',
+    'http://127.0.0.1:3000',
   ];
   const allowedOrigins =
     configuredOrigins.length > 0 ? configuredOrigins : developmentOrigins;
@@ -36,11 +39,31 @@ async function bootstrap() {
   app.enableCors({
     origin(origin, callback) {
       if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
-      return callback(new Error(`CORS origin not allowed: ${origin}`), false);
+
+      // In development, permit any localhost, 127.0.0.1, or local network IP
+      if (environment === 'development') {
+        const isLocal =
+          /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin) ||
+          /^https?:\/\/(192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+)(:\d+)?$/.test(
+            origin,
+          );
+        if (isLocal) return callback(null, true);
+      }
+
+      return callback(null, false);
     },
     credentials: true,
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Authorization', 'Content-Type', 'X-Request-Id'],
+    allowedHeaders: [
+      'Authorization',
+      'Content-Type',
+      'X-Request-Id',
+      'Accept',
+      'Origin',
+      'X-Requested-With',
+      'Cache-Control',
+      'Pragma',
+    ],
   });
   if (configService.get<string>('TRUST_PROXY') === 'true') {
     app.getHttpAdapter().getInstance().set('trust proxy', 1);

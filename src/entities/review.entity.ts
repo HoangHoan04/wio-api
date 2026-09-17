@@ -1,54 +1,67 @@
 import { enumData } from '@/common/constanst/enumData';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity, Index } from 'typeorm';
 import { BaseEntity } from './base.entity';
 
 @Entity('reviews')
 @Index('IDX_review_status_pinned', ['status', 'isPinned', 'sortOrder'])
 export class ReviewEntity extends BaseEntity {
-  @Column({ type: 'varchar', length: 150, nullable: false })
   @ApiProperty({ description: 'Tên người đánh giá' })
+  @Column({ type: 'varchar', length: 150, nullable: false })
   authorName: string;
 
-  @Column({ type: 'text', nullable: false })
   @ApiProperty({ description: 'Nội dung đánh giá' })
+  @Column({ type: 'text', nullable: false })
   content: string;
 
+  @ApiProperty({ description: 'Số sao đánh giá (1-5)' })
   @Column({ type: 'smallint', nullable: false })
-  @ApiProperty({ description: 'Số sao (1-5)' })
   rating: number;
 
+  @ApiPropertyOptional({
+    description: 'Nhãn sự kiện (VD: Thiệp cưới · 12/2025)',
+  })
   @Column({ type: 'varchar', length: 150, nullable: true })
-  @ApiProperty({ description: 'Nhãn hiển thị (vd. Thiệp cưới · 12/2025)', required: false })
   eventLabel?: string;
 
+  @ApiPropertyOptional({ description: 'URL ảnh đại diện người đánh giá' })
   @Column({ type: 'text', nullable: true })
-  @ApiProperty({ description: 'Ảnh đại diện', required: false })
   avatarUrl?: string;
 
-  @Column({ type: 'varchar', length: 40, nullable: true })
-  @ApiProperty({ description: 'Loại thiệp', enum: enumData.CARD_TYPE, required: false })
-  cardType?: string;
+  @ApiPropertyOptional({
+    description: 'Phong cách cưới',
+    enum: enumData.WEDDING_THEME,
+  })
+  @Column({ type: 'varchar', length: 30, nullable: true })
+  weddingTheme?: string;
 
-  @Column({ type: 'uuid', nullable: true })
+  @ApiPropertyOptional({ description: 'ID thiệp cưới liên quan' })
   @Index()
-  @ApiProperty({ description: 'ID thiệp liên quan', required: false })
+  @Column({ type: 'uuid', nullable: true })
   invitationId?: string;
 
+  @ApiPropertyOptional({ description: 'ID user gửi đánh giá' })
   @Column({ type: 'uuid', nullable: true })
-  @ApiProperty({ description: 'ID user gửi đánh giá', required: false })
   userId?: string;
 
-  @Column({ type: 'varchar', length: 20, nullable: false, default: 'PENDING' })
+  @ApiProperty({
+    description: 'Trạng thái duyệt',
+    enum: enumData.REVIEW_STATUS,
+  })
   @Index()
-  @ApiProperty({ description: 'Trạng thái', enum: enumData.REVIEW_STATUS })
+  @Column({
+    type: 'varchar',
+    length: 20,
+    nullable: false,
+    default: enumData.REVIEW_STATUS.PENDING.code,
+  })
   status: string;
 
+  @ApiProperty({ description: 'Ghim đánh giá lên đầu' })
   @Column({ type: 'boolean', default: false, nullable: false })
-  @ApiProperty({ description: 'Ghim lên trang chủ' })
   isPinned: boolean;
 
-  @Column({ type: 'int', default: 0, nullable: false })
   @ApiProperty({ description: 'Thứ tự hiển thị' })
+  @Column({ type: 'int', default: 0, nullable: false })
   sortOrder: number;
 }

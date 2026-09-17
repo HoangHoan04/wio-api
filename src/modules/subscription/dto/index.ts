@@ -1,85 +1,99 @@
-import { ApiProperty, PartialType } from '@nestjs/swagger';
+import { enumData } from '@/common/constanst/enumData';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsDate,
+  IsEnum,
   IsNotEmpty,
   IsOptional,
-  IsString,
   IsUUID,
 } from 'class-validator';
 
+/* ============================================================
+ * CREATE
+ * ============================================================ */
 export class CreateSubscriptionDto {
-  @ApiProperty({ description: 'ID User đăng ký' })
-  @IsNotEmpty()
-  @IsString()
-  userId: string;
-
-  @ApiProperty({ description: 'ID Gói dịch vụ' })
-  @IsNotEmpty()
-  @IsString()
-  planId: string;
-
-  @ApiProperty({ description: 'Trạng thái gói', required: false })
-  @IsOptional()
-  @IsString()
-  status?: string;
-
-  @ApiProperty({ description: 'Ngày bắt đầu' })
-  @IsNotEmpty()
-  @Type(() => Date)
-  @IsDate()
-  startedAt: Date;
-
-  @ApiProperty({ description: 'Ngày hết hạn' })
-  @IsNotEmpty()
-  @Type(() => Date)
-  @IsDate()
-  expiresAt: Date;
-}
-
-export class UpdateSubscriptionDto extends PartialType(CreateSubscriptionDto) {
-  @ApiProperty({ description: 'ID' })
+  @ApiProperty({ description: 'ID user đăng ký' })
   @IsUUID()
   @IsNotEmpty()
-  id: string;
-}
+  userId: string;
 
-export class FilterSubscriptionDto {
-  @ApiProperty({ description: 'ID User đăng ký', required: false })
-  @IsOptional()
-  @IsString()
-  userId?: string;
+  @ApiProperty({ description: 'ID gói dịch vụ' })
+  @IsUUID()
+  @IsNotEmpty()
+  planId: string;
 
-  @ApiProperty({ description: 'ID Gói dịch vụ', required: false })
+  @ApiPropertyOptional({
+    description: 'Trạng thái gói',
+    enum: enumData.SUB_STATUS,
+    default: enumData.SUB_STATUS.ACTIVE.code,
+  })
   @IsOptional()
-  @IsString()
-  planId?: string;
-
-  @ApiProperty({ description: 'Trạng thái gói', required: false })
-  @IsOptional()
-  @IsString()
+  @IsEnum(enumData.SUB_STATUS)
   status?: string;
 
-  @ApiProperty({ description: 'Ngày bắt đầu', required: false })
+  @ApiPropertyOptional({ description: 'Ngày bắt đầu (mặc định = now)' })
   @IsOptional()
   @Type(() => Date)
   @IsDate()
   startedAt?: Date;
 
-  @ApiProperty({ description: 'Ngày hết hạn', required: false })
+  @ApiPropertyOptional({
+    description: 'Ngày hết hạn (mặc định = startedAt + durationDays của plan)',
+  })
   @IsOptional()
   @Type(() => Date)
   @IsDate()
   expiresAt?: Date;
 }
 
+/* ============================================================
+ * UPDATE
+ * ============================================================ */
+export class UpdateSubscriptionDto extends PartialType(CreateSubscriptionDto) {
+  @ApiProperty({ description: 'ID subscription' })
+  @IsUUID()
+  @IsNotEmpty()
+  id: string;
+}
+
+/* ============================================================
+ * FILTER
+ * ============================================================ */
+export class FilterSubscriptionDto {
+  @ApiPropertyOptional({ description: 'ID user' })
+  @IsOptional()
+  @IsUUID()
+  userId?: string;
+
+  @ApiPropertyOptional({ description: 'ID gói dịch vụ' })
+  @IsOptional()
+  @IsUUID()
+  planId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Trạng thái gói',
+    enum: enumData.SUB_STATUS,
+  })
+  @IsOptional()
+  @IsEnum(enumData.SUB_STATUS)
+  status?: string;
+
+  @ApiPropertyOptional({ description: 'Còn hiệu lực (expiresAt > now)' })
+  @IsOptional()
+  isActive?: boolean;
+}
+
+/* ============================================================
+ * ADMIN — Change plan
+ * ============================================================ */
 export class AdminChangeSubscriptionPlanDto {
-  @ApiProperty({ description: 'ID Đăng ký' })
+  @ApiProperty({ description: 'ID subscription' })
   @IsUUID()
   @IsNotEmpty()
   subscriptionId: string;
 
-  @ApiProperty({ description: 'ID Gói dịch vụ mới' })
+  @ApiProperty({ description: 'ID gói dịch vụ mới' })
   @IsUUID()
   @IsNotEmpty()
   planId: string;

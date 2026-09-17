@@ -5,6 +5,7 @@ import { ReviewService } from './review.service';
 
 @Module({
   imports: [TypeOrmExModule.forCustomRepository([ReviewRepository])],
+  controllers: [],
   providers: [ReviewService],
   exports: [ReviewService],
 })

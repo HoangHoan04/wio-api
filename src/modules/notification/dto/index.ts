@@ -1,38 +1,44 @@
-import { ApiProperty, PartialType } from '@nestjs/swagger';
+import { enumData } from '@/common/constanst/enumData';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsDate,
+  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
   IsUUID,
+  MaxLength,
 } from 'class-validator';
 
+/* ============================================================
+ * CREATE
+ * ============================================================ */
 export class CreateNotificationDto {
-  @ApiProperty({ description: 'ID Thiệp' })
+  @ApiProperty({ description: 'ID thiệp cưới' })
+  @IsUUID()
   @IsNotEmpty()
-  @IsString()
   invitationId: string;
 
-  @ApiProperty({
-    description: 'ID Khách mời (Null = gửi broadcast)',
-    required: false,
-  })
+  @ApiPropertyOptional({ description: 'ID khách mời (null = broadcast)' })
   @IsOptional()
-  @IsString()
+  @IsUUID()
   guestId?: string;
 
-  @ApiProperty({ description: 'Kênh gửi' })
+  @ApiProperty({ description: 'Kênh gửi', enum: enumData.NOTIF_CHANNEL })
   @IsNotEmpty()
+  @IsEnum(enumData.NOTIF_CHANNEL)
   channel: string;
 
-  @ApiProperty({ description: 'Loại thông báo' })
+  @ApiProperty({ description: 'Loại thông báo', enum: enumData.NOTIF_TYPE })
   @IsNotEmpty()
+  @IsEnum(enumData.NOTIF_TYPE)
   type: string;
 
-  @ApiProperty({ description: 'Chủ đề email', required: false })
+  @ApiPropertyOptional({ description: 'Tiêu đề email' })
   @IsOptional()
   @IsString()
+  @MaxLength(255)
   subject?: string;
 
   @ApiProperty({ description: 'Nội dung thông báo' })
@@ -40,9 +46,14 @@ export class CreateNotificationDto {
   @IsString()
   content: string;
 
-  @ApiProperty({ description: 'Trạng thái gửi' })
-  @IsNotEmpty()
-  status: string;
+  @ApiPropertyOptional({
+    description: 'Trạng thái gửi',
+    enum: enumData.NOTIF_STATUS,
+    default: enumData.NOTIF_STATUS.PENDING.code,
+  })
+  @IsOptional()
+  @IsEnum(enumData.NOTIF_STATUS)
+  status?: string;
 
   @ApiProperty({ description: 'Thời gian lên lịch gửi' })
   @IsNotEmpty()
@@ -50,116 +61,136 @@ export class CreateNotificationDto {
   @IsDate()
   scheduledAt: Date;
 
-  @ApiProperty({ description: 'Thời gian đã gửi', required: false })
+  @ApiPropertyOptional({ description: 'Thời gian đã gửi' })
   @IsOptional()
   @Type(() => Date)
   @IsDate()
   sentAt?: Date;
 
-  @ApiProperty({ description: 'Lý do thất bại', required: false })
+  @ApiPropertyOptional({ description: 'Lý do thất bại' })
   @IsOptional()
   @IsString()
   failedReason?: string;
 
-  @ApiProperty({
-    description: 'Nhà cung cấp (Zalo ZNS, Twilio...)',
-    required: false,
-  })
+  @ApiPropertyOptional({ description: 'Nhà cung cấp gửi' })
   @IsOptional()
   @IsString()
+  @MaxLength(50)
   provider?: string;
 
-  @ApiProperty({
-    description: 'Message ID trả về từ provider',
-    required: false,
-  })
+  @ApiPropertyOptional({ description: 'Message ID từ provider' })
   @IsOptional()
   @IsString()
+  @MaxLength(255)
   providerMsgId?: string;
 }
 
+/* ============================================================
+ * UPDATE
+ * ============================================================ */
 export class UpdateNotificationDto extends PartialType(CreateNotificationDto) {
-  @ApiProperty({ description: 'ID' })
+  @ApiProperty({ description: 'ID thông báo' })
   @IsUUID()
   @IsNotEmpty()
   id: string;
 }
 
+/* ============================================================
+ * FILTER
+ * ============================================================ */
 export class FilterNotificationDto {
-  @ApiProperty({ description: 'ID Thiệp', required: false })
+  @ApiPropertyOptional({ description: 'ID thiệp cưới' })
   @IsOptional()
-  @IsString()
+  @IsUUID()
   invitationId?: string;
 
-  @ApiProperty({
-    description: 'ID Khách mời (Null = gửi broadcast)',
-    required: false,
-  })
+  @ApiPropertyOptional({ description: 'ID khách mời' })
   @IsOptional()
-  @IsString()
+  @IsUUID()
   guestId?: string;
 
-  @ApiProperty({ description: 'Kênh gửi', required: false })
+  @ApiPropertyOptional({
+    description: 'Kênh gửi',
+    enum: enumData.NOTIF_CHANNEL,
+  })
   @IsOptional()
-  @IsString()
+  @IsEnum(enumData.NOTIF_CHANNEL)
   channel?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Loại thông báo',
-    required: false,
+    enum: enumData.NOTIF_TYPE,
   })
   @IsOptional()
-  @IsString()
+  @IsEnum(enumData.NOTIF_TYPE)
   type?: string;
 
-  @ApiProperty({ description: 'Chủ đề email', required: false })
-  @IsOptional()
-  @IsString()
-  subject?: string;
-
-  @ApiProperty({ description: 'Nội dung thông báo', required: false })
-  @IsOptional()
-  @IsString()
-  content?: string;
-
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Trạng thái gửi',
-    required: false,
+    enum: enumData.NOTIF_STATUS,
   })
   @IsOptional()
-  @IsString()
+  @IsEnum(enumData.NOTIF_STATUS)
   status?: string;
 
-  @ApiProperty({ description: 'Thời gian lên lịch gửi', required: false })
+  @ApiPropertyOptional({ description: 'Lịch gửi từ' })
   @IsOptional()
   @Type(() => Date)
   @IsDate()
-  scheduledAt?: Date;
+  scheduledFrom?: Date;
 
-  @ApiProperty({ description: 'Thời gian đã gửi', required: false })
+  @ApiPropertyOptional({ description: 'Lịch gửi đến' })
   @IsOptional()
   @Type(() => Date)
   @IsDate()
-  sentAt?: Date;
+  scheduledTo?: Date;
 
-  @ApiProperty({ description: 'Lý do thất bại', required: false })
+  @ApiPropertyOptional({ description: 'Đã gửi từ' })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  sentFrom?: Date;
+
+  @ApiPropertyOptional({ description: 'Đã gửi đến' })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  sentTo?: Date;
+}
+
+/* ============================================================
+ * BROADCAST — gửi cho toàn bộ khách mời
+ * ============================================================ */
+export class BroadcastNotificationDto {
+  @ApiProperty({ description: 'ID thiệp cưới' })
+  @IsUUID()
+  @IsNotEmpty()
+  invitationId: string;
+
+  @ApiProperty({ description: 'Kênh gửi', enum: enumData.NOTIF_CHANNEL })
+  @IsNotEmpty()
+  @IsEnum(enumData.NOTIF_CHANNEL)
+  channel: string;
+
+  @ApiProperty({ description: 'Loại thông báo', enum: enumData.NOTIF_TYPE })
+  @IsNotEmpty()
+  @IsEnum(enumData.NOTIF_TYPE)
+  type: string;
+
+  @ApiPropertyOptional({ description: 'Tiêu đề email' })
   @IsOptional()
   @IsString()
-  failedReason?: string;
+  @MaxLength(255)
+  subject?: string;
 
-  @ApiProperty({
-    description: 'Nhà cung cấp (Zalo ZNS, Twilio...)',
-    required: false,
-  })
-  @IsOptional()
+  @ApiProperty({ description: 'Nội dung thông báo' })
+  @IsNotEmpty()
   @IsString()
-  provider?: string;
+  content: string;
 
-  @ApiProperty({
-    description: 'Message ID trả về từ provider',
-    required: false,
-  })
-  @IsOptional()
-  @IsString()
-  providerMsgId?: string;
+  @ApiProperty({ description: 'Thời gian lên lịch gửi' })
+  @IsNotEmpty()
+  @Type(() => Date)
+  @IsDate()
+  scheduledAt: Date;
 }

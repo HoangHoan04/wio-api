@@ -1,10 +1,12 @@
-import { RequireRoles } from '@/common/decorators';
+import { enumData } from '@/common/constanst/enumData';
+import { CurrentUser, RequireRoles } from '@/common/decorators';
 import { JwtAuthGuard } from '@/common/guards';
+import { IdDto, PaginationDto, UserDto } from '@/dto';
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { YoutubeAudioProviderType } from '../../youtube-audio';
 import {
   CreateMusicBackgroundDto,
+  FilterMusicBackgroundDto,
   GetYoutubeInfoDto,
   ImportYoutubeDto,
   UpdateMusicBackgroundDto,
@@ -14,84 +16,71 @@ import { MusicBackgroundService } from '../music-background.service';
 @ApiTags('Admin - Music Background')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@RequireRoles('ADMIN')
+@RequireRoles(enumData.USER_ROLE.ADMIN.code)
 @Controller('music-background')
 export class MusicBackgroundAdminController {
-  constructor(private readonly musicService: MusicBackgroundService) {}
+  constructor(private readonly service: MusicBackgroundService) {}
 
+  /* ============================================================
+   * CRUD
+   * ============================================================ */
   @Post('pagination')
-  @ApiOperation({ summary: 'Lấy danh sách nhạc nền (có phân trang)' })
-  pagination(@Body() query: any) {
-    return this.musicService.pagination(query);
+  @ApiOperation({ summary: 'Danh sách nhạc nền (phân trang)' })
+  async pagination(@Body() query: PaginationDto<FilterMusicBackgroundDto>) {
+    return this.service.pagination(query);
   }
 
   @Post('find-by-id')
-  @ApiOperation({ summary: 'Lấy chi tiết nhạc nền theo ID' })
-  findById(@Body('id') id: string) {
-    return this.musicService.findOne(id);
+  @ApiOperation({ summary: 'Chi tiết nhạc nền theo ID' })
+  async findById(@Body() dto: IdDto) {
+    return this.service.findById(dto.id);
   }
 
   @Post('create')
-  @ApiOperation({
-    summary: 'Tạo nhạc nền mới (audioUrl đã upload qua /api/upload)',
-  })
-  create(@Body() createDto: CreateMusicBackgroundDto) {
-    createDto.type = 'admin';
-    return this.musicService.create(createDto);
-  }
-
-  @Post('import-youtube')
-  @ApiOperation({ summary: 'Nhập nhạc từ YouTube' })
-  importYoutube(@Body() importDto: ImportYoutubeDto) {
-    importDto.type = 'admin';
-    return this.musicService.importYoutube(importDto);
-  }
-
-  @Post('import-youtube-library')
-  @ApiOperation({
-    summary: 'Nhập nhạc từ YouTube bằng thư viện youtube-dl-exec',
-  })
-  importYoutubeLibrary(@Body() importDto: ImportYoutubeDto) {
-    return this.musicService.importYoutube({
-      ...importDto,
-      provider: 'youtube-dl-exec',
-    });
-  }
-
-  @Post('import-youtube-public-api')
-  @ApiOperation({ summary: 'Nhập nhạc từ YouTube bằng public internet API' })
-  importYoutubePublicApi(@Body() importDto: ImportYoutubeDto) {
-    return this.musicService.importYoutube({
-      ...importDto,
-      provider: 'public-api',
-    });
-  }
-
-  @Post('import-youtube-python')
-  @ApiOperation({ summary: 'Nhập nhạc từ YouTube bằng hàm Python yt-dlp' })
-  importYoutubePython(@Body() importDto: ImportYoutubeDto) {
-    return this.musicService.importYoutube({
-      ...importDto,
-      provider: 'python-yt-dlp',
-    });
-  }
-
-  @Post('info')
-  @ApiOperation({ summary: 'Lấy metadata YouTube (không tải)' })
-  getYoutubeInfo(@Body() body: GetYoutubeInfoDto) {
-    return this.musicService.getYoutubeInfo(body.url, body.provider);
+  @ApiOperation({ summary: 'Tạo nhạc nền mới (audioUrl đã upload)' })
+  async create(
+    @Body() dto: CreateMusicBackgroundDto,
+    @CurrentUser() user: UserDto,
+  ) {
+    return this.service.create(
+      { ...dto, type: enumData.MUSIC_TYPE.ADMIN.code },
+      user,
+    );
   }
 
   @Post('update')
   @ApiOperation({ summary: 'Cập nhật nhạc nền' })
-  update(@Body() updateDto: UpdateMusicBackgroundDto) {
-    const { id, ...rest } = updateDto as any;
-    return this.musicService.update(id, rest);
+  async update(
+    @Body() dto: UpdateMusicBackgroundDto,
+    @CurrentUser() user: UserDto,
+  ) {
+    return this.service.update(dto, user);
   }
 
   @Post('delete')
-  @ApiOperation({ summary: 'Xóa nhạc nền' })
-  remove(@Body('id') id: string) {
-    return this.musicService.remove(id);
+  @ApiOperation({ summary: 'Xoá mềm nhạc nền' })
+  async remove(@Body() dto: IdDto, @CurrentUser() user: UserDto) {
+    return this.service.remove(dto.id, user);
+  }
+
+  /* ============================================================
+   * YOUTUBE
+   * ============================================================ */
+  @Post('import-youtube')
+  @ApiOperation({ summary: 'Nhập nhạc từ YouTube' })
+  async importYoutube(
+    @Body() dto: ImportYoutubeDto,
+    @CurrentUser() user: UserDto,
+  ) {
+    return this.service.importYoutube(
+      { ...dto, type: enumData.MUSIC_TYPE.ADMIN.code },
+      user,
+    );
+  }
+
+  @Post('info')
+  @ApiOperation({ summary: 'Lấy metadata YouTube (không tải)' })
+  async getYoutubeInfo(@Body() dto: GetYoutubeInfoDto) {
+    return this.service.getYoutubeInfo(dto);
   }
 }

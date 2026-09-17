@@ -4,13 +4,13 @@ import { ContactService } from '../contact.service';
 import { CreateContactDto } from '../dto';
 
 @ApiTags('Public - Contact')
-@Controller('contact/public')
+@Controller('contact')
 export class ContactPublicController {
   constructor(private readonly service: ContactService) {}
 
-  @ApiOperation({ summary: 'Khách hàng gửi yêu cầu liên hệ / hỗ trợ' })
   @Post('create')
+  @ApiOperation({ summary: 'Khách hàng gửi yêu cầu liên hệ / hỗ trợ' })
   async createPublicContact(@Body() body: CreateContactDto) {
-    return await this.service.createPublicContact(body);
+    return this.service.createPublicContact(body);
   }
 }

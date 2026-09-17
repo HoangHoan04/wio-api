@@ -6,41 +6,38 @@ import { FilterTemplateDto } from '../dto';
 import { TemplateService } from '../template.service';
 
 @ApiTags('User - Template')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('template')
 export class TemplateUserController {
   constructor(private readonly service: TemplateService) {}
 
   @Post('pagination')
-  @ApiOperation({ summary: 'Lấy danh sách template' })
+  @ApiOperation({ summary: 'Danh sách template đang hiển thị' })
   async pagination(@Body() body: PaginationDto<FilterTemplateDto>) {
-    if (!body.where) {
-      body.where = {};
-    }
-    body.where.isShow = true;
-    if (body.where.isDeleted === undefined) {
-      body.where.isDeleted = false;
-    }
-
-    return await this.service.pagination(body);
+    body.where = {
+      ...(body.where || {}),
+      isShow: true,
+      isDeleted: false,
+    };
+    return this.service.pagination(body);
   }
 
-  @ApiOperation({ summary: 'Chi tiết' })
   @Post('find-by-id')
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Chi tiết template' })
   async findById(@Body() body: IdDto) {
-    return await this.service.findById(body);
+    return this.service.findById(body);
   }
 
-  @ApiOperation({ summary: 'Tăng lượt dùng template (khi user tạo thiệp)' })
   @Post('increment-view')
+  @ApiOperation({ summary: 'Tăng lượt dùng template' })
   async incrementView(@Body() body: IdDto) {
-    return await this.service.incrementView(body);
+    return this.service.incrementView(body);
   }
 
-  @ApiOperation({ summary: 'Tăng lượt xem trước template' })
   @Post('increment-preview')
+  @ApiOperation({ summary: 'Tăng lượt xem trước template' })
   async incrementPreview(@Body() body: IdDto) {
-    return await this.service.incrementPreview(body);
+    return this.service.incrementPreview(body);
   }
 }

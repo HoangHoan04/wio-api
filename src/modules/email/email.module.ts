@@ -1,12 +1,10 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { EmailController } from './email.controller';
 import { EmailService } from './email.service';
 
 @Module({
+  controllers: [EmailController],
   providers: [EmailService],
   exports: [EmailService],
-  controllers: [EmailController],
 })
-export class EmailModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {}
-}
+export class EmailModule {}

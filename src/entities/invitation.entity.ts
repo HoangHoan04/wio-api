@@ -1,5 +1,5 @@
 import { enumData } from '@/common/constanst/enumData';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   Column,
   Entity,
@@ -7,18 +7,25 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
+  OneToOne,
 } from 'typeorm';
+import { AiScanJobEntity } from './ai-scan-job.entity';
 import { BaseEntity } from './base.entity';
-import { GuestEntity } from './guest.entity';
 import { GuestGroupEntity } from './guest-group.entity';
+import { GuestEntity } from './guest.entity';
 import { InvitationEventEntity } from './invitation-event.entity';
 import { InvitationGiftEntity } from './invitation-gift.entity';
 import { InvitationHostEntity } from './invitation-host.entity';
 import { InvitationPhotoEntity } from './invitation-photo.entity';
 import { InvitationTimelineEntity } from './invitation-timeline.entity';
+import { InvitationVersionEntity } from './invitation-version.entity';
+import { NotificationEntity } from './notification.entity';
+import { PhotoWallEntity } from './photo-wall.entity';
+import { SlugHistoryEntity } from './slug-history.entity';
 import { TableEntity } from './table.entity';
 import { TemplateEntity } from './template.entity';
 import { UserEntity } from './user.entity';
+import { WeddingInfoEntity } from './wedding-info.entity';
 import { WishEntity } from './wish.entity';
 
 @Entity('invitations')
@@ -26,135 +33,184 @@ import { WishEntity } from './wish.entity';
   unique: true,
   where: `"status" != 'ARCHIVED' AND "isDeleted" = false`,
 })
+@Index(['userId', 'status'])
 export class InvitationEntity extends BaseEntity {
-  @Column({ type: 'uuid', nullable: false })
+  @ApiProperty({ description: 'ID user sở hữu thiệp' })
   @Index()
-  @ApiProperty({ description: 'ID User sở hữu' })
+  @Column({ type: 'uuid', nullable: false })
   userId: string;
 
+  @ApiProperty({
+    description: 'Chế độ thiết kế thiệp',
+    enum: enumData.DESIGN_MODE,
+  })
+  @Column({
+    type: 'varchar',
+    length: 20,
+    nullable: false,
+    default: enumData.DESIGN_MODE.TEMPLATE.code,
+  })
+  designMode: string;
+
+  @ApiProperty({ description: 'Phong cách cưới', enum: enumData.WEDDING_THEME })
+  @Column({ type: 'varchar', length: 30, nullable: false })
+  weddingTheme: string;
+
+  @ApiPropertyOptional({
+    description: 'ID template (nếu designMode = TEMPLATE)',
+  })
   @Column({ type: 'uuid', nullable: true })
-  @ApiProperty({ description: 'ID Template', required: false })
   templateId?: string;
 
-  @Column({ type: 'varchar', length: 40, nullable: false })
-  @Index()
-  @ApiProperty({ description: 'Loại thiệp', enum: enumData.CARD_TYPE })
-  cardType: string;
-
+  @ApiProperty({ description: 'Tiêu đề thiệp cưới' })
   @Column({ type: 'varchar', length: 200, nullable: false })
-  @ApiProperty({ description: 'Tiêu đề thiệp' })
   title: string;
 
+  @ApiProperty({ description: 'Slug công khai dạng /thiep-cuoi/{slug}' })
+  @Index()
   @Column({ type: 'varchar', length: 100, nullable: false })
-  @ApiProperty({ description: 'URL công khai: /thiep/slug' })
   slug: string;
 
-  @Column({ type: 'varchar', length: 20, nullable: false })
+  @ApiProperty({
+    description: 'Trạng thái thiệp',
+    enum: enumData.INVITATION_STATUS,
+  })
   @Index()
-  @ApiProperty({ description: 'Trạng thái', enum: enumData.INVITATION_STATUS })
+  @Column({
+    type: 'varchar',
+    length: 20,
+    nullable: false,
+    default: enumData.INVITATION_STATUS.DRAFT.code,
+  })
   status: string;
 
+  @ApiPropertyOptional({ description: 'Lời mời' })
   @Column({ type: 'text', nullable: true })
-  @ApiProperty({ description: 'Lời mời', required: false })
   invitationText?: string;
 
+  @ApiPropertyOptional({ description: 'Lời cảm ơn' })
   @Column({ type: 'text', nullable: true })
-  @ApiProperty({ description: 'Lời cảm ơn', required: false })
   thankYouText?: string;
 
-  @Column({ type: 'varchar', length: 80, nullable: true })
-  @ApiProperty({ description: 'Hashtag', required: false })
-  hashtag?: string;
-
+  @ApiPropertyOptional({ description: 'URL ảnh cover chính' })
   @Column({ type: 'text', nullable: true })
-  @ApiProperty({ description: 'Ảnh cover', required: false })
   heroImageUrl?: string;
 
-  @Column({ type: 'timestamptz', nullable: true })
+  @ApiPropertyOptional({ description: 'Thời điểm diễn ra sự kiện chính' })
   @Index()
-  @ApiProperty({ description: 'Thời điểm sự kiện chính', required: false })
+  @Column({ type: 'timestamptz', nullable: true })
   primaryEventAt?: Date;
 
+  @ApiPropertyOptional({
+    description: 'Bật/tắt các section hiển thị trên thiệp',
+  })
   @Column({ type: 'jsonb', nullable: true })
-  @ApiProperty({ description: 'Bật/tắt section', required: false })
   sectionConfig?: Record<string, boolean>;
 
+  @ApiPropertyOptional({ description: 'ID nhạc nền' })
+  @Column({ type: 'uuid', nullable: true })
+  musicId?: string;
+
+  @ApiPropertyOptional({ description: 'Cấu hình phát nhạc nền' })
   @Column({ type: 'jsonb', nullable: true })
-  @ApiProperty({ description: 'Module được bật', required: false })
-  enabledModules?: string[];
+  musicConfig?: { autoplay?: boolean; loop?: boolean; volume?: number };
 
+  @ApiPropertyOptional({ description: 'Dữ liệu thiết kế tự do (Canva mode)' })
   @Column({ type: 'jsonb', nullable: true })
-  @ApiProperty({ description: 'Nhạc nền', required: false })
-  music?: { url?: string; type?: string; autoplay?: boolean; name?: string };
+  customDesign?: Record<string, any>;
 
+  @ApiPropertyOptional({ description: 'Metadata do AI sinh ra (AI_SCAN mode)' })
   @Column({ type: 'jsonb', nullable: true })
-  @ApiProperty({ description: 'Nội dung theo loại thiệp', required: false })
-  extraContent?: Record<string, any>;
+  aiGeneratedMeta?: Record<string, any>;
 
-  @Column({ type: 'jsonb', nullable: true })
-  @ApiProperty({ description: 'Thiết kế Konva', required: false })
-  customDesign?: any;
-
-  @Column({ type: 'jsonb', nullable: true })
-  @ApiProperty({ description: 'Cấu hình envelope/cover', required: false })
-  coverConfig?: Record<string, any>;
-
-  @Column({ type: 'jsonb', nullable: true })
-  @ApiProperty({ description: 'Ghi đè layout preset của template', required: false })
-  presetLayoutOverride?: Record<string, any>;
-
-  @Column({ type: 'timestamptz', nullable: true })
-  @ApiProperty({ description: 'Ngày xuất bản', required: false })
-  publishedAt?: Date;
-
-  @Column({ type: 'timestamptz', nullable: true })
-  @ApiProperty({ description: 'Ngày hết hạn', required: false })
-  expiresAt?: Date;
-
+  @ApiPropertyOptional({ description: 'URL chia sẻ thiệp' })
   @Column({ type: 'text', nullable: true })
-  @ApiProperty({ description: 'Link chia sẻ', required: false })
   shareUrl?: string;
 
+  @ApiPropertyOptional({ description: 'URL ảnh QR chia sẻ' })
   @Column({ type: 'text', nullable: true })
-  @ApiProperty({ description: 'QR chia sẻ', required: false })
   shareQrUrl?: string;
 
+  @ApiPropertyOptional({ description: 'Tiêu đề SEO' })
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  seoTitle?: string;
+
+  @ApiPropertyOptional({ description: 'Mô tả SEO' })
+  @Column({ type: 'text', nullable: true })
+  seoDescription?: string;
+
+  @ApiProperty({ description: 'Tổng lượt xem' })
   @Column({ type: 'int', default: 0, nullable: false })
-  @ApiProperty({ description: 'Lượt xem' })
   viewCount: number;
 
-  @ManyToOne(() => UserEntity, (user) => user.invitations, { onDelete: 'CASCADE' })
+  @ApiProperty({ description: 'Lượt xem duy nhất' })
+  @Column({ type: 'int', default: 0, nullable: false })
+  uniqueViewCount: number;
+
+  @ApiPropertyOptional({ description: 'Thời điểm xuất bản thiệp' })
+  @Column({ type: 'timestamptz', nullable: true })
+  publishedAt?: Date;
+
+  @ApiPropertyOptional({ description: 'Thời điểm hết hạn thiệp' })
+  @Column({ type: 'timestamptz', nullable: true })
+  expiresAt?: Date;
+
+  @ManyToOne(() => UserEntity, (u) => u.invitations, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user: UserEntity;
 
   @ManyToOne(() => TemplateEntity, { onDelete: 'SET NULL', nullable: true })
   @JoinColumn({ name: 'templateId' })
-  template: TemplateEntity;
+  template?: TemplateEntity;
 
-  @OneToMany(() => InvitationHostEntity, (host) => host.invitation, { cascade: true })
+  @OneToOne(() => WeddingInfoEntity, (w) => w.invitation, { cascade: true })
+  weddingInfo: WeddingInfoEntity;
+
+  @OneToMany(() => InvitationHostEntity, (h) => h.invitation, { cascade: true })
   hosts: InvitationHostEntity[];
 
-  @OneToMany(() => InvitationEventEntity, (event) => event.invitation, { cascade: true })
+  @OneToMany(() => InvitationEventEntity, (e) => e.invitation, {
+    cascade: true,
+  })
   events: InvitationEventEntity[];
 
-  @OneToMany(() => InvitationTimelineEntity, (item) => item.invitation, { cascade: true })
+  @OneToMany(() => InvitationTimelineEntity, (t) => t.invitation, {
+    cascade: true,
+  })
   timelines: InvitationTimelineEntity[];
 
-  @OneToMany(() => InvitationPhotoEntity, (photo) => photo.invitation, { cascade: true })
+  @OneToMany(() => InvitationPhotoEntity, (p) => p.invitation, {
+    cascade: true,
+  })
   photos: InvitationPhotoEntity[];
 
-  @OneToMany(() => InvitationGiftEntity, (gift) => gift.invitation, { cascade: true })
+  @OneToMany(() => InvitationGiftEntity, (g) => g.invitation, { cascade: true })
   gifts: InvitationGiftEntity[];
 
-  @OneToMany(() => GuestGroupEntity, (group) => group.invitation, { cascade: true })
+  @OneToMany(() => InvitationVersionEntity, (v) => v.invitation)
+  versions: InvitationVersionEntity[];
+
+  @OneToMany(() => GuestGroupEntity, (g) => g.invitation, { cascade: true })
   guestGroups: GuestGroupEntity[];
 
-  @OneToMany(() => WishEntity, (wish) => wish.invitation)
-  wishes: WishEntity[];
+  @OneToMany(() => GuestEntity, (g) => g.invitation)
+  guests: GuestEntity[];
 
-  @OneToMany(() => TableEntity, (table) => table.invitation)
+  @OneToMany(() => TableEntity, (t) => t.invitation)
   tables: TableEntity[];
 
-  @OneToMany(() => GuestEntity, (guest) => guest.invitation)
-  guests: GuestEntity[];
+  @OneToMany(() => WishEntity, (w) => w.invitation)
+  wishes: WishEntity[];
+
+  @OneToMany(() => PhotoWallEntity, (p) => p.invitation)
+  photoWall: PhotoWallEntity[];
+
+  @OneToMany(() => NotificationEntity, (n) => n.invitation)
+  notifications: NotificationEntity[];
+
+  @OneToMany(() => SlugHistoryEntity, (s) => s.invitation)
+  slugHistories: SlugHistoryEntity[];
+
+  @OneToMany(() => AiScanJobEntity, (a) => a.invitation)
+  aiScanJobs: AiScanJobEntity[];
 }

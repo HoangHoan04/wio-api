@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsEmail,
   IsNotEmpty,
@@ -7,33 +7,54 @@ import {
   MaxLength,
 } from 'class-validator';
 
-export interface ContactEmailData {
-  name: string;
+/* ============================================================
+ * SEND VERIFY / FORGOT PASSWORD OTP
+ * ============================================================ */
+export class SendOtpEmailDto {
+  @ApiProperty({ description: 'Email nhận OTP' })
+  @IsEmail()
+  @IsNotEmpty()
   email: string;
-  subject?: string;
-  message: string;
+
+  @ApiProperty({ description: 'Mã OTP' })
+  @IsString()
+  @IsNotEmpty()
+  otpCode: string;
 }
 
+/* ============================================================
+ * SEND CONTACT
+ * ============================================================ */
 export class SendContactDto {
   @ApiProperty({ description: 'Họ và tên người liên hệ' })
-  @IsNotEmpty()
   @IsString()
+  @IsNotEmpty()
   @MaxLength(100)
   name: string;
 
   @ApiProperty({ description: 'Email người liên hệ' })
-  @IsNotEmpty()
   @IsEmail()
+  @IsNotEmpty()
   email: string;
 
-  @ApiProperty({ description: 'Chủ đề liên hệ' })
-  @IsOptional()
+  @ApiPropertyOptional({ description: 'Chủ đề liên hệ' })
   @IsString()
+  @IsOptional()
   subject?: string;
 
   @ApiProperty({ description: 'Nội dung tin nhắn' })
-  @IsNotEmpty()
   @IsString()
+  @IsNotEmpty()
   @MaxLength(2000)
+  message: string;
+}
+
+/* ============================================================
+ * TYPE (dùng cho service, không validate)
+ * ============================================================ */
+export interface ContactEmailData {
+  name: string;
+  email: string;
+  subject?: string;
   message: string;
 }

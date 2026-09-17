@@ -1,3 +1,4 @@
+import { enumData } from '@/common/constanst/enumData';
 import { CurrentUser, RequireRoles } from '@/common/decorators';
 import { JwtAuthGuard } from '@/common/guards';
 import { IdDto, PaginationDto, UserDto } from '@/dto';
@@ -10,34 +11,34 @@ import { FilterContactDto, UpdateContactStatusDto } from '../dto';
 @Controller('contact')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@RequireRoles('ADMIN')
+@RequireRoles(enumData.USER_ROLE.ADMIN.code)
 export class ContactAdminController {
   constructor(private readonly service: ContactService) {}
 
-  @ApiOperation({ summary: 'Danh sách các yêu cầu liên hệ từ khách hàng' })
   @Post('pagination')
+  @ApiOperation({ summary: 'Danh sách các yêu cầu liên hệ' })
   async pagination(@Body() body: PaginationDto<FilterContactDto>) {
-    return await this.service.pagination(body);
+    return this.service.pagination(body);
   }
 
-  @ApiOperation({ summary: 'Chi tiết yêu cầu liên hệ' })
   @Post('find-by-id')
+  @ApiOperation({ summary: 'Chi tiết yêu cầu liên hệ' })
   async findById(@Body() body: IdDto) {
-    return await this.service.findById(body);
+    return this.service.findById(body);
   }
 
-  @ApiOperation({ summary: 'Cập nhật trạng thái / phản hồi liên hệ' })
   @Post('update-status')
+  @ApiOperation({ summary: 'Cập nhật trạng thái / phản hồi liên hệ' })
   async updateStatus(
     @Body() body: UpdateContactStatusDto,
     @CurrentUser() user: UserDto,
   ) {
-    return await this.service.updateStatus(body, user);
+    return this.service.updateStatus(body, user);
   }
 
-  @ApiOperation({ summary: 'Xóa yêu cầu liên hệ' })
   @Post('delete')
+  @ApiOperation({ summary: 'Xóa yêu cầu liên hệ' })
   async delete(@Body() body: IdDto, @CurrentUser() user: UserDto) {
-    return await this.service.delete(body, user);
+    return this.service.delete(body, user);
   }
 }

@@ -1,109 +1,181 @@
-import { ApiProperty, PartialType } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import {
   IsBoolean,
-  IsDate,
   IsNotEmpty,
   IsOptional,
   IsString,
   IsUUID,
+  MaxLength,
 } from 'class-validator';
 
+/* ============================================================
+ * CREATE (Admin)
+ * ============================================================ */
 export class CreatePhotoWallDto {
-  @ApiProperty({ description: 'ID Thiệp' })
+  @ApiProperty({ description: 'ID thiệp cưới' })
+  @IsUUID()
   @IsNotEmpty()
-  @IsString()
   invitationId: string;
 
-  @ApiProperty({
-    description: 'ID Khách mời (Null nếu upload ẩn danh)',
-    required: false,
-  })
+  @ApiPropertyOptional({ description: 'ID khách mời (null = ẩn danh)' })
   @IsOptional()
-  @IsString()
+  @IsUUID()
   guestId?: string;
 
-  @ApiProperty({ description: 'Tên người upload' })
-  @IsNotEmpty()
+  @ApiProperty({ description: 'Tên người tải ảnh lên' })
   @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
   uploaderName: string;
 
-  @ApiProperty({ description: 'Đường dẫn ảnh' })
-  @IsNotEmpty()
+  @ApiProperty({ description: 'URL ảnh' })
   @IsString()
+  @IsNotEmpty()
   url: string;
 
-  @ApiProperty({ description: 'Key lưu trữ', required: false })
+  @ApiPropertyOptional({ description: 'Storage key trên cloud' })
   @IsOptional()
   @IsString()
+  @MaxLength(500)
   storageKey?: string;
 
-  @ApiProperty({ description: 'Chú thích ảnh', required: false })
+  @ApiPropertyOptional({ description: 'Chú thích ảnh' })
   @IsOptional()
   @IsString()
+  @MaxLength(255)
   caption?: string;
 
-  @ApiProperty({ description: 'Đã duyệt?', required: false })
+  @ApiPropertyOptional({ description: 'Đã duyệt?' })
   @IsOptional()
   @IsBoolean()
   isApproved?: boolean;
-
-  @ApiProperty({ description: 'Thời gian duyệt', required: false })
-  @IsOptional()
-  @Type(() => Date)
-  @IsDate()
-  approvedAt?: Date;
 }
 
-export class UpdatePhotoWallDto extends PartialType(CreatePhotoWallDto) {
-  @ApiProperty({ description: 'ID' })
+/* ============================================================
+ * UPDATE (Admin/User)
+ * KHÔNG cho phép đổi invitationId, guestId
+ * ============================================================ */
+export class UpdatePhotoWallDto extends PartialType(
+  // chỉ cho sửa các field này
+  class {
+    uploaderName?: string;
+    url?: string;
+    storageKey?: string;
+    caption?: string;
+    isApproved?: boolean;
+  } as any,
+) {
+  @ApiProperty({ description: 'ID ảnh' })
   @IsUUID()
   @IsNotEmpty()
   id: string;
-}
 
-export class FilterPhotoWallDto {
-  @ApiProperty({ description: 'ID Thiệp', required: false })
+  @ApiPropertyOptional({ description: 'Tên người tải ảnh lên' })
   @IsOptional()
   @IsString()
-  invitationId?: string;
-
-  @ApiProperty({
-    description: 'ID Khách mời (Null nếu upload ẩn danh)',
-    required: false,
-  })
-  @IsOptional()
-  @IsString()
-  guestId?: string;
-
-  @ApiProperty({ description: 'Tên người upload', required: false })
-  @IsOptional()
-  @IsString()
+  @MaxLength(100)
   uploaderName?: string;
 
-  @ApiProperty({ description: 'Đường dẫn ảnh', required: false })
+  @ApiPropertyOptional({ description: 'URL ảnh' })
   @IsOptional()
   @IsString()
   url?: string;
 
-  @ApiProperty({ description: 'Key lưu trữ', required: false })
+  @ApiPropertyOptional({ description: 'Storage key' })
   @IsOptional()
   @IsString()
+  @MaxLength(500)
   storageKey?: string;
 
-  @ApiProperty({ description: 'Chú thích ảnh', required: false })
+  @ApiPropertyOptional({ description: 'Chú thích ảnh' })
   @IsOptional()
   @IsString()
+  @MaxLength(255)
   caption?: string;
 
-  @ApiProperty({ description: 'Đã duyệt?', required: false })
+  @ApiPropertyOptional({ description: 'Đã duyệt?' })
   @IsOptional()
   @IsBoolean()
   isApproved?: boolean;
+}
 
-  @ApiProperty({ description: 'Thời gian duyệt', required: false })
+/* ============================================================
+ * FILTER
+ * ============================================================ */
+export class FilterPhotoWallDto {
+  @ApiPropertyOptional({ description: 'ID thiệp cưới' })
   @IsOptional()
-  @Type(() => Date)
-  @IsDate()
-  approvedAt?: Date;
+  @IsUUID()
+  invitationId?: string;
+
+  @ApiPropertyOptional({ description: 'ID khách mời' })
+  @IsOptional()
+  @IsUUID()
+  guestId?: string;
+
+  @ApiPropertyOptional({ description: 'Tên người tải ảnh lên' })
+  @IsOptional()
+  @IsString()
+  uploaderName?: string;
+
+  @ApiPropertyOptional({ description: 'Đã duyệt?' })
+  @IsOptional()
+  @IsBoolean()
+  isApproved?: boolean;
+}
+
+/* ============================================================
+ * PUBLIC — Upload ẩn danh / có mã mời
+ * ============================================================ */
+export class PublicUploadPhotoWallDto {
+  @ApiProperty({ description: 'ID thiệp cưới' })
+  @IsUUID()
+  @IsNotEmpty()
+  invitationId: string;
+
+  @ApiPropertyOptional({
+    description: 'Mã mời của khách (nếu có) — dùng để liên kết guest',
+  })
+  @IsOptional()
+  @IsString()
+  invitationCode?: string;
+
+  @ApiProperty({ description: 'Tên người tải ảnh lên' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  uploaderName: string;
+
+  @ApiProperty({ description: 'URL ảnh' })
+  @IsString()
+  @IsNotEmpty()
+  url: string;
+
+  @ApiPropertyOptional({ description: 'Storage key' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  storageKey?: string;
+
+  @ApiPropertyOptional({ description: 'Chú thích ảnh' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  caption?: string;
+}
+
+/* ============================================================
+ * APPROVE/REJECT
+ * ============================================================ */
+export class RejectPhotoWallDto {
+  @ApiProperty({ description: 'ID ảnh' })
+  @IsUUID()
+  @IsNotEmpty()
+  id: string;
+
+  @ApiPropertyOptional({ description: 'Lý do từ chối' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  reason?: string;
 }

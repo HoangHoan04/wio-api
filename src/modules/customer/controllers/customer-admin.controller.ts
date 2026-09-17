@@ -1,53 +1,56 @@
-import { CurrentUser } from '@/common/decorators';
+import { enumData } from '@/common/constanst/enumData';
+import { CurrentUser, RequireRoles } from '@/common/decorators';
 import { JwtAuthGuard } from '@/common/guards';
 import { IdDto, PaginationDto, UserDto } from '@/dto';
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CustomerService } from '../customer.service';
+import { ChangeCustomerPasswordDto, FilterCustomerDto } from '../dto';
 
+@ApiTags('Admin - Customer')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@ApiTags('Customer')
+@RequireRoles(enumData.USER_ROLE.ADMIN.code)
 @Controller('customer')
 export class CustomerAdminController {
   constructor(private readonly service: CustomerService) {}
 
-  @ApiOperation({ summary: 'Hàm phân trang nhân viên' })
   @Post('pagination')
-  async pagination(@Body() data: PaginationDto) {
+  @ApiOperation({ summary: 'Phân trang khách hàng' })
+  async pagination(@Body() data: PaginationDto<FilterCustomerDto>) {
     return this.service.pagination(data);
   }
 
-  @ApiOperation({ summary: 'Tìm kiếm chi tiết nhân viên theo ID' })
   @Post('find-by-id')
+  @ApiOperation({ summary: 'Chi tiết khách hàng theo ID' })
   async findById(@Body() data: IdDto) {
-    return await this.service.findById(data);
+    return this.service.findById(data);
   }
 
-  @ApiOperation({ summary: 'Kích hoạt nhân viên' })
-  @Post('activate')
-  async activate(@CurrentUser() user: UserDto, @Body() data: IdDto) {
-    return await this.service.activate(user, data);
-  }
-
-  @ApiOperation({ summary: 'Ngưng hoạt động nhân viên' })
-  @Post('deactivate')
-  async deactivate(@CurrentUser() user: UserDto, @Body() data: IdDto) {
-    return await this.service.deactivate(user, data);
-  }
-
-  @ApiOperation({ summary: 'Lấy danh sách nhân viên cho select box' })
   @Post('select-box')
+  @ApiOperation({ summary: 'Danh sách khách hàng cho select box' })
   async selectBox() {
-    return await this.service.selectBox();
+    return this.service.selectBox();
   }
 
-  @ApiOperation({ summary: 'Đổi mật khẩu nhân viên' })
+  @Post('activate')
+  @ApiOperation({ summary: 'Kích hoạt khách hàng' })
+  async activate(@CurrentUser() user: UserDto, @Body() data: IdDto) {
+    return this.service.activate(user, data);
+  }
+
+  @Post('deactivate')
+  @ApiOperation({ summary: 'Ngưng hoạt động khách hàng' })
+  async deactivate(@CurrentUser() user: UserDto, @Body() data: IdDto) {
+    return this.service.deactivate(user, data);
+  }
+
   @Post('change-password')
+  @ApiOperation({ summary: 'Đổi mật khẩu khách hàng' })
   async changePassword(
     @CurrentUser() user: UserDto,
-    @Body() data: { customerId: string; newPassword: string },
+    @Body() data: ChangeCustomerPasswordDto,
   ) {
-    return await this.service.changePassword(user, data);
+    return this.service.changePassword(user, data);
   }
 }

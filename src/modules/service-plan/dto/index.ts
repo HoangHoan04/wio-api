@@ -1,127 +1,167 @@
-import { ApiProperty, PartialType } from '@nestjs/swagger';
+import { enumData } from '@/common/constanst/enumData';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
   IsBoolean,
-  IsDate,
   IsEnum,
   IsInt,
   IsNotEmpty,
-  IsNumber,
   IsOptional,
   IsString,
   IsUUID,
+  MaxLength,
+  Min,
 } from 'class-validator';
-import { Type } from 'class-transformer';
 
+/* ============================================================
+ * CREATE
+ * ============================================================ */
 export class CreateServicePlanDto {
-  @ApiProperty({ description: 'Tên gói (Free, Basic, Premium...)' })
+  @ApiProperty({ description: 'Tên gói dịch vụ' })
   @IsNotEmpty()
   @IsString()
+  @MaxLength(50)
   name: string;
 
-  @ApiProperty({ description: 'Số lượng khách tối đa' })
+  @ApiProperty({
+    description: 'Mã gói dịch vụ',
+    enum: enumData.SERVICE_PLAN_CODE,
+  })
   @IsNotEmpty()
-  @IsNumber()
+  @IsEnum(enumData.SERVICE_PLAN_CODE)
+  code: string;
+
+  @ApiProperty({ description: 'Số thiệp tối đa' })
+  @IsNotEmpty()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  maxInvitations: number;
+
+  @ApiProperty({ description: 'Số khách mời tối đa' })
+  @IsNotEmpty()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
   maxGuests: number;
 
-  @ApiProperty({ description: 'Số lượng ảnh tối đa' })
+  @ApiProperty({ description: 'Số ảnh tối đa' })
   @IsNotEmpty()
-  @IsNumber()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
   maxPhotos: number;
-
-  @ApiProperty({ description: 'Số lượng template tối đa' })
-  @IsNotEmpty()
-  @IsNumber()
-  maxInvitations: number;
 
   @ApiProperty({ description: 'Có tính năng AI?' })
   @IsNotEmpty()
   @IsBoolean()
   hasAi: boolean;
 
-  @ApiProperty({ description: 'Có tính năng thống kê?' })
+  @ApiProperty({ description: 'Có tính năng phân tích?' })
   @IsNotEmpty()
   @IsBoolean()
   hasAnalytics: boolean;
 
-  @ApiProperty({ description: 'Có slug tùy chỉnh?' })
+  @ApiProperty({ description: 'Có cho phép custom slug?' })
   @IsNotEmpty()
   @IsBoolean()
   hasCustomSlug: boolean;
 
-  @ApiProperty({ description: 'Thời hạn (ngày)' })
-  @IsNotEmpty()
-  @IsNumber()
-  durationDays: number;
-
-  @ApiProperty({ description: 'Giá (VND)' })
-  @IsNotEmpty()
-  @IsNumber()
-  priceVnd: number;
-
-  @ApiProperty({ description: 'Trạng thái hoạt động' })
+  @ApiProperty({ description: 'Có cho phép tự thiết kế (Canva)?' })
   @IsNotEmpty()
   @IsBoolean()
-  isActive: boolean;
+  hasCustomDesign: boolean;
+
+  @ApiProperty({ description: 'Số ngày hiệu lực' })
+  @IsNotEmpty()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  durationDays: number;
+
+  @ApiProperty({ description: 'Giá gói (VND)' })
+  @IsNotEmpty()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  priceVnd: number;
+
+  @ApiPropertyOptional({ description: 'Trạng thái hoạt động', default: true })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+
+  @ApiPropertyOptional({ description: 'Thứ tự hiển thị', default: 0 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  sortOrder?: number;
 }
 
+/* ============================================================
+ * UPDATE
+ * ============================================================ */
 export class UpdateServicePlanDto extends PartialType(CreateServicePlanDto) {
-  @ApiProperty({ description: 'ID' })
+  @ApiProperty({ description: 'ID gói dịch vụ' })
   @IsUUID()
   @IsNotEmpty()
   id: string;
 }
 
+/* ============================================================
+ * FILTER
+ * ============================================================ */
 export class FilterServicePlanDto {
-  @ApiProperty({
-    description: 'Tên gói (Free, Basic, Premium...)',
-    required: false,
-  })
+  @ApiPropertyOptional({ description: 'Tên gói' })
   @IsOptional()
   @IsString()
   name?: string;
 
-  @ApiProperty({ description: 'Số lượng khách tối đa', required: false })
+  @ApiPropertyOptional({
+    description: 'Mã gói',
+    enum: enumData.SERVICE_PLAN_CODE,
+  })
   @IsOptional()
-  @IsNumber()
-  maxGuests?: number;
+  @IsEnum(enumData.SERVICE_PLAN_CODE)
+  code?: string;
 
-  @ApiProperty({ description: 'Số lượng ảnh tối đa', required: false })
-  @IsOptional()
-  @IsNumber()
-  maxPhotos?: number;
-
-  @ApiProperty({ description: 'Số lượng template tối đa', required: false })
-  @IsOptional()
-  @IsNumber()
-  maxInvitations?: number;
-
-  @ApiProperty({ description: 'Có tính năng AI?', required: false })
+  @ApiPropertyOptional({ description: 'Có tính năng AI?' })
   @IsOptional()
   @IsBoolean()
   hasAi?: boolean;
 
-  @ApiProperty({ description: 'Có tính năng thống kê?', required: false })
+  @ApiPropertyOptional({ description: 'Có phân tích?' })
   @IsOptional()
   @IsBoolean()
   hasAnalytics?: boolean;
 
-  @ApiProperty({ description: 'Có slug tùy chỉnh?', required: false })
+  @ApiPropertyOptional({ description: 'Có custom slug?' })
   @IsOptional()
   @IsBoolean()
   hasCustomSlug?: boolean;
 
-  @ApiProperty({ description: 'Thời hạn (ngày)', required: false })
+  @ApiPropertyOptional({ description: 'Có custom design?' })
   @IsOptional()
-  @IsNumber()
-  durationDays?: number;
+  @IsBoolean()
+  hasCustomDesign?: boolean;
 
-  @ApiProperty({ description: 'Giá (VND)', required: false })
-  @IsOptional()
-  @IsNumber()
-  priceVnd?: number;
-
-  @ApiProperty({ description: 'Trạng thái hoạt động', required: false })
+  @ApiPropertyOptional({ description: 'Đang hoạt động?' })
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @ApiPropertyOptional({ description: 'Giá tối thiểu' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  priceVndMin?: number;
+
+  @ApiPropertyOptional({ description: 'Giá tối đa' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  priceVndMax?: number;
 }

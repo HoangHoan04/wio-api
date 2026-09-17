@@ -1,6 +1,6 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { CreatePhotoWallDto } from '../dto';
+import { PublicUploadPhotoWallDto } from '../dto';
 import { PhotoWallService } from '../photo-wall.service';
 
 @ApiTags('Public - PhotoWall')
@@ -10,7 +10,13 @@ export class PhotoWallPublicController {
 
   @Post('upload')
   @ApiOperation({ summary: 'Khách tải ảnh lên tường' })
-  async upload(@Body() data: CreatePhotoWallDto) {
-    return await this.service.createPublic(data);
+  async upload(@Body() data: PublicUploadPhotoWallDto) {
+    return this.service.createPublic(data);
+  }
+
+  @Get('list/:invitationId')
+  @ApiOperation({ summary: 'Danh sách ảnh đã duyệt của thiệp' })
+  async listApproved(@Param('invitationId') invitationId: string) {
+    return this.service.listApprovedByInvitation(invitationId);
   }
 }

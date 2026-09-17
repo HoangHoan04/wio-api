@@ -1,5 +1,5 @@
+import { AuthModule } from '@/modules/auth/auth.module';
 import { Module } from '@nestjs/common';
-import { AuthModule } from '../auth/auth.module';
 import { FacebookAuthController } from './facebook-auth.controller';
 
 @Module({

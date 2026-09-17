@@ -1,7 +1,8 @@
 import { enumData } from '@/common/constanst/enumData';
-import { CustomerEntity, UserEntity, UserTokenEntity, SubscriptionEntity } from '@/entities';
+import { CustomerEntity, UserEntity } from '@/entities';
 import {
   CustomerRepository,
+  SubscriptionRepository,
   UserRepository,
   UserTokenRepository,
 } from '@/repositories';
@@ -15,6 +16,7 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { lastValueFrom } from 'rxjs';
+import { LessThan } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { EmailService } from '../email/email.service';
 import {
@@ -41,10 +43,18 @@ export class AuthService {
     private readonly userRepo: UserRepository,
     private readonly customerRepo: CustomerRepository,
     private readonly userTokenRepo: UserTokenRepository,
+    private readonly subscriptionRepo: SubscriptionRepository,
     private readonly otpService: OtpService,
     private readonly httpService: HttpService,
     private readonly emailService: EmailService,
   ) {}
+
+  /* ============================================================
+   * HELPER
+   * ============================================================ */
+  private generateCustomerCode(): string {
+    return `CUS_${Math.floor(100000 + Math.random() * 900000)}`;
+  }
 
   private async generateAuthTokens(
     user: UserEntity,
@@ -56,28 +66,48 @@ export class AuthService {
     const accessToken = this.tokenService.generateAccessToken(payload);
     const refreshToken = this.tokenService.generateRefreshToken();
 
-    const tokenEntity = new UserTokenEntity();
-    tokenEntity.id = uuidv4();
-    tokenEntity.userId = user.id;
-    tokenEntity.accessToken = accessToken;
-    tokenEntity.refreshToken = refreshToken;
-    tokenEntity.userAgent = userAgent || '';
-    tokenEntity.ipAddress = ipAddress || '';
-
     const expires = new Date();
     expires.setDate(expires.getDate() + 7);
-    tokenEntity.expiresAt = expires;
-    tokenEntity.createdAt = new Date();
-    tokenEntity.createdBy = user.id;
+
+    const tokenEntity = this.userTokenRepo.create({
+      id: uuidv4(),
+      userId: user.id,
+      accessToken,
+      refreshToken,
+      userAgent: userAgent || '',
+      ipAddress: ipAddress || '',
+      expiresAt: expires,
+      createdBy: user.id,
+    });
 
     await this.userTokenRepo.save(tokenEntity);
-
     return { accessToken, refreshToken };
   }
 
+  private async createCustomerForUser(
+    user: UserEntity,
+    fullName?: string,
+  ): Promise<CustomerEntity> {
+    const customer = this.customerRepo.create({
+      id: uuidv4(),
+      userId: user.id,
+      fullName: fullName || user.email || 'Khách hàng',
+      email: user.email,
+      phone: user.phone,
+      gender: 'OTHER',
+      code: this.generateCustomerCode(),
+      createdBy: user.id,
+    });
+    return this.customerRepo.save(customer);
+  }
+
+  /* ============================================================
+   * LOGIN
+   * ============================================================ */
   async login(data: UserLoginDto, userAgent?: string, ipAddress?: string) {
     const user = await this.userRepo.findOne({
       where: [{ email: data.email }, { phone: data.email }],
+      select: ['id', 'email', 'phone', 'password', 'role', 'isActive'],
     });
 
     if (!user) {
@@ -85,7 +115,6 @@ export class AuthService {
         'Tài khoản hoặc mật khẩu không chính xác',
       );
     }
-
     if (!user.isActive) {
       throw new UnauthorizedException('Tài khoản đã bị khóa');
     }
@@ -98,7 +127,6 @@ export class AuthService {
     }
 
     const tokens = await this.generateAuthTokens(user, userAgent, ipAddress);
-
     const customer = await this.customerRepo.findOne({
       where: { userId: user.id },
     });
@@ -116,8 +144,14 @@ export class AuthService {
     };
   }
 
+  /* ============================================================
+   * REGISTER
+   * ============================================================ */
   async register(data: RegisterDto) {
-    const identifier = data.sendMethod === 'EMAIL' ? data.email : data.phone;
+    const identifier =
+      data.sendMethod === enumData.OTP_METHOD.EMAIL.code
+        ? data.email
+        : data.phone;
 
     await this.otpService.verifyOtp(identifier, data.otpCode, data.sendMethod);
 
@@ -132,75 +166,80 @@ export class AuthService {
       throw new BadRequestException('Email hoặc số điện thoại đã được đăng ký');
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(data.password, salt);
-
-    const user = new UserEntity();
-    user.id = uuidv4();
-    user.email = data.email;
-    user.phone = data.phone;
-    user.password = hashedPassword;
-    user.role = enumData.USER_ROLE.CUSTOMER.code;
-    user.isActive = true;
-    user.createdAt = new Date();
-    user.createdBy = undefined;
-
+    const user = this.userRepo.create({
+      id: uuidv4(),
+      email: data.email,
+      phone: data.phone,
+      password: data.password,
+      role: enumData.USER_ROLE.CUSTOMER.code,
+      isActive: true,
+    });
     await this.userRepo.save(user);
 
-    const customer = new CustomerEntity();
-    customer.id = uuidv4();
-    customer.userId = user.id;
-    customer.fullName = data.name;
-    customer.email = data.email;
-    customer.phone = data.phone;
-    customer.gender = data.gender || 'OTHER';
-    customer.code = `CUS_${Math.floor(100000 + Math.random() * 900000)}`;
-    customer.createdAt = new Date();
-    customer.createdBy = undefined;
-
-    await this.customerRepo.save(customer);
+    const customer = await this.createCustomerForUser(user, data.name);
+    if (data.gender) {
+      customer.gender = data.gender;
+      await this.customerRepo.save(customer);
+    }
 
     return { message: 'Đăng ký tài khoản thành công', user: { id: user.id } };
   }
 
+  /* ============================================================
+   * LOGOUT
+   * ============================================================ */
   async logout(user: any, refreshTokenStr?: string) {
     if (refreshTokenStr) {
       await this.userTokenRepo.update(
         { refreshToken: refreshTokenStr, userId: user.id },
-        { isRevoked: true, updatedAt: new Date(), updatedBy: user.id },
+        { isRevoked: true, updatedBy: user.id },
       );
     } else {
       await this.userTokenRepo.update(
         { userId: user.id, isRevoked: false },
-        { isRevoked: true, updatedAt: new Date(), updatedBy: user.id },
+        { isRevoked: true, updatedBy: user.id },
       );
     }
     return { message: 'Đăng xuất thành công' };
   }
 
+  /* ============================================================
+   * CLEAN TOKENS — dùng repo.delete với điều kiện (không QB)
+   * ============================================================ */
   async cleanExpiredTokens() {
-    const result = await this.userTokenRepo
-      .createQueryBuilder()
-      .delete()
-      .where('expiresAt < NOW()')
-      .orWhere('isRevoked = true')
-      .execute();
+    // Xoá token hết hạn
+    const expiredResult = await this.userTokenRepo.delete({
+      expiresAt: LessThan(new Date()),
+    });
+
+    // Xoá token đã bị thu hồi
+    const revokedResult = await this.userTokenRepo.delete({
+      isRevoked: true,
+    });
+
+    const deletedCount =
+      (expiredResult.affected || 0) + (revokedResult.affected || 0);
+
     return {
       message: 'Dọn dẹp token thành công',
-      deletedCount: result.affected || 0,
+      deletedCount,
     };
   }
 
+  /* ============================================================
+   * VERIFY EMAIL
+   * ============================================================ */
   async verifyEmail(data: VerifyEmailDto) {
-    await this.otpService.verifyOtp(data.email, data.otpCode, 'EMAIL');
+    await this.otpService.verifyOtp(
+      data.email,
+      data.otpCode,
+      enumData.OTP_METHOD.EMAIL.code,
+    );
 
     const user = await this.userRepo.findOne({ where: { email: data.email } });
-    if (!user) {
-      throw new BadRequestException('Người dùng không tồn tại');
-    }
+    if (!user) throw new BadRequestException('Người dùng không tồn tại');
 
     user.isActive = true;
-    user.updatedAt = new Date();
     await this.userRepo.save(user);
 
     return { message: 'Xác thực email thành công' };
@@ -208,29 +247,26 @@ export class AuthService {
 
   async resendVerificationEmail(email: string) {
     const user = await this.userRepo.findOne({ where: { email } });
-    if (!user) {
-      throw new BadRequestException('Người dùng không tồn tại');
-    }
-    if (user.isActive) {
+    if (!user) throw new BadRequestException('Người dùng không tồn tại');
+    if (user.isActive)
       throw new BadRequestException('Tài khoản đã được xác thực');
-    }
 
-    const otpCode = await this.otpService.createOtp(email, 'EMAIL');
+    const otpCode = await this.otpService.createOtp(
+      email,
+      enumData.OTP_METHOD.EMAIL.code,
+    );
     await this.emailService.sendEmailVerify({ email, otpCode });
 
     return { message: 'Gửi lại mã xác thực thành công' };
   }
 
+  /* ============================================================
+   * REFRESH TOKEN — dùng repo.delete thay QB
+   * ============================================================ */
   async refreshToken(data: RefreshTokenDto) {
     const tokenRecord = await this.userTokenRepo.findOne({
       where: { refreshToken: data.refreshToken, isRevoked: false },
     });
-
-    if (!tokenRecord) {
-      throw new UnauthorizedException(
-        'Refresh token không hợp lệ hoặc đã hết hạn',
-      );
-    }
 
     if (
       !tokenRecord ||
@@ -256,21 +292,20 @@ export class AuthService {
     );
 
     tokenRecord.isRevoked = true;
-    tokenRecord.updatedAt = new Date();
     await this.userTokenRepo.save(tokenRecord);
 
-    await this.userTokenRepo
-      .createQueryBuilder()
-      .delete()
-      .where('userId = :userId AND expiresAt < NOW()', { userId: user.id })
-      .execute();
+    // Xoá token hết hạn của user — dùng repo.delete + LessThan
+    await this.userTokenRepo.delete({
+      userId: user.id,
+      expiresAt: LessThan(new Date()),
+    });
 
-    return {
-      message: 'Làm mới token thành công',
-      ...tokens,
-    };
+    return { message: 'Làm mới token thành công', ...tokens };
   }
 
+  /* ============================================================
+   * CHECK PHONE & EMAIL
+   * ============================================================ */
   async checkPhoneAndEmail(data: CheckPhoneAndEmailDto) {
     if (data.email) {
       const exist = await this.userRepo.findOne({
@@ -287,15 +322,20 @@ export class AuthService {
     return { message: 'Có thể sử dụng' };
   }
 
+  /* ============================================================
+   * SEND OTP
+   * ============================================================ */
   async sendOtpEmailCustomer(data: SendOtpCustomerDto) {
-    const identifier = data.sendMethod === 'EMAIL' ? data.email : data.phone;
-    if (!identifier) {
+    const identifier =
+      data.sendMethod === enumData.OTP_METHOD.EMAIL.code
+        ? data.email
+        : data.phone;
+    if (!identifier)
       throw new BadRequestException('Vui lòng cung cấp email/sđt!');
-    }
 
     const user = await this.userRepo.findOne({
       where:
-        data.sendMethod === 'EMAIL'
+        data.sendMethod === enumData.OTP_METHOD.EMAIL.code
           ? { email: identifier }
           : { phone: identifier },
     });
@@ -311,7 +351,7 @@ export class AuthService {
       data.sendMethod,
     );
 
-    if (data.sendMethod === 'EMAIL') {
+    if (data.sendMethod === enumData.OTP_METHOD.EMAIL.code) {
       await this.emailService.sendEmailVerify({ email: identifier, otpCode });
     }
 
@@ -324,36 +364,37 @@ export class AuthService {
       data.method,
     );
 
-    if (data.method === 'EMAIL') {
+    if (data.method === enumData.OTP_METHOD.EMAIL.code) {
       await this.emailService.sendLoginOtp({ email: data.identifier, otpCode });
     }
 
     return { message: 'Gửi mã xác nhận thành công' };
   }
 
+  /* ============================================================
+   * FORGOT PASSWORD
+   * ============================================================ */
   async forgotPassword(data: ForgotPasswordCustomerDto) {
     await this.otpService.verifyOtp(data.identifier, data.otpCode, data.method);
 
     const user = await this.userRepo.findOne({
       where:
-        data.method === 'EMAIL'
+        data.method === enumData.OTP_METHOD.EMAIL.code
           ? { email: data.identifier }
           : { phone: data.identifier },
     });
 
-    if (!user) {
-      throw new BadRequestException('Người dùng không tồn tại');
-    }
+    if (!user) throw new BadRequestException('Người dùng không tồn tại');
 
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(data.newPassword, salt);
-    user.updatedAt = new Date();
-
+    user.password = data.newPassword;
     await this.userRepo.save(user);
 
     return { message: 'Khôi phục mật khẩu thành công' };
   }
 
+  /* ============================================================
+   * VERIFY LOGIN OTP
+   * ============================================================ */
   async verifyLoginOtp(
     data: VerifyLoginOtpDto,
     userAgent?: string,
@@ -363,46 +404,33 @@ export class AuthService {
 
     let user = await this.userRepo.findOne({
       where:
-        data.method === 'EMAIL'
+        data.method === enumData.OTP_METHOD.EMAIL.code
           ? { email: data.identifier }
           : { phone: data.identifier },
     });
 
     if (!user) {
-      user = new UserEntity();
-      user.id = uuidv4();
-      if (data.method === 'EMAIL') {
-        user.email = data.identifier;
-      } else {
-        user.phone = data.identifier;
-      }
-      user.password = '';
-      user.role = enumData.USER_ROLE.CUSTOMER.code;
-      user.isActive = true;
-      user.createdAt = new Date();
-      user.createdBy = undefined;
+      user = this.userRepo.create({
+        id: uuidv4(),
+        email:
+          data.method === enumData.OTP_METHOD.EMAIL.code
+            ? data.identifier
+            : undefined,
+        phone:
+          data.method === enumData.OTP_METHOD.EMAIL.code
+            ? undefined
+            : data.identifier,
+        password: '',
+        role: enumData.USER_ROLE.CUSTOMER.code,
+        isActive: true,
+      });
       await this.userRepo.save(user);
-
-      const customer = new CustomerEntity();
-      customer.id = uuidv4();
-      customer.userId = user.id;
-      customer.fullName = user.email;
-      if (data.method === 'EMAIL') {
-        customer.email = data.identifier;
-      } else {
-        customer.phone = data.identifier;
-      }
-      customer.code = `CUS_${Math.floor(100000 + Math.random() * 900000)}`;
-      customer.gender = 'OTHER';
-      customer.createdAt = new Date();
-      customer.createdBy = undefined;
-      await this.customerRepo.save(customer);
+      await this.createCustomerForUser(user);
     }
 
     if (!user.isActive) throw new UnauthorizedException('Tài khoản đã bị khóa');
 
     const tokens = await this.generateAuthTokens(user, userAgent, ipAddress);
-
     const customer = await this.customerRepo.findOne({
       where: { userId: user.id },
     });
@@ -420,6 +448,9 @@ export class AuthService {
     };
   }
 
+  /* ============================================================
+   * PASSWORD
+   * ============================================================ */
   async changePassword(
     { currentPassword, newPassword, confirmPassword }: ChangePasswordDto,
     userDto: any,
@@ -436,38 +467,69 @@ export class AuthService {
     { currentPassword, newPassword }: UpdatePasswordDto,
     userDto: any,
   ) {
-    const user = await this.userRepo.findOne({ where: { id: userDto.id } });
+    const user = await this.userRepo.findOne({
+      where: { id: userDto.id },
+      select: ['id', 'password'],
+    });
     if (!user) throw new BadRequestException('Người dùng không tồn tại');
 
     const isMatch = await bcrypt.compare(currentPassword, user.password);
-    if (!isMatch)
+    if (!isMatch) {
       throw new BadRequestException('Mật khẩu hiện tại không chính xác');
+    }
 
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(newPassword, salt);
+    user.password = newPassword;
     await this.userRepo.save(user);
 
     return { message: 'Cập nhật mật khẩu thành công' };
   }
 
+  /* ============================================================
+   * USER INFO — dùng relation (không QB)
+   * ============================================================ */
   async getUserInfo(userDto: any) {
-    const user = await this.userRepo.findOne({ where: { id: userDto.id } });
+    const user = await this.userRepo.findOne({
+      where: { id: userDto.id },
+      relations: { customer: true },
+    });
+
     const customer = await this.customerRepo.findOne({
       where: { userId: userDto.id },
     });
-    const activeSubscription = await this.userRepo.manager.createQueryBuilder(SubscriptionEntity, 'sub')
-      .leftJoinAndSelect('sub.plan', 'plan')
-      .where('sub.userId = :userId', { userId: userDto.id })
-      .andWhere('sub.status = :status', { status: 'ACTIVE' })
-      .andWhere('sub.expiresAt > :now', { now: new Date() })
-      .getOne();
+
+    // Lấy subscription ACTIVE của user — dùng repo.find với relations
+    const activeSubscription = await this.subscriptionRepo.findOne({
+      where: {
+        userId: userDto.id,
+        status: enumData.SUB_STATUS.ACTIVE.code,
+      },
+      relations: { plan: true },
+      order: { expiresAt: 'DESC' },
+    });
+
+    // Lọc thủ công subscription còn hạn (không dùng andWhere)
+    const validSubscription =
+      activeSubscription && activeSubscription.expiresAt > new Date()
+        ? activeSubscription
+        : null;
 
     return {
       message: 'Lấy thông tin thành công',
-      data: { ...user, customer, activeSubscription },
+      data: {
+        id: user?.id,
+        email: user?.email,
+        phone: user?.phone,
+        role: user?.role,
+        isActive: user?.isActive,
+        customer,
+        activeSubscription: validSubscription,
+      },
     };
   }
 
+  /* ============================================================
+   * UPDATE PROFILE
+   * ============================================================ */
   async updateProfile(userDto: any, dto: UpdateProfileDto) {
     const user = await this.userRepo.findOne({ where: { id: userDto.id } });
     if (!user) throw new BadRequestException('Không tìm thấy người dùng');
@@ -477,12 +539,7 @@ export class AuthService {
     });
 
     if (!customer) {
-      customer = new CustomerEntity();
-      customer.id = uuidv4();
-      customer.userId = user.id;
-      customer.fullName = dto.fullName || 'Khách Hàng';
-      customer.email = user.email;
-      customer.createdBy = user.id;
+      customer = await this.createCustomerForUser(user, dto.fullName);
     }
 
     if (dto.fullName !== undefined) customer.fullName = dto.fullName;
@@ -491,15 +548,14 @@ export class AuthService {
       user.phone = dto.phone;
     }
     if (dto.gender !== undefined) customer.gender = dto.gender;
-    if (dto.dateOfBirth !== undefined)
+    if (dto.dateOfBirth !== undefined) {
       customer.dateOfBirth = new Date(dto.dateOfBirth);
+    }
 
     customer.updatedBy = user.id;
-    customer.updatedAt = new Date();
     await this.customerRepo.save(customer);
 
     user.updatedBy = user.id;
-    user.updatedAt = new Date();
     await this.userRepo.save(user);
 
     return {
@@ -508,6 +564,9 @@ export class AuthService {
     };
   }
 
+  /* ============================================================
+   * GOOGLE
+   * ============================================================ */
   async loginWithGoogle(
     data: GoogleLoginDto,
     userAgent?: string,
@@ -574,6 +633,59 @@ export class AuthService {
     return data;
   }
 
+  private async verifyGoogleAccessToken(token: string) {
+    if (token.startsWith('mock-')) {
+      const email = token.replace('mock-', '');
+      return { email, email_verified: true, name: email };
+    }
+    return this.getGoogleUserInfo(token);
+  }
+
+  private async handleGoogleUser(
+    googleUser: any,
+    userAgent?: string,
+    ipAddress?: string,
+  ) {
+    let user = await this.userRepo.findOne({
+      where: { email: googleUser.email },
+    });
+
+    if (!user) {
+      user = this.userRepo.create({
+        id: uuidv4(),
+        email: googleUser.email,
+        password: '',
+        role: enumData.USER_ROLE.CUSTOMER.code,
+        isActive: true,
+      });
+      await this.userRepo.save(user);
+      await this.createCustomerForUser(
+        user,
+        googleUser.name || googleUser.email,
+      );
+    }
+
+    const tokens = await this.generateAuthTokens(user, userAgent, ipAddress);
+    const customer = await this.customerRepo.findOne({
+      where: { userId: user.id },
+    });
+
+    return {
+      message: 'Đăng nhập thành công',
+      user: {
+        id: user.id,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        customer,
+      },
+      ...tokens,
+    };
+  }
+
+  /* ============================================================
+   * FACEBOOK
+   * ============================================================ */
   async getFacebookAuthUrl() {
     const appId = process.env.FACEBOOK_APP_ID;
     const redirectUri = process.env.FACEBOOK_CALLBACK_URL;
@@ -635,128 +747,6 @@ export class AuthService {
     return data;
   }
 
-  private resolveFacebookEmail(fbUser: { id?: string; email?: string }) {
-    if (fbUser.email) {
-      return fbUser.email;
-    }
-
-    if (!fbUser.id) {
-      throw new BadRequestException(
-        'Không thể lấy email từ Facebook. Vui lòng cấp quyền email hoặc dùng tài khoản khác.',
-      );
-    }
-
-    return `fb_${fbUser.id}@facebook.local`;
-  }
-
-  private async handleFacebookUser(
-    fbUser: any,
-    userAgent?: string,
-    ipAddress?: string,
-  ) {
-    const email = this.resolveFacebookEmail(fbUser);
-
-    let user = await this.userRepo.findOne({
-      where: { email },
-    });
-
-    if (!user) {
-      user = new UserEntity();
-      user.id = uuidv4();
-      user.email = email;
-      user.password = '';
-      user.role = enumData.USER_ROLE.CUSTOMER.code;
-      user.isActive = true;
-      await this.userRepo.save(user);
-
-      const customer = new CustomerEntity();
-      customer.id = uuidv4();
-      customer.userId = user.id;
-      customer.fullName = fbUser.name || email;
-      customer.email = email;
-      customer.code = `CUS_${Math.floor(100000 + Math.random() * 900000)}`;
-      customer.gender = 'OTHER';
-      customer.createdAt = new Date();
-      customer.createdBy = undefined;
-      await this.customerRepo.save(customer);
-    }
-
-    const tokens = await this.generateAuthTokens(user, userAgent, ipAddress);
-
-    const customer = await this.customerRepo.findOne({
-      where: { userId: user.id },
-    });
-
-    return {
-      message: 'Đăng nhập thành công',
-      user: {
-        id: user.id,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-        customer,
-      },
-      ...tokens,
-    };
-  }
-
-  private async handleGoogleUser(
-    googleUser: any,
-    userAgent?: string,
-    ipAddress?: string,
-  ) {
-    let user = await this.userRepo.findOne({
-      where: { email: googleUser.email },
-    });
-
-    if (!user) {
-      user = new UserEntity();
-      user.id = uuidv4();
-      user.email = googleUser.email;
-      user.password = '';
-      user.role = enumData.USER_ROLE.CUSTOMER.code;
-      user.isActive = true;
-      await this.userRepo.save(user);
-
-      const customer = new CustomerEntity();
-      customer.id = uuidv4();
-      customer.userId = user.id;
-      customer.fullName = googleUser.name || googleUser.email;
-      customer.email = googleUser.email;
-      customer.code = `CUS_${Math.floor(100000 + Math.random() * 900000)}`;
-      customer.gender = 'OTHER';
-      customer.createdAt = new Date();
-      customer.createdBy = undefined;
-      await this.customerRepo.save(customer);
-    }
-
-    const tokens = await this.generateAuthTokens(user, userAgent, ipAddress);
-
-    const customer = await this.customerRepo.findOne({
-      where: { userId: user.id },
-    });
-
-    return {
-      message: 'Đăng nhập thành công',
-      user: {
-        id: user.id,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-        customer,
-      },
-      ...tokens,
-    };
-  }
-
-  private async verifyGoogleAccessToken(token: string) {
-    if (token.startsWith('mock-')) {
-      const email = token.replace('mock-', '');
-      return { email, email_verified: true, name: email };
-    }
-    return this.getGoogleUserInfo(token);
-  }
-
   async loginWithFacebook(
     data: FacebookLoginDto,
     userAgent?: string,
@@ -775,8 +765,57 @@ export class AuthService {
       const url = `https://graph.facebook.com/me?fields=id,name,email,picture.type(large)&access_token=${accessToken}`;
       const response = await lastValueFrom(this.httpService.get(url));
       return response.data;
-    } catch (error: any) {
+    } catch {
       throw new BadRequestException('Token Facebook không hợp lệ');
     }
+  }
+
+  private resolveFacebookEmail(fbUser: { id?: string; email?: string }) {
+    if (fbUser.email) return fbUser.email;
+    if (!fbUser.id) {
+      throw new BadRequestException(
+        'Không thể lấy email từ Facebook. Vui lòng cấp quyền email hoặc dùng tài khoản khác.',
+      );
+    }
+    return `fb_${fbUser.id}@facebook.local`;
+  }
+
+  private async handleFacebookUser(
+    fbUser: any,
+    userAgent?: string,
+    ipAddress?: string,
+  ) {
+    const email = this.resolveFacebookEmail(fbUser);
+
+    let user = await this.userRepo.findOne({ where: { email } });
+
+    if (!user) {
+      user = this.userRepo.create({
+        id: uuidv4(),
+        email,
+        password: '',
+        role: enumData.USER_ROLE.CUSTOMER.code,
+        isActive: true,
+      });
+      await this.userRepo.save(user);
+      await this.createCustomerForUser(user, fbUser.name || email);
+    }
+
+    const tokens = await this.generateAuthTokens(user, userAgent, ipAddress);
+    const customer = await this.customerRepo.findOne({
+      where: { userId: user.id },
+    });
+
+    return {
+      message: 'Đăng nhập thành công',
+      user: {
+        id: user.id,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        customer,
+      },
+      ...tokens,
+    };
   }
 }

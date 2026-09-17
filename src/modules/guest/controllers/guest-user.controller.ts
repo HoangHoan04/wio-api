@@ -12,7 +12,12 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Response } from 'express';
 import {
   CreateGuestDto,
@@ -25,76 +30,77 @@ import {
 import { GuestService } from '../guest.service';
 
 @ApiTags('User - Guest')
-@Controller('guest')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
+@Controller('guest')
 export class GuestUserController {
   constructor(private readonly service: GuestService) {}
 
   @Post('pagination')
-  @ApiOperation({ summary: 'Lấy danh sách' })
+  @ApiOperation({ summary: 'Danh sách khách mời' })
   async pagination(
     @CurrentUser() user: UserDto,
     @Body() body: PaginationDto<FilterGuestDto>,
   ) {
-    return await this.service.pagination(body, user);
+    return this.service.pagination(body, user);
   }
 
-  @ApiOperation({ summary: 'Chi tiết' })
   @Post('find-by-id')
+  @ApiOperation({ summary: 'Chi tiết khách mời' })
   async findById(@CurrentUser() user: UserDto, @Body() body: IdDto) {
-    return await this.service.findById(body, user);
+    return this.service.findById(body, user);
   }
 
-  @ApiOperation({ summary: 'Tạo khách mời' })
   @Post('create')
+  @ApiOperation({ summary: 'Tạo khách mời' })
   async create(@CurrentUser() user: UserDto, @Body() data: CreateGuestDto) {
-    return await this.service.create(user, data);
+    return this.service.create(user, data);
   }
 
-  @ApiOperation({ summary: 'Cập nhật khách mời' })
+  @Post('create-many')
+  @ApiOperation({ summary: 'Tạo nhiều khách mời từ danh sách' })
+  async createMany(
+    @CurrentUser() user: UserDto,
+    @Body() data: CreateManyGuestsDto,
+  ) {
+    return this.service.createMany(user, data);
+  }
+
   @Post('update')
+  @ApiOperation({ summary: 'Cập nhật khách mời' })
   async update(@CurrentUser() user: UserDto, @Body() data: UpdateGuestDto) {
-    return await this.service.update(data, user);
+    return this.service.update(data, user);
   }
 
-  @ApiOperation({ summary: 'Xóa mềm khách mời' })
   @Post('delete')
+  @ApiOperation({ summary: 'Xoá mềm khách mời' })
   async delete(@CurrentUser() user: UserDto, @Body() data: IdDto) {
-    return await this.service.delete(data, user);
+    return this.service.delete(data, user);
   }
 
-  @ApiOperation({ summary: 'Tạo mã QR cho khách mời' })
   @Post('generate-qr')
+  @ApiOperation({ summary: 'Tạo mã QR cho khách mời' })
   async generateQr(
     @CurrentUser() user: UserDto,
     @Body() data: GenerateQrGuestDto,
   ) {
-    return await this.service.generateQrCode(data.id, user);
+    return this.service.generateQrCode(data.id, user);
   }
 
-  @ApiOperation({ summary: 'Import danh sách khách mời từ Excel' })
   @Post('import-excel')
+  @ApiOperation({ summary: 'Import danh sách khách mời từ Excel' })
+  @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file'))
   async importExcel(
     @CurrentUser() user: UserDto,
     @Body() data: ImportGuestExcelDto,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    return await this.service.importExcel(data.invitationId, file.buffer, user);
+    return this.service.importExcel(data.invitationId, file.buffer, user);
   }
 
-  @ApiOperation({ summary: 'Tạo nhiều khách mời từ danh sách' })
-  @Post('create-many')
-  async createMany(
-    @CurrentUser() user: UserDto,
-    @Body() data: CreateManyGuestsDto,
-  ) {
-    return await this.service.createMany(user, data);
-  }
-
-  @ApiOperation({ summary: 'Tải file Excel mẫu nhập khách mời' })
   @Post('download-sample-excel')
+  @ApiOperation({ summary: 'Tải file Excel mẫu nhập khách mời' })
   @Header(
     'Content-Type',
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

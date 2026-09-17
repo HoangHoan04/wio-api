@@ -1,58 +1,73 @@
 import { enumData } from '@/common/constanst/enumData';
-import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity, Index } from 'typeorm';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from './base.entity';
+import { GuestEntity } from './guest.entity';
+import { InvitationEntity } from './invitation.entity';
 
 @Entity('notifications')
 @Index(['invitationId', 'status'])
 @Index(['scheduledAt', 'status'])
 export class NotificationEntity extends BaseEntity {
+  @ApiProperty({ description: 'ID thiệp cưới' })
   @Column({ type: 'uuid', nullable: false })
-  @ApiProperty({ description: 'ID thiệp' })
   invitationId: string;
 
-  @Column({ type: 'uuid', nullable: true })
+  @ApiPropertyOptional({ description: 'ID khách mời nhận thông báo' })
   @Index()
-  @ApiProperty({ description: 'Guest Id', required: false })
+  @Column({ type: 'uuid', nullable: true })
   guestId?: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: false })
   @ApiProperty({ description: 'Kênh gửi', enum: enumData.NOTIF_CHANNEL })
+  @Column({ type: 'varchar', length: 20, nullable: false })
   channel: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: false })
   @ApiProperty({ description: 'Loại thông báo', enum: enumData.NOTIF_TYPE })
+  @Column({ type: 'varchar', length: 40, nullable: false })
   type: string;
 
+  @ApiPropertyOptional({ description: 'Tiêu đề email' })
   @Column({ type: 'varchar', length: 255, nullable: true })
-  @ApiProperty({ description: 'Chủ đề email', required: false })
   subject?: string;
 
-  @Column({ type: 'text', nullable: false })
   @ApiProperty({ description: 'Nội dung thông báo' })
+  @Column({ type: 'text', nullable: false })
   content: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: false })
-  @ApiProperty({ description: 'Trạng thái', enum: enumData.NOTIF_STATUS })
+  @ApiProperty({ description: 'Trạng thái gửi', enum: enumData.NOTIF_STATUS })
+  @Column({ type: 'varchar', length: 20, nullable: false })
   status: string;
 
+  @ApiProperty({ description: 'Thời gian dự kiến gửi' })
   @Column({ type: 'timestamptz', nullable: false })
-  @ApiProperty({ description: 'Thời gian lên lịch gửi' })
   scheduledAt: Date;
 
+  @ApiPropertyOptional({ description: 'Thời gian đã gửi' })
   @Column({ type: 'timestamptz', nullable: true })
-  @ApiProperty({ description: 'Thời gian đã gửi', required: false })
   sentAt?: Date;
 
+  @ApiPropertyOptional({ description: 'Lý do gửi thất bại' })
   @Column({ type: 'text', nullable: true })
-  @ApiProperty({ description: 'Lý do thất bại', required: false })
   failedReason?: string;
 
+  @ApiPropertyOptional({ description: 'Nhà cung cấp dịch vụ gửi' })
   @Column({ type: 'varchar', length: 50, nullable: true })
-  @ApiProperty({ description: 'Nơi gửi thông báo', required: false })
   provider?: string;
 
+  @ApiPropertyOptional({ description: 'ID tin nhắn từ provider' })
   @Column({ type: 'varchar', length: 255, nullable: true })
-  @ApiProperty({ description: 'Message ID từ provider', required: false })
   providerMsgId?: string;
+
+  @ManyToOne(() => InvitationEntity, (i) => i.notifications, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'invitationId' })
+  invitation: InvitationEntity;
+
+  @ManyToOne(() => GuestEntity, {
+    onDelete: 'SET NULL',
+    nullable: true,
+  })
+  @JoinColumn({ name: 'guestId' })
+  guest?: GuestEntity;
 }

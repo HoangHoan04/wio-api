@@ -1,26 +1,68 @@
+import { CurrentUser } from '@/common/decorators';
 import { JwtAuthGuard } from '@/common/guards';
-import { IdDto, PaginationDto } from '@/dto';
+import { IdDto, PaginationDto, UserDto } from '@/dto';
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { FilterNotificationDto } from '../dto';
+import {
+  BroadcastNotificationDto,
+  CreateNotificationDto,
+  FilterNotificationDto,
+  UpdateNotificationDto,
+} from '../dto';
 import { NotificationService } from '../notification.service';
 
 @ApiTags('User - Notification')
-@Controller('notification')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
+@Controller('notification')
 export class NotificationUserController {
   constructor(private readonly service: NotificationService) {}
 
   @Post('pagination')
-  @ApiOperation({ summary: 'Lấy danh sách' })
-  async pagination(@Body() body: PaginationDto<FilterNotificationDto>) {
-    return await this.service.pagination(body);
+  @ApiOperation({ summary: 'Danh sách thông báo của tôi' })
+  async pagination(
+    @Body() body: PaginationDto<FilterNotificationDto>,
+    @CurrentUser() user: UserDto,
+  ) {
+    return this.service.paginationForUser(body, user);
   }
 
-  @ApiOperation({ summary: 'Chi tiết' })
   @Post('find-by-id')
-  async findById(@Body() body: IdDto) {
-    return await this.service.findById(body);
+  @ApiOperation({ summary: 'Chi tiết thông báo' })
+  async findById(@Body() body: IdDto, @CurrentUser() user: UserDto) {
+    return this.service.findById(body, user);
+  }
+
+  @Post('create')
+  @ApiOperation({ summary: 'Tạo thông báo cho thiệp của tôi' })
+  async create(
+    @Body() dto: CreateNotificationDto,
+    @CurrentUser() user: UserDto,
+  ) {
+    return this.service.create(user, dto);
+  }
+
+  @Post('update')
+  @ApiOperation({ summary: 'Cập nhật thông báo' })
+  async update(
+    @Body() dto: UpdateNotificationDto,
+    @CurrentUser() user: UserDto,
+  ) {
+    return this.service.update(dto, user);
+  }
+
+  @Post('delete')
+  @ApiOperation({ summary: 'Xoá mềm thông báo' })
+  async delete(@Body() body: IdDto, @CurrentUser() user: UserDto) {
+    return this.service.delete(body, user);
+  }
+
+  @Post('broadcast')
+  @ApiOperation({ summary: 'Gửi thông báo cho toàn bộ khách mời của thiệp' })
+  async broadcast(
+    @Body() dto: BroadcastNotificationDto,
+    @CurrentUser() user: UserDto,
+  ) {
+    return this.service.broadcast(user, dto);
   }
 }

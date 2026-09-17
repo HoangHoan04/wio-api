@@ -1,3 +1,4 @@
+import { JwtAuthGuard } from '@/common/guards';
 import {
   BadRequestException,
   Body,
@@ -9,68 +10,137 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-
-import { JwtAuthGuard } from '@/common/guards';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
+import { MAX_FILES_PER_REQUEST } from './upload-file.constant';
+import { UploadCatboxFromUrlDto } from './upload-file.dto';
 import { UploadFileService } from './upload-file.service';
 
-@ApiBearerAuth()
 @ApiTags('UploadFile')
+@ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('upload-file')
 export class UploadFileController {
   constructor(private readonly service: UploadFileService) {}
 
-  @ApiOperation({ summary: 'Upload single file - tự động phân loại' })
+  /* ============================================================
+   * SINGLE
+   * ============================================================ */
   @Post('upload-single')
+  @ApiOperation({ summary: 'Upload 1 file — tự động phân loại' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { file: { type: 'string', format: 'binary' } },
+    },
+  })
   @UseInterceptors(FileInterceptor('file'))
   async uploadSingle(@UploadedFile() file: Express.Multer.File) {
-    return await this.service.uploadSingle(file);
+    return this.service.uploadSingle(file);
   }
 
-  @ApiOperation({ summary: 'Upload multiple files - tự động phân loại' })
+  /* ============================================================
+   * MULTI
+   * ============================================================ */
   @Post('upload-multi')
-  @UseInterceptors(FilesInterceptor('files'))
+  @ApiOperation({ summary: 'Upload nhiều file — tự động phân loại' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        files: {
+          type: 'array',
+          items: { type: 'string', format: 'binary' },
+        },
+      },
+    },
+  })
+  @UseInterceptors(FilesInterceptor('files', MAX_FILES_PER_REQUEST))
   async uploadMulti(@UploadedFiles() files: Array<Express.Multer.File>) {
     if (!files || files.length === 0) {
       throw new BadRequestException('Danh sách file trống');
     }
-    return await this.service.uploadMulti(files);
+    return this.service.uploadMulti(files);
   }
 
-  @ApiOperation({ summary: 'Upload ảnh' })
+  /* ============================================================
+   * SPECIFIC — Image
+   * ============================================================ */
   @Post('upload-image')
+  @ApiOperation({ summary: 'Upload ảnh' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { file: { type: 'string', format: 'binary' } },
+    },
+  })
   @UseInterceptors(FileInterceptor('file'))
   async uploadImage(@UploadedFile() file: Express.Multer.File) {
-    return await this.service.uploadImage(file);
+    return this.service.uploadImage(file);
   }
 
-  @ApiOperation({ summary: 'Upload audio' })
+  /* ============================================================
+   * SPECIFIC — Audio
+   * ============================================================ */
   @Post('upload-audio')
+  @ApiOperation({ summary: 'Upload audio' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { file: { type: 'string', format: 'binary' } },
+    },
+  })
   @UseInterceptors(FileInterceptor('file'))
   async uploadAudio(@UploadedFile() file: Express.Multer.File) {
-    return await this.service.uploadAudio(file);
+    return this.service.uploadAudio(file);
   }
 
-  @ApiOperation({ summary: 'Upload document' })
+  /* ============================================================
+   * SPECIFIC — Document
+   * ============================================================ */
   @Post('upload-document')
+  @ApiOperation({ summary: 'Upload tài liệu' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { file: { type: 'string', format: 'binary' } },
+    },
+  })
   @UseInterceptors(FileInterceptor('file'))
   async uploadDocument(@UploadedFile() file: Express.Multer.File) {
-    return await this.service.uploadDocument(file);
+    return this.service.uploadDocument(file);
   }
 
-  @ApiOperation({
-    summary: 'Upload file lên Catbox.moe (miễn phí, không giới hạn)',
-  })
+  /* ============================================================
+   * CATBOX
+   * ============================================================ */
   @Post('upload-catbox')
+  @ApiOperation({ summary: 'Upload file lên Catbox.moe (miễn phí)' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { file: { type: 'string', format: 'binary' } },
+    },
+  })
   @UseInterceptors(FileInterceptor('file'))
   async uploadCatbox(@UploadedFile() file: Express.Multer.File) {
-    return await this.service.uploadCatbox(file);
+    return this.service.uploadCatbox(file);
   }
 
-  @ApiOperation({ summary: 'Upload từ URL lên Catbox.moe' })
   @Post('upload-catbox-url')
-  async uploadCatboxUrl(@Body('url') url: string) {
-    return await this.service.uploadToCatboxFromUrl(url);
+  @ApiOperation({ summary: 'Upload từ URL lên Catbox.moe' })
+  async uploadCatboxUrl(@Body() body: UploadCatboxFromUrlDto) {
+    return this.service.uploadToCatboxFromUrl(body.url);
   }
 }

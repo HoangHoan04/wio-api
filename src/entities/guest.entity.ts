@@ -1,5 +1,5 @@
 import { enumData } from '@/common/constanst/enumData';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { GuestGroupEntity } from './guest-group.entity';
@@ -9,87 +9,87 @@ import { TableEntity } from './table.entity';
 @Entity('guests')
 @Index(['invitationId', 'rsvpStatus'])
 @Index(['invitationId', 'tableId'])
+@Index(['invitationCode'], { unique: true })
 export class GuestEntity extends BaseEntity {
+  @ApiProperty({ description: 'ID thiệp cưới' })
   @Column({ type: 'uuid', nullable: false })
-  @ApiProperty({ description: 'ID thiệp' })
   invitationId: string;
 
+  @ApiPropertyOptional({ description: 'ID nhóm khách' })
   @Column({ type: 'uuid', nullable: true })
-  @ApiProperty({ description: 'Nhóm khách', required: false })
   groupId?: string;
 
+  @ApiPropertyOptional({ description: 'ID bàn tiệc' })
   @Column({ type: 'uuid', nullable: true })
-  @ApiProperty({ description: 'Bàn tiệc', required: false })
   tableId?: string;
 
+  @ApiProperty({ description: 'Họ và tên khách mời' })
   @Column({ type: 'varchar', length: 100, nullable: false })
-  @ApiProperty({ description: 'Họ và tên' })
   fullName: string;
 
+  @ApiPropertyOptional({ description: 'Danh xưng (Anh/Chị/Ông/Bà…)' })
   @Column({ type: 'varchar', length: 20, nullable: true })
-  @ApiProperty({ description: 'Danh xưng', required: false })
   salutation?: string;
 
-  @Column({ type: 'boolean', default: false, nullable: false })
   @ApiProperty({ description: 'Khách VIP' })
+  @Column({ type: 'boolean', default: false, nullable: false })
   isVip: boolean;
 
-  @Column({ type: 'varchar', length: 32, unique: true, nullable: false })
-  @ApiProperty({ description: 'Mã lời mời' })
+  @ApiProperty({ description: 'Mã lời mời (dùng để tra cứu RSVP)' })
+  @Column({ type: 'varchar', length: 32, nullable: false, unique: true })
   invitationCode: string;
 
+  @ApiPropertyOptional({ description: 'URL QR code check-in' })
   @Column({ type: 'text', nullable: true })
-  @ApiProperty({ description: 'QR Code Url', required: false })
   qrCodeUrl?: string;
 
-  @Column({ type: 'varchar', length: 20, nullable: false })
   @ApiProperty({ description: 'Trạng thái RSVP', enum: enumData.RSVP_STATUS })
+  @Column({ type: 'varchar', length: 20, nullable: false })
   rsvpStatus: string;
 
-  @Column({ type: 'smallint', default: 1, nullable: false })
   @ApiProperty({ description: 'Số người tham dự' })
+  @Column({ type: 'smallint', default: 1, nullable: false })
   attendingCount: number;
 
+  @ApiProperty({ description: 'Cần đưa đón?' })
   @Column({ type: 'boolean', default: false, nullable: false })
-  @ApiProperty({ description: 'Cần đưa đón' })
   needsTransport: boolean;
 
+  @ApiPropertyOptional({ description: 'Ghi chú RSVP' })
   @Column({ type: 'text', nullable: true })
-  @ApiProperty({ description: 'Ghi chú RSVP', required: false })
   rsvpNote?: string;
 
+  @ApiPropertyOptional({ description: 'Thời điểm khách phản hồi RSVP' })
   @Column({ type: 'timestamptz', nullable: true })
-  @ApiProperty({ description: 'Ngày RSVP', required: false })
   rsvpAt?: Date;
 
+  @ApiPropertyOptional({ description: 'Thời điểm gửi lời mời' })
   @Column({ type: 'timestamptz', nullable: true })
-  @ApiProperty({ description: 'Ngày mời', required: false })
   invitedAt?: Date;
 
+  @ApiPropertyOptional({ description: 'Thời điểm khách xem lời mời' })
   @Column({ type: 'timestamptz', nullable: true })
-  @ApiProperty({ description: 'Ngày xem lời mời', required: false })
   invitationViewedAt?: Date;
 
+  @ApiPropertyOptional({ description: 'Thời điểm khách check-in' })
   @Column({ type: 'timestamptz', nullable: true })
-  @ApiProperty({ description: 'Ngày check-in', required: false })
   checkedInAt?: Date;
 
-  @ManyToOne(() => InvitationEntity, (invitation) => invitation.guests, {
-    onDelete: 'CASCADE',
-  })
+  @ManyToOne(() => InvitationEntity, (i) => i.guests, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'invitationId' })
   invitation: InvitationEntity;
 
-  @ManyToOne(() => GuestGroupEntity, (group) => group.guests, {
+  @ManyToOne(() => GuestGroupEntity, (g) => g.guests, {
     onDelete: 'SET NULL',
     nullable: true,
   })
   @JoinColumn({ name: 'groupId' })
-  group: GuestGroupEntity;
+  group?: GuestGroupEntity;
 
-  @ManyToOne(() => TableEntity, (table) => table.guests, {
+  @ManyToOne(() => TableEntity, (t) => t.guests, {
     onDelete: 'SET NULL',
+    nullable: true,
   })
   @JoinColumn({ name: 'tableId' })
-  table: TableEntity;
+  table?: TableEntity;
 }

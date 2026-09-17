@@ -7,29 +7,38 @@ import { UserEntity } from './user.entity';
 
 @Entity('subscriptions')
 @Index(['status', 'expiresAt'])
+@Index(['userId', 'status'])
 export class SubscriptionEntity extends BaseEntity {
+  @ApiProperty({ description: 'ID user đăng ký gói' })
   @Column({ type: 'uuid', nullable: false })
-  @ApiProperty({ description: 'ID người dùng' })
   userId: string;
 
+  @ApiProperty({ description: 'ID gói dịch vụ' })
   @Column({ type: 'uuid', nullable: false })
-  @ApiProperty({ description: 'Plan Id' })
   planId: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: false })
-  @ApiProperty({ description: 'Trạng thái', enum: enumData.SUB_STATUS })
+  @ApiProperty({
+    description: 'Trạng thái thuê bao',
+    enum: enumData.SUB_STATUS,
+  })
+  @Column({
+    type: 'varchar',
+    length: 20,
+    nullable: false,
+    default: enumData.SUB_STATUS.ACTIVE.code,
+  })
   status: string;
 
+  @ApiProperty({ description: 'Thời điểm bắt đầu thuê bao' })
   @Column({
     type: 'timestamptz',
     default: () => 'CURRENT_TIMESTAMP',
     nullable: false,
   })
-  @ApiProperty({ description: 'Ngày bắt đầu' })
   startedAt: Date;
 
+  @ApiProperty({ description: 'Thời điểm hết hạn thuê bao' })
   @Column({ type: 'timestamptz', nullable: false })
-  @ApiProperty({ description: 'Ngày hết hạn' })
   expiresAt: Date;
 
   @ManyToOne(() => UserEntity, { onDelete: 'CASCADE' })

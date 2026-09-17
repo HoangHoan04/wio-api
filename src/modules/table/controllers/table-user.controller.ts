@@ -7,46 +7,49 @@ import {
   AssignGuestDto,
   CreateTableDto,
   FilterTableDto,
-  UpdateTableDto,
   UnassignGuestDto,
+  UpdateTableDto,
 } from '../dto';
 import { TableService } from '../table.service';
 
 @ApiTags('User - Table')
-@Controller('table')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
+@Controller('table')
 export class TableUserController {
   constructor(private readonly service: TableService) {}
 
   @Post('pagination')
-  @ApiOperation({ summary: 'Lấy danh sách' })
-  async pagination(@Body() body: PaginationDto<FilterTableDto>) {
-    return await this.service.pagination(body);
+  @ApiOperation({ summary: 'Danh sách bàn tiệc' })
+  async pagination(
+    @Body() body: PaginationDto<FilterTableDto>,
+    @CurrentUser() user: UserDto,
+  ) {
+    return this.service.pagination(body, user);
   }
 
-  @ApiOperation({ summary: 'Chi tiết' })
   @Post('find-by-id')
-  async findById(@Body() body: IdDto) {
-    return await this.service.findById(body);
+  @ApiOperation({ summary: 'Chi tiết bàn tiệc' })
+  async findById(@Body() body: IdDto, @CurrentUser() user: UserDto) {
+    return this.service.findById(body, user);
   }
 
   @Post('create')
-  @ApiOperation({ summary: 'Tạo mới bàn tiệc' })
+  @ApiOperation({ summary: 'Tạo bàn tiệc' })
   async create(@CurrentUser() user: UserDto, @Body() body: CreateTableDto) {
-    return await this.service.create(user, body);
+    return this.service.create(user, body);
   }
 
   @Post('update')
   @ApiOperation({ summary: 'Cập nhật bàn tiệc' })
   async update(@CurrentUser() user: UserDto, @Body() body: UpdateTableDto) {
-    return await this.service.update(body, user);
+    return this.service.update(body, user);
   }
 
   @Post('delete')
-  @ApiOperation({ summary: 'Xóa bàn tiệc' })
+  @ApiOperation({ summary: 'Xoá bàn tiệc' })
   async delete(@CurrentUser() user: UserDto, @Body() body: IdDto) {
-    return await this.service.delete(body, user);
+    return this.service.delete(body, user);
   }
 
   @Post('assign-guest')
@@ -55,7 +58,7 @@ export class TableUserController {
     @CurrentUser() user: UserDto,
     @Body() body: AssignGuestDto,
   ) {
-    return await this.service.assignGuest(body.tableId, body.guestId, user);
+    return this.service.assignGuest(body, user);
   }
 
   @Post('unassign-guest')
@@ -64,6 +67,6 @@ export class TableUserController {
     @CurrentUser() user: UserDto,
     @Body() body: UnassignGuestDto,
   ) {
-    return await this.service.unassignGuest(body.guestId, user);
+    return this.service.unassignGuest(body.guestId, user);
   }
 }

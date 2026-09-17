@@ -1,3 +1,4 @@
+import { enumData } from '@/common/constanst/enumData';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsEmail,
@@ -8,8 +9,11 @@ import {
   Length,
 } from 'class-validator';
 
+/* ============================================================
+ * LOGIN
+ * ============================================================ */
 export class UserLoginDto {
-  @ApiProperty({ description: 'Tài khoản đăng nhập (Email)' })
+  @ApiProperty({ description: 'Tài khoản đăng nhập (Email hoặc SĐT)' })
   @IsNotEmpty({ message: 'Tài khoản không được để trống' })
   @IsString()
   email: string;
@@ -22,7 +26,7 @@ export class UserLoginDto {
 }
 
 export class GoogleLoginDto {
-  @ApiProperty({ description: 'Id Token hoặc Access Token nhận từ Google' })
+  @ApiProperty({ description: 'ID Token hoặc Access Token nhận từ Google' })
   @IsNotEmpty()
   @IsString()
   idToken: string;
@@ -37,10 +41,14 @@ export class FacebookLoginDto {
 
 export class RefreshTokenDto {
   @ApiProperty({ description: 'Chuỗi Refresh Token' })
+  @IsNotEmpty()
   @IsString()
   refreshToken: string;
 }
 
+/* ============================================================
+ * PASSWORD
+ * ============================================================ */
 export class UpdatePasswordDto {
   @ApiProperty({ description: 'Mật khẩu hiện tại' })
   @IsNotEmpty()
@@ -61,6 +69,9 @@ export class ChangePasswordDto extends UpdatePasswordDto {
   confirmPassword: string;
 }
 
+/* ============================================================
+ * CHECK PHONE & EMAIL
+ * ============================================================ */
 export class CheckPhoneAndEmailDto {
   @ApiPropertyOptional({ description: 'Email cần kiểm tra' })
   @IsOptional()
@@ -73,6 +84,9 @@ export class CheckPhoneAndEmailDto {
   phone?: string;
 }
 
+/* ============================================================
+ * OTP
+ * ============================================================ */
 export class SendOtpCustomerDto {
   @ApiPropertyOptional({ description: 'Email nhận OTP' })
   @IsOptional()
@@ -84,8 +98,12 @@ export class SendOtpCustomerDto {
   @IsString()
   phone?: string;
 
-  @ApiProperty({ description: 'Phương thức gửi' })
+  @ApiProperty({
+    description: 'Phương thức gửi OTP',
+    enum: enumData.OTP_METHOD,
+  })
   @IsNotEmpty()
+  @IsEnum(enumData.OTP_METHOD)
   sendMethod: string;
 }
 
@@ -95,13 +113,59 @@ export class SendOtpVerifyDto {
   @IsString()
   identifier: string;
 
-  @ApiProperty({ description: 'Phương thức' })
+  @ApiProperty({
+    description: 'Phương thức gửi OTP',
+    enum: enumData.OTP_METHOD,
+  })
   @IsNotEmpty()
+  @IsEnum(enumData.OTP_METHOD)
   method: string;
 }
 
+export class VerifyLoginOtpDto {
+  @ApiProperty({ description: 'Định danh tài khoản (Email/SĐT)' })
+  @IsNotEmpty()
+  @IsString()
+  identifier: string;
+
+  @ApiProperty({ description: 'Mã OTP' })
+  @IsNotEmpty()
+  @IsString()
+  otpCode: string;
+
+  @ApiProperty({
+    description: 'Phương thức gửi OTP',
+    enum: enumData.OTP_METHOD,
+  })
+  @IsNotEmpty()
+  @IsEnum(enumData.OTP_METHOD)
+  method: string;
+}
+
+export class VerifyEmailDto {
+  @ApiProperty({ description: 'Email cần xác thực' })
+  @IsNotEmpty()
+  @IsEmail()
+  email: string;
+
+  @ApiProperty({ description: 'Mã OTP xác thực' })
+  @IsNotEmpty()
+  @IsString()
+  otpCode: string;
+}
+
+export class ResendVerificationDto {
+  @ApiProperty({ description: 'Email cần gửi lại mã xác thực' })
+  @IsNotEmpty()
+  @IsEmail()
+  email: string;
+}
+
+/* ============================================================
+ * REGISTER
+ * ============================================================ */
 export class RegisterDto {
-  @ApiProperty({ description: 'Họ và tên học viên' })
+  @ApiProperty({ description: 'Họ và tên khách hàng' })
   @IsNotEmpty()
   @IsString()
   name: string;
@@ -127,10 +191,13 @@ export class RegisterDto {
   @IsString()
   otpCode: string;
 
-  @ApiProperty({ description: 'Phương thức xác thực OTP: EMAIL | PHONE' })
+  @ApiProperty({
+    description: 'Phương thức xác thực OTP',
+    enum: enumData.OTP_METHOD,
+  })
   @IsNotEmpty()
-  @IsEnum(['EMAIL', 'PHONE'])
-  sendMethod: 'EMAIL' | 'PHONE';
+  @IsEnum(enumData.OTP_METHOD)
+  sendMethod: string;
 
   @ApiPropertyOptional({ description: 'Giới tính' })
   @IsOptional()
@@ -138,8 +205,11 @@ export class RegisterDto {
   gender?: string;
 }
 
+/* ============================================================
+ * FORGOT PASSWORD
+ * ============================================================ */
 export class ForgotPasswordCustomerDto {
-  @ApiProperty({ description: 'Định danh tài khoản (Email/Phone)' })
+  @ApiProperty({ description: 'Định danh tài khoản (Email/SĐT)' })
   @IsNotEmpty()
   @IsString()
   identifier: string;
@@ -155,48 +225,18 @@ export class ForgotPasswordCustomerDto {
   @Length(6, 50)
   newPassword: string;
 
-  @ApiProperty({ description: 'Phương thức xác thực: EMAIL | PHONE' })
+  @ApiProperty({
+    description: 'Phương thức xác thực OTP',
+    enum: enumData.OTP_METHOD,
+  })
   @IsNotEmpty()
-  @IsEnum(['EMAIL', 'PHONE'])
-  method: 'EMAIL' | 'PHONE';
+  @IsEnum(enumData.OTP_METHOD)
+  method: string;
 }
 
-export class VerifyLoginOtpDto {
-  @ApiProperty({ description: 'Định danh tài khoản (Email/Phone)' })
-  @IsNotEmpty()
-  @IsString()
-  identifier: string;
-
-  @ApiProperty({ description: 'Mã OTP' })
-  @IsNotEmpty()
-  @IsString()
-  otpCode: string;
-
-  @ApiProperty({ description: 'Phương thức gửi: EMAIL | PHONE' })
-  @IsNotEmpty()
-  @IsEnum(['EMAIL', 'PHONE'])
-  method: 'EMAIL' | 'PHONE';
-}
-
-export class VerifyEmailDto {
-  @ApiProperty({ description: 'Email cần xác thực' })
-  @IsNotEmpty()
-  @IsEmail()
-  email: string;
-
-  @ApiProperty({ description: 'Mã OTP xác thực' })
-  @IsNotEmpty()
-  @IsString()
-  otpCode: string;
-}
-
-export class ResendVerificationDto {
-  @ApiProperty({ description: 'Email cần gửi lại mã xác thực' })
-  @IsNotEmpty()
-  @IsEmail()
-  email: string;
-}
-
+/* ============================================================
+ * PROFILE
+ * ============================================================ */
 export class UpdateProfileDto {
   @ApiPropertyOptional({ description: 'Họ và tên khách hàng' })
   @IsOptional()
@@ -213,8 +253,18 @@ export class UpdateProfileDto {
   @IsString()
   gender?: string;
 
-  @ApiPropertyOptional({ description: 'Ngày sinh' })
+  @ApiPropertyOptional({ description: 'Ngày sinh (ISO date)' })
   @IsOptional()
   @IsString()
   dateOfBirth?: string;
+}
+
+/* ============================================================
+ * LOGOUT
+ * ============================================================ */
+export class LogoutDto {
+  @ApiPropertyOptional({ description: 'Refresh token cần thu hồi' })
+  @IsOptional()
+  @IsString()
+  refreshToken?: string;
 }

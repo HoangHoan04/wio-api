@@ -1,62 +1,65 @@
 import { enumData } from '@/common/constanst/enumData';
-import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { InvitationEntity } from './invitation.entity';
 
 @Entity('invitation_events')
+@Index(['invitationId', 'isPrimary'])
 export class InvitationEventEntity extends BaseEntity {
+  @ApiProperty({ description: 'ID thiệp cưới' })
   @Column({ type: 'uuid', nullable: false })
-  @ApiProperty({ description: 'ID thiệp' })
   invitationId: string;
 
+  @ApiProperty({ description: 'Loại sự kiện cưới', enum: enumData.EVENT_KEY })
   @Column({ type: 'varchar', length: 40, nullable: false })
-  @ApiProperty({ description: 'Loại sự kiện', enum: enumData.EVENT_KEY })
   eventKey: string;
 
+  @ApiProperty({ description: 'Tiêu đề sự kiện' })
   @Column({ type: 'varchar', length: 255, nullable: false })
-  @ApiProperty({ description: 'Tiêu đề' })
   title: string;
 
+  @ApiPropertyOptional({ description: 'Thời gian bắt đầu' })
   @Column({ type: 'timestamptz', nullable: true })
-  @ApiProperty({ description: 'Thời gian bắt đầu', required: false })
   startsAt?: Date;
 
+  @ApiPropertyOptional({ description: 'Thời gian kết thúc' })
+  @Column({ type: 'timestamptz', nullable: true })
+  endsAt?: Date;
+
+  @ApiPropertyOptional({ description: 'Tên địa điểm' })
   @Column({ type: 'varchar', length: 255, nullable: true })
-  @ApiProperty({ description: 'Địa điểm', required: false })
   venue?: string;
 
+  @ApiPropertyOptional({ description: 'Địa chỉ chi tiết' })
   @Column({ type: 'text', nullable: true })
-  @ApiProperty({ description: 'Địa chỉ', required: false })
   address?: string;
 
+  @ApiPropertyOptional({ description: 'Link Google Maps' })
   @Column({ type: 'text', nullable: true })
-  @ApiProperty({ description: 'Link bản đồ', required: false })
   mapsUrl?: string;
 
+  @ApiPropertyOptional({ description: 'Vĩ độ' })
   @Column({ type: 'decimal', precision: 10, scale: 7, nullable: true })
-  @ApiProperty({ description: 'Vĩ độ', required: false })
   lat?: number;
 
+  @ApiPropertyOptional({ description: 'Kinh độ' })
   @Column({ type: 'decimal', precision: 10, scale: 7, nullable: true })
-  @ApiProperty({ description: 'Kinh độ', required: false })
   lng?: number;
 
+  @ApiPropertyOptional({ description: 'Trang phục gợi ý' })
   @Column({ type: 'text', nullable: true })
-  @ApiProperty({ description: 'Dress code', required: false })
   dressCode?: string;
 
+  @ApiProperty({ description: 'Là sự kiện chính (dùng cho countdown)' })
   @Column({ type: 'boolean', default: false, nullable: false })
-  @ApiProperty({ description: 'Sự kiện chính (countdown)' })
   isPrimary: boolean;
 
+  @ApiProperty({ description: 'Thứ tự hiển thị' })
   @Column({ type: 'int', default: 0, nullable: false })
-  @ApiProperty({ description: 'Thứ tự' })
   sortOrder: number;
 
-  @ManyToOne(() => InvitationEntity, (invitation) => invitation.events, {
-    onDelete: 'CASCADE',
-  })
+  @ManyToOne(() => InvitationEntity, (i) => i.events, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'invitationId' })
   invitation: InvitationEntity;
 }

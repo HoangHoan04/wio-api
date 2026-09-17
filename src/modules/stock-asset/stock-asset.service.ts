@@ -15,60 +15,64 @@ import {
 export class StockAssetService {
   constructor(private readonly repo: StockAssetRepository) {}
 
+  /* ============================================================
+   * PUBLIC — Danh sách cho editor
+   * ============================================================ */
   async listPublic(query: PublicStockAssetListDto = {}) {
     const take = query.take ?? 24;
     const skip = query.skip ?? 0;
+
     const baseWhere: FindOptionsWhere<StockAssetEntity> = {
       isDeleted: false,
       isActive: true,
     };
 
-    if (query.category && query.category !== 'all') {
-      baseWhere.category = query.category;
-    }
+    if (query.category) baseWhere.category = query.category;
     if (query.kind) baseWhere.kind = query.kind;
 
     const q = query.q?.trim();
-    const where: FindOptionsWhere<StockAssetEntity> | FindOptionsWhere<StockAssetEntity>[] =
-      q
-        ? [
-            { ...baseWhere, title: ILike(`%${q}%`) },
-            { ...baseWhere, tags: ILike(`%${q}%`) },
-          ]
-        : baseWhere;
+    const where: FindOptionsWhere<StockAssetEntity> = q
+      ? { ...baseWhere, title: ILike(`%${q}%`) }
+      : baseWhere;
 
     const [list, total] = await this.repo.findAndCount({
       where,
       order: { sortOrder: 'ASC', createdAt: 'DESC' },
       skip,
       take,
+      select: {
+        id: true,
+        title: true,
+        category: true,
+        tags: true,
+        src: true,
+        thumb: true,
+        kind: true,
+        license: true,
+      },
     });
 
-    return {
-      message: 'Thành công',
-      data: list.map((item) => ({
-        id: item.id,
-        title: item.title,
-        category: item.category,
-        tags: item.tags || [],
-        src: item.src,
-        thumb: item.thumb || item.src,
-        kind: item.kind,
-        license: item.license || '',
-      })),
-      total,
-    };
+    // Fallback: nếu không có thumb → dùng src
+    const data = list.map((item) => ({
+      ...item,
+      thumb: item.thumb || item.src,
+      tags: item.tags || [],
+      license: item.license || '',
+    }));
+
+    return { message: 'Thành công', data, total };
   }
 
+  /* ============================================================
+   * ADMIN — Pagination
+   * ============================================================ */
   async pagination(data: PaginationDto<FilterStockAssetDto>) {
     const { skip = 0, take = 10, where = {} } = data;
     const whereCon: FindOptionsWhere<StockAssetEntity> = { isDeleted: false };
 
-    if (where.title !== undefined) {
-      whereCon.title = ILike(`%${where.title}%`);
-    }
-    if (where.category !== undefined) whereCon.category = where.category;
-    if (where.kind !== undefined) whereCon.kind = where.kind;
+    if (where.title) whereCon.title = ILike(`%${where.title}%`);
+    if (where.category) whereCon.category = where.category;
+    if (where.kind) whereCon.kind = where.kind;
     if (where.isActive !== undefined) whereCon.isActive = where.isActive;
 
     const [list, total] = await this.repo.findAndCount({
@@ -81,59 +85,80 @@ export class StockAssetService {
     return { data: list, total };
   }
 
+  /* ============================================================
+   * ADMIN — Find by id
+   * ============================================================ */
   async findById(data: IdDto) {
-    const item = await this.repo.findOne({
-      where: { id: data.id, isDeleted: false },
-    });
-    if (!item) throw new NotFoundException('Không tìm thấy asset');
+    const item = await this.requireOne(data.id);
     return { message: 'Thành công', data: item };
   }
 
+  /* ============================================================
+   * ADMIN — Create
+   * ============================================================ */
   async create(user: UserDto, dto: CreateStockAssetDto) {
-    const entity = new StockAssetEntity();
-    entity.id = uuidv4();
-    entity.createdBy = user.id;
-    this.assign(entity, dto);
-    entity.isActive = dto.isActive ?? true;
-    entity.sortOrder = dto.sortOrder ?? 0;
+    const entity = this.repo.create({
+      id: uuidv4(),
+      title: dto.title.trim(),
+      category: dto.category,
+      kind: dto.kind,
+      tags: dto.tags ?? [],
+      src: dto.src.trim(),
+      thumb: dto.thumb?.trim() || dto.src.trim(),
+      license: dto.license?.trim(),
+      sortOrder: dto.sortOrder ?? 0,
+      isActive: dto.isActive ?? true,
+      createdBy: user.id,
+    });
+
     const saved = await this.repo.save(entity);
     return { message: 'Tạo asset thành công', data: saved };
   }
 
+  /* ============================================================
+   * ADMIN — Update
+   * ============================================================ */
   async update(dto: UpdateStockAssetDto, user: UserDto) {
     const entity = await this.requireOne(dto.id);
+
+    if (dto.title !== undefined) entity.title = dto.title.trim();
+    if (dto.category !== undefined) entity.category = dto.category;
+    if (dto.kind !== undefined) entity.kind = dto.kind;
+    if (dto.tags !== undefined) entity.tags = dto.tags;
+    if (dto.src !== undefined) entity.src = dto.src.trim();
+    if (dto.thumb !== undefined) {
+      entity.thumb = dto.thumb?.trim() || entity.src;
+    }
+    if (dto.license !== undefined) {
+      entity.license = dto.license?.trim() || undefined;
+    }
+    if (dto.sortOrder !== undefined) entity.sortOrder = dto.sortOrder;
+    if (dto.isActive !== undefined) entity.isActive = dto.isActive;
+
     entity.updatedBy = user.id;
-    this.assign(entity, dto);
     const saved = await this.repo.save(entity);
-    return { message: 'Cập nhật thành công', data: saved };
+    return { message: 'Cập nhật asset thành công', data: saved };
   }
 
+  /* ============================================================
+   * ADMIN — Delete (soft)
+   * ============================================================ */
   async delete(data: IdDto, user: UserDto) {
     const entity = await this.requireOne(data.id);
     entity.isDeleted = true;
     entity.updatedBy = user.id;
     await this.repo.save(entity);
-    return { message: 'Xóa thành công' };
+    return { message: 'Xoá asset thành công' };
   }
 
+  /* ============================================================
+   * PRIVATE
+   * ============================================================ */
   private async requireOne(id: string) {
     const entity = await this.repo.findOne({
       where: { id, isDeleted: false },
     });
     if (!entity) throw new NotFoundException('Không tìm thấy asset');
     return entity;
-  }
-
-  private assign(entity: StockAssetEntity, dto: Partial<CreateStockAssetDto>) {
-    if (dto.title !== undefined) entity.title = dto.title.trim();
-    if (dto.category !== undefined) entity.category = dto.category;
-    if (dto.tags !== undefined) entity.tags = dto.tags;
-    if (dto.src !== undefined) entity.src = dto.src.trim();
-    if (dto.thumb !== undefined) entity.thumb = dto.thumb?.trim() || undefined;
-    if (dto.kind !== undefined) entity.kind = dto.kind;
-    if (dto.license !== undefined) entity.license = dto.license?.trim() || undefined;
-    if (dto.sortOrder !== undefined) entity.sortOrder = dto.sortOrder;
-    if (dto.isActive !== undefined) entity.isActive = dto.isActive;
-    if (!entity.thumb && entity.src) entity.thumb = entity.src;
   }
 }

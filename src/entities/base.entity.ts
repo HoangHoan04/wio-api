@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   Column,
   CreateDateColumn,
+  DeleteDateColumn,
   PrimaryGeneratedColumn,
   BaseEntity as TypeOrmBase,
   UpdateDateColumn,
@@ -31,4 +32,8 @@ export abstract class BaseEntity extends TypeOrmBase {
   @Column({ name: 'isDeleted', type: 'boolean', default: false })
   @ApiProperty({ description: 'Xóa mềm?' })
   isDeleted: boolean;
+
+  @DeleteDateColumn({ type: 'timestamptz', nullable: true })
+  @ApiProperty({ description: 'Thời điểm xóa mềm' })
+  deletedAt?: Date;
 }

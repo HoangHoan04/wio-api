@@ -1,9 +1,9 @@
 import { enumData } from '@/common/constanst/enumData';
-import { IsEnumCode } from '@/common/decorators';
-import { ApiProperty, PartialType } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsBoolean,
+  IsEnum,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -14,6 +14,9 @@ import {
   Min,
 } from 'class-validator';
 
+/* ============================================================
+ * CREATE (Admin)
+ * ============================================================ */
 export class CreateReviewDto {
   @ApiProperty({ description: 'Tên người đánh giá' })
   @IsNotEmpty()
@@ -34,72 +37,127 @@ export class CreateReviewDto {
   @Max(5)
   rating: number;
 
-  @ApiProperty({ description: 'Nhãn hiển thị', required: false })
+  @ApiPropertyOptional({
+    description: 'Nhãn hiển thị (VD: Thiệp cưới · 12/2025)',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(150)
   eventLabel?: string;
 
-  @ApiProperty({ description: 'Ảnh đại diện', required: false })
+  @ApiPropertyOptional({ description: 'URL ảnh đại diện' })
   @IsOptional()
   @IsString()
   avatarUrl?: string;
 
-  @ApiProperty({ enum: enumData.CARD_TYPE, required: false })
+  @ApiPropertyOptional({
+    description: 'Phong cách cưới',
+    enum: enumData.WEDDING_THEME,
+  })
   @IsOptional()
-  @IsEnumCode(enumData.CARD_TYPE)
-  cardType?: string;
+  @IsEnum(enumData.WEDDING_THEME)
+  weddingTheme?: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ description: 'ID thiệp liên quan' })
   @IsOptional()
   @IsUUID()
   invitationId?: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ description: 'ID user gửi đánh giá' })
+  @IsOptional()
+  @IsUUID()
+  userId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Trạng thái',
+    enum: enumData.REVIEW_STATUS,
+    default: enumData.REVIEW_STATUS.PENDING.code,
+  })
+  @IsOptional()
+  @IsEnum(enumData.REVIEW_STATUS)
+  status?: string;
+
+  @ApiPropertyOptional({ description: 'Ghim lên trang chủ' })
   @IsOptional()
   @IsBoolean()
   isPinned?: boolean;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ description: 'Thứ tự hiển thị' })
   @IsOptional()
   @IsInt()
   sortOrder?: number;
-
-  @ApiProperty({ enum: enumData.REVIEW_STATUS, required: false })
-  @IsOptional()
-  @IsEnumCode(enumData.REVIEW_STATUS)
-  status?: string;
 }
 
+/* ============================================================
+ * UPDATE (Admin)
+ * ============================================================ */
 export class UpdateReviewDto extends PartialType(CreateReviewDto) {
-  @ApiProperty()
+  @ApiProperty({ description: 'ID đánh giá' })
   @IsUUID()
   @IsNotEmpty()
   id: string;
 }
 
+/* ============================================================
+ * FILTER (Admin)
+ * ============================================================ */
 export class FilterReviewDto {
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ description: 'Tên người đánh giá' })
   @IsOptional()
   @IsString()
   authorName?: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ description: 'ID thiệp liên quan' })
   @IsOptional()
-  @IsEnumCode(enumData.REVIEW_STATUS)
+  @IsUUID()
+  invitationId?: string;
+
+  @ApiPropertyOptional({ description: 'ID user gửi' })
+  @IsOptional()
+  @IsUUID()
+  userId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Phong cách cưới',
+    enum: enumData.WEDDING_THEME,
+  })
+  @IsOptional()
+  @IsEnum(enumData.WEDDING_THEME)
+  weddingTheme?: string;
+
+  @ApiPropertyOptional({
+    description: 'Trạng thái',
+    enum: enumData.REVIEW_STATUS,
+  })
+  @IsOptional()
+  @IsEnum(enumData.REVIEW_STATUS)
   status?: string;
 
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsEnumCode(enumData.CARD_TYPE)
-  cardType?: string;
-
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ description: 'Đã ghim?' })
   @IsOptional()
   @IsBoolean()
   isPinned?: boolean;
+
+  @ApiPropertyOptional({ description: 'Số sao tối thiểu' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  ratingMin?: number;
+
+  @ApiPropertyOptional({ description: 'Số sao tối đa' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  ratingMax?: number;
 }
 
+/* ============================================================
+ * PUBLIC — Khách gửi đánh giá
+ * ============================================================ */
 export class PublicCreateReviewDto {
   @ApiProperty({ description: 'Tên người đánh giá' })
   @IsNotEmpty()
@@ -120,24 +178,51 @@ export class PublicCreateReviewDto {
   @Max(5)
   rating: number;
 
-  @ApiProperty({ description: 'Nhãn hiển thị', required: false })
+  @ApiPropertyOptional({ description: 'Nhãn hiển thị' })
   @IsOptional()
   @IsString()
   @MaxLength(150)
   eventLabel?: string;
 
-  @ApiProperty({ enum: enumData.CARD_TYPE, required: false })
+  @ApiPropertyOptional({
+    description: 'Phong cách cưới',
+    enum: enumData.WEDDING_THEME,
+  })
   @IsOptional()
-  @IsEnumCode(enumData.CARD_TYPE)
-  cardType?: string;
+  @IsEnum(enumData.WEDDING_THEME)
+  weddingTheme?: string;
+
+  @ApiPropertyOptional({ description: 'ID thiệp liên quan (nếu có)' })
+  @IsOptional()
+  @IsUUID()
+  invitationId?: string;
 }
 
+/* ============================================================
+ * PUBLIC — Danh sách cho trang chủ
+ * ============================================================ */
 export class PublicReviewListDto {
-  @ApiProperty({ required: false, default: 6 })
+  @ApiPropertyOptional({ description: 'Số lượng trả về', default: 6 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(24)
   take?: number;
+
+  @ApiPropertyOptional({
+    description: 'Phong cách cưới',
+    enum: enumData.WEDDING_THEME,
+  })
+  @IsOptional()
+  @IsEnum(enumData.WEDDING_THEME)
+  weddingTheme?: string;
+
+  @ApiPropertyOptional({ description: 'Số sao tối thiểu' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  ratingMin?: number;
 }

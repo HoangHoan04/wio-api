@@ -1,3 +1,4 @@
+import { enumData } from '@/common/constanst/enumData';
 import { CurrentUser, RequireRoles } from '@/common/decorators';
 import { JwtAuthGuard } from '@/common/guards';
 import { IdDto, PaginationDto, UserDto } from '@/dto';
@@ -10,24 +11,24 @@ import {
 } from '../dto';
 import { StockAssetService } from '../stock-asset.service';
 
-@ApiTags('Admin - Stock asset')
-@Controller('stock-asset')
+@ApiTags('Admin - StockAsset')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@RequireRoles('ADMIN')
+@RequireRoles(enumData.USER_ROLE.ADMIN.code)
+@Controller('stock-asset')
 export class StockAssetAdminController {
   constructor(private readonly service: StockAssetService) {}
 
   @Post('pagination')
-  @ApiOperation({ summary: 'Danh sách stock asset' })
+  @ApiOperation({ summary: 'Danh sách stock asset (phân trang)' })
   async pagination(@Body() body: PaginationDto<FilterStockAssetDto>) {
-    return await this.service.pagination(body);
+    return this.service.pagination(body);
   }
 
   @Post('find-by-id')
   @ApiOperation({ summary: 'Chi tiết stock asset' })
   async findById(@Body() body: IdDto) {
-    return await this.service.findById(body);
+    return this.service.findById(body);
   }
 
   @Post('create')
@@ -36,7 +37,7 @@ export class StockAssetAdminController {
     @Body() body: CreateStockAssetDto,
     @CurrentUser() user: UserDto,
   ) {
-    return await this.service.create(user, body);
+    return this.service.create(user, body);
   }
 
   @Post('update')
@@ -45,12 +46,12 @@ export class StockAssetAdminController {
     @Body() body: UpdateStockAssetDto,
     @CurrentUser() user: UserDto,
   ) {
-    return await this.service.update(body, user);
+    return this.service.update(body, user);
   }
 
   @Post('delete')
-  @ApiOperation({ summary: 'Xóa stock asset' })
+  @ApiOperation({ summary: 'Xoá mềm stock asset' })
   async delete(@Body() body: IdDto, @CurrentUser() user: UserDto) {
-    return await this.service.delete(body, user);
+    return this.service.delete(body, user);
   }
 }

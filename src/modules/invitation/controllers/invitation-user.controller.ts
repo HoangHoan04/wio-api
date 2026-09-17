@@ -3,13 +3,18 @@ import { JwtAuthGuard } from '@/common/guards';
 import { IdDto, PaginationDto, UserDto } from '@/dto';
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { CreateInvitationDto, FilterInvitationDto, UpdateInvitationDto, CheckSlugDto } from '../dto';
+import {
+  CheckSlugDto,
+  CreateInvitationDto,
+  FilterInvitationDto,
+  UpdateInvitationDto,
+} from '../dto';
 import { InvitationService } from '../invitation.service';
 
 @ApiTags('User - Invitation')
-@Controller('invitation')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
+@Controller('invitation')
 export class InvitationUserController {
   constructor(private readonly service: InvitationService) {}
 
@@ -20,55 +25,67 @@ export class InvitationUserController {
     @CurrentUser() user: UserDto,
   ) {
     body.where = { ...body.where, userId: user.id };
-    return await this.service.pagination(body);
+    return this.service.pagination(body);
   }
 
   @Post('find-by-id')
   @ApiOperation({ summary: 'Chi tiết thiệp' })
   async findById(@Body() body: IdDto) {
-    return await this.service.findById(body);
+    return this.service.findById(body);
   }
 
   @Post('create')
   @ApiOperation({ summary: 'Tạo thiệp mới' })
-  async create(@Body() data: CreateInvitationDto, @CurrentUser() user: UserDto) {
+  async create(
+    @Body() data: CreateInvitationDto,
+    @CurrentUser() user: UserDto,
+  ) {
     data.userId = user.id;
-    return await this.service.create(user, data);
+    return this.service.create(user, data);
   }
 
   @Post('update')
   @ApiOperation({ summary: 'Cập nhật thiệp' })
-  async update(@Body() data: UpdateInvitationDto, @CurrentUser() user: UserDto) {
-    return await this.service.update(data, user);
+  async update(
+    @Body() data: UpdateInvitationDto,
+    @CurrentUser() user: UserDto,
+  ) {
+    return this.service.update(data, user);
   }
 
   @Post('delete')
   @ApiOperation({ summary: 'Xóa thiệp' })
   async delete(@Body() body: IdDto, @CurrentUser() user: UserDto) {
-    return await this.service.delete(body, user);
+    return this.service.delete(body, user);
   }
 
   @Post('publish')
   @ApiOperation({ summary: 'Xuất bản thiệp' })
   async publish(@Body() body: IdDto, @CurrentUser() user: UserDto) {
-    return await this.service.publish(body.id, user);
+    return this.service.publish(body.id, user);
   }
 
   @Post('unpublish')
   @ApiOperation({ summary: 'Hủy xuất bản (về nháp)' })
   async unpublish(@Body() body: IdDto, @CurrentUser() user: UserDto) {
-    return await this.service.unpublish(body.id, user);
+    return this.service.unpublish(body.id, user);
   }
 
   @Post('archive')
   @ApiOperation({ summary: 'Lưu trữ thiệp' })
   async archive(@Body() body: IdDto, @CurrentUser() user: UserDto) {
-    return await this.service.archive(body.id, user);
+    return this.service.archive(body.id, user);
   }
 
   @Post('check-slug')
   @ApiOperation({ summary: 'Kiểm tra slug còn trống' })
   async checkSlug(@Body() body: CheckSlugDto) {
-    return await this.service.checkSlug(body);
+    return this.service.checkSlug(body);
+  }
+
+  @Post('share-url')
+  @ApiOperation({ summary: 'Lấy link chia sẻ + QR' })
+  async getShareUrl(@Body() body: IdDto, @CurrentUser() user: UserDto) {
+    return this.service.getShareUrl(body.id, user);
   }
 }

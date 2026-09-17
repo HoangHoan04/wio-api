@@ -1,4 +1,4 @@
-import { Controller, Post } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ServicePlanService } from '../service-plan.service';
 
@@ -7,9 +7,9 @@ import { ServicePlanService } from '../service-plan.service';
 export class ServicePlanPublicController {
   constructor(private readonly service: ServicePlanService) {}
 
+  @Get('list')
   @ApiOperation({ summary: 'Danh sách gói dịch vụ đang hoạt động' })
-  @Post('list')
   async findActivePlans() {
-    return await this.service.findActivePlans();
+    return this.service.findActivePlans();
   }
 }

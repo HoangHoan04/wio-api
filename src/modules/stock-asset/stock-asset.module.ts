@@ -5,6 +5,7 @@ import { StockAssetService } from './stock-asset.service';
 
 @Module({
   imports: [TypeOrmExModule.forCustomRepository([StockAssetRepository])],
+  controllers: [],
   providers: [StockAssetService],
   exports: [StockAssetService],
 })

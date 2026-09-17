@@ -1,5 +1,6 @@
 import {
   CustomerRepository,
+  SubscriptionRepository,
   UserRepository,
   UserTokenRepository,
   VerifyOtpRepository,
@@ -37,6 +38,7 @@ import { JwtStrategy } from './jwt.strategy';
       UserTokenRepository,
       CustomerRepository,
       VerifyOtpRepository,
+      SubscriptionRepository,
     ]),
     HttpModule,
     EmailModule,

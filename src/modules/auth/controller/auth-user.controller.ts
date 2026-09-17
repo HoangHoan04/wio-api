@@ -20,6 +20,7 @@ import {
   FacebookLoginDto,
   ForgotPasswordCustomerDto,
   GoogleLoginDto,
+  LogoutDto,
   RefreshTokenDto,
   RegisterDto,
   ResendVerificationDto,
@@ -32,19 +33,22 @@ import {
   VerifyLoginOtpDto,
 } from '../dto';
 
+@ApiTags('Auth - User')
 @ApiBearerAuth()
-@ApiTags('Auth')
 @Controller('auth')
 export class AuthUserController {
   constructor(private readonly service: AuthService) {}
 
+  /* ============================================================
+   * ĐĂNG NHẬP
+   * ============================================================ */
   @Post('login')
   async login(
     @Body() data: UserLoginDto,
     @Req() req: Request,
     @Ip() ipAddress: string,
   ) {
-    return await this.service.login(data, req.headers['user-agent'], ipAddress);
+    return this.service.login(data, req.headers['user-agent'], ipAddress);
   }
 
   @Post('login/google')
@@ -53,13 +57,29 @@ export class AuthUserController {
     @Req() req: Request,
     @Ip() ipAddress: string,
   ) {
-    return await this.service.loginWithGoogle(
+    return this.service.loginWithGoogle(
       data,
       req.headers['user-agent'],
       ipAddress,
     );
   }
 
+  @Post('login/facebook')
+  async loginWithFacebook(
+    @Body() data: FacebookLoginDto,
+    @Req() req: Request,
+    @Ip() ipAddress: string,
+  ) {
+    return this.service.loginWithFacebook(
+      data,
+      req.headers['user-agent'],
+      ipAddress,
+    );
+  }
+
+  /* ============================================================
+   * OAUTH REDIRECT (Google / Facebook)
+   * ============================================================ */
   @Get('google')
   async getGoogleAuthUrl(@Res() res: Response) {
     try {
@@ -75,19 +95,6 @@ export class AuthUserController {
       );
       return res.redirect(redirectUrl.toString());
     }
-  }
-
-  @Post('login/facebook')
-  async loginWithFacebook(
-    @Body() data: FacebookLoginDto,
-    @Req() req: Request,
-    @Ip() ipAddress: string,
-  ) {
-    return await this.service.loginWithFacebook(
-      data,
-      req.headers['user-agent'],
-      ipAddress,
-    );
   }
 
   @Get('facebook')
@@ -107,29 +114,27 @@ export class AuthUserController {
     }
   }
 
+  /* ============================================================
+   * ĐĂNG KÝ & OTP
+   * ============================================================ */
   @Post('check-phone-email')
   async checkPhoneAndEmail(@Body() data: CheckPhoneAndEmailDto) {
-    return await this.service.checkPhoneAndEmail(data);
+    return this.service.checkPhoneAndEmail(data);
   }
 
   @Post('send-otp')
   async sendOtpCustomer(@Body() data: SendOtpCustomerDto) {
-    return await this.service.sendOtpEmailCustomer(data);
+    return this.service.sendOtpEmailCustomer(data);
   }
 
   @Post('send-otp-verify')
   async sendOtpVerify(@Body() data: SendOtpVerifyDto) {
-    return await this.service.sendOtpVerify(data);
+    return this.service.sendOtpVerify(data);
   }
 
   @Post('register')
   async register(@Body() data: RegisterDto) {
-    return await this.service.register(data);
-  }
-
-  @Post('forgot-password')
-  async forgotPassword(@Body() data: ForgotPasswordCustomerDto) {
-    return await this.service.forgotPassword(data);
+    return this.service.register(data);
   }
 
   @Post('verify-otp')
@@ -138,40 +143,43 @@ export class AuthUserController {
     @Req() req: Request,
     @Ip() ipAddress: string,
   ) {
-    return await this.service.verifyLoginOtp(
+    return this.service.verifyLoginOtp(
       data,
       req.headers['user-agent'],
       ipAddress,
     );
   }
 
+  @Post('forgot-password')
+  async forgotPassword(@Body() data: ForgotPasswordCustomerDto) {
+    return this.service.forgotPassword(data);
+  }
+
   @Post('refresh-token')
   async refreshToken(@Body() data: RefreshTokenDto) {
-    return await this.service.refreshToken(data);
+    return this.service.refreshToken(data);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Post('update-password')
-  async updatePassword(
-    @Body() info: UpdatePasswordDto,
-    @CurrentUser() user: UserDto,
-  ) {
-    return await this.service.updatePassword(info, user);
+  /* ============================================================
+   * XÁC THỰC EMAIL
+   * ============================================================ */
+  @Post('verify-email')
+  async verifyEmail(@Body() data: VerifyEmailDto) {
+    return this.service.verifyEmail(data);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Post('change-password')
-  async changePassword(
-    @Body() info: ChangePasswordDto,
-    @CurrentUser() user: UserDto,
-  ) {
-    return await this.service.changePassword(info, user);
+  @Post('resend-verification')
+  async resendVerification(@Body() data: ResendVerificationDto) {
+    return this.service.resendVerificationEmail(data.email);
   }
 
+  /* ============================================================
+   * PROFILE (Cần đăng nhập)
+   * ============================================================ */
   @UseGuards(JwtAuthGuard)
   @Post('me')
   async getUserInfo(@CurrentUser() user: UserDto) {
-    return await this.service.getUserInfo(user);
+    return this.service.getUserInfo(user);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -180,31 +188,42 @@ export class AuthUserController {
     @CurrentUser() user: UserDto,
     @Body() dto: UpdateProfileDto,
   ) {
-    return await this.service.updateProfile(user, dto);
+    return this.service.updateProfile(user, dto);
+  }
+
+  /* ============================================================
+   * MẬT KHẨU (Cần đăng nhập)
+   * ============================================================ */
+  @UseGuards(JwtAuthGuard)
+  @Post('update-password')
+  async updatePassword(
+    @Body() info: UpdatePasswordDto,
+    @CurrentUser() user: UserDto,
+  ) {
+    return this.service.updatePassword(info, user);
   }
 
   @UseGuards(JwtAuthGuard)
-  @Post('logout')
-  async logout(
+  @Post('change-password')
+  async changePassword(
+    @Body() info: ChangePasswordDto,
     @CurrentUser() user: UserDto,
-    @Body() data: { refreshToken?: string },
   ) {
-    return await this.service.logout(user, data?.refreshToken);
+    return this.service.changePassword(info, user);
   }
 
-  @Post('verify-email')
-  async verifyEmail(@Body() data: VerifyEmailDto) {
-    return await this.service.verifyEmail(data);
-  }
-
-  @Post('resend-verification')
-  async resendVerification(@Body() data: ResendVerificationDto) {
-    return await this.service.resendVerificationEmail(data.email);
+  /* ============================================================
+   * ĐĂNG XUẤT & DỌN TOKEN
+   * ============================================================ */
+  @UseGuards(JwtAuthGuard)
+  @Post('logout')
+  async logout(@CurrentUser() user: UserDto, @Body() data: LogoutDto) {
+    return this.service.logout(user, data?.refreshToken);
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('clean-tokens')
   async cleanExpiredTokens() {
-    return await this.service.cleanExpiredTokens();
+    return this.service.cleanExpiredTokens();
   }
 }

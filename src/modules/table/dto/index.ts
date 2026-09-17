@@ -1,119 +1,132 @@
-import { ApiProperty, PartialType } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
+  IsInt,
   IsNotEmpty,
-  IsNumber,
   IsOptional,
   IsString,
   IsUUID,
+  Max,
+  MaxLength,
+  Min,
 } from 'class-validator';
 
+/* ============================================================
+ * CREATE
+ * ============================================================ */
 export class CreateTableDto {
-  @ApiProperty({ description: 'ID Thiệp' })
+  @ApiProperty({ description: 'ID thiệp cưới' })
+  @IsUUID()
   @IsNotEmpty()
-  @IsString()
   invitationId: string;
 
-  @ApiProperty({ description: 'Tên bàn (Bàn 1, Bàn VIP...)' })
+  @ApiProperty({ description: 'Tên bàn (Bàn 1, Bàn VIP…)' })
   @IsNotEmpty()
   @IsString()
+  @MaxLength(50)
   name: string;
 
-  @ApiProperty({ description: 'Số chỗ tối đa' })
+  @ApiProperty({ description: 'Số ghế tối đa' })
   @IsNotEmpty()
-  @IsNumber()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
   maxSeats: number;
 
-  @ApiProperty({ description: 'Số chỗ hiện tại', required: false })
-  @IsOptional()
-  @IsNumber()
-  currentSeats?: number;
-
-  @ApiProperty({ description: 'Mô tả', required: false })
+  @ApiPropertyOptional({ description: 'Mô tả' })
   @IsOptional()
   @IsString()
+  @MaxLength(255)
   description?: string;
 
-  @ApiProperty({
-    description: 'Tọa độ X trên sơ đồ kéo thả (px)',
-    required: false,
-  })
+  @ApiPropertyOptional({ description: 'Vị trí X trên sơ đồ (px)' })
   @IsOptional()
-  @IsNumber()
+  @Type(() => Number)
+  @IsInt()
   positionX?: number;
 
-  @ApiProperty({
-    description: 'Tọa độ Y trên sơ đồ kéo thả (px)',
-    required: false,
-  })
+  @ApiPropertyOptional({ description: 'Vị trí Y trên sơ đồ (px)' })
   @IsOptional()
-  @IsNumber()
+  @Type(() => Number)
+  @IsInt()
   positionY?: number;
 }
 
-export class UpdateTableDto extends PartialType(CreateTableDto) {
-  @ApiProperty({ description: 'ID' })
+/* ============================================================
+ * UPDATE — KHÔNG cho đổi invitationId
+ * ============================================================ */
+export class UpdateTableDto {
+  @ApiProperty({ description: 'ID bàn tiệc' })
   @IsUUID()
   @IsNotEmpty()
   id: string;
-}
 
-export class FilterTableDto {
-  @ApiProperty({ description: 'ID Thiệp', required: false })
+  @ApiPropertyOptional({ description: 'Tên bàn' })
   @IsOptional()
   @IsString()
-  invitationId?: string;
-
-  @ApiProperty({ description: 'Tên bàn (Bàn 1, Bàn VIP...)', required: false })
-  @IsOptional()
-  @IsString()
+  @MaxLength(50)
   name?: string;
 
-  @ApiProperty({ description: 'Số chỗ tối đa', required: false })
+  @ApiPropertyOptional({ description: 'Số ghế tối đa' })
   @IsOptional()
-  @IsNumber()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
   maxSeats?: number;
 
-  @ApiProperty({ description: 'Số chỗ hiện tại', required: false })
-  @IsOptional()
-  @IsNumber()
-  currentSeats?: number;
-
-  @ApiProperty({ description: 'Mô tả', required: false })
+  @ApiPropertyOptional({ description: 'Mô tả' })
   @IsOptional()
   @IsString()
+  @MaxLength(255)
   description?: string;
 
-  @ApiProperty({
-    description: 'Tọa độ X trên sơ đồ kéo thả (px)',
-    required: false,
-  })
+  @ApiPropertyOptional({ description: 'Vị trí X' })
   @IsOptional()
-  @IsNumber()
+  @Type(() => Number)
+  @IsInt()
   positionX?: number;
 
-  @ApiProperty({
-    description: 'Tọa độ Y trên sơ đồ kéo thả (px)',
-    required: false,
-  })
+  @ApiPropertyOptional({ description: 'Vị trí Y' })
   @IsOptional()
-  @IsNumber()
+  @Type(() => Number)
+  @IsInt()
   positionY?: number;
 }
 
+/* ============================================================
+ * FILTER
+ * ============================================================ */
+export class FilterTableDto {
+  @ApiPropertyOptional({ description: 'ID thiệp cưới' })
+  @IsOptional()
+  @IsUUID()
+  invitationId?: string;
+
+  @ApiPropertyOptional({ description: 'Tên bàn' })
+  @IsOptional()
+  @IsString()
+  name?: string;
+}
+
+/* ============================================================
+ * ASSIGN / UNASSIGN
+ * ============================================================ */
 export class AssignGuestDto {
-  @ApiProperty({ description: 'ID Bàn tiệc' })
+  @ApiProperty({ description: 'ID bàn tiệc' })
   @IsUUID()
   @IsNotEmpty()
   tableId: string;
 
-  @ApiProperty({ description: 'ID Khách mời' })
+  @ApiProperty({ description: 'ID khách mời' })
   @IsUUID()
   @IsNotEmpty()
   guestId: string;
 }
 
 export class UnassignGuestDto {
-  @ApiProperty({ description: 'ID Khách mời' })
+  @ApiProperty({ description: 'ID khách mời' })
   @IsUUID()
   @IsNotEmpty()
   guestId: string;

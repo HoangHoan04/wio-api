@@ -1,3 +1,4 @@
+import { enumData } from '@/common/constanst/enumData';
 import { CurrentUser, RequireRoles } from '@/common/decorators';
 import { JwtAuthGuard } from '@/common/guards';
 import { IdDto, PaginationDto, UserDto } from '@/dto';
@@ -11,52 +12,52 @@ import {
 import { ServicePlanService } from '../service-plan.service';
 
 @ApiTags('Admin - ServicePlan')
-@Controller('service-plan')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@RequireRoles('ADMIN')
+@RequireRoles(enumData.USER_ROLE.ADMIN.code)
+@Controller('service-plan')
 export class ServicePlanAdminController {
   constructor(private readonly service: ServicePlanService) {}
 
-  @ApiOperation({ summary: 'Tạo mới gói dịch vụ' })
+  @Post('pagination')
+  @ApiOperation({ summary: 'Danh sách gói dịch vụ (có phân trang)' })
+  async pagination(@Body() body: PaginationDto<FilterServicePlanDto>) {
+    return this.service.pagination(body);
+  }
+
+  @Post('find-by-id')
+  @ApiOperation({ summary: 'Chi tiết gói dịch vụ' })
+  async findById(@Body() body: IdDto) {
+    return this.service.findById(body);
+  }
+
   @Post('create')
+  @ApiOperation({ summary: 'Tạo gói dịch vụ mới' })
   async create(
     @Body() data: CreateServicePlanDto,
     @CurrentUser() user: UserDto,
   ) {
-    return await this.service.create(user, data);
+    return this.service.create(user, data);
   }
 
-  @ApiOperation({ summary: 'Lấy danh sách gói dịch vụ với bộ lọc' })
-  @Post('pagination')
-  async pagination(@Body() body: PaginationDto<FilterServicePlanDto>) {
-    return await this.service.pagination(body);
-  }
-
-  @ApiOperation({ summary: 'Cập nhật gói dịch vụ' })
   @Post('update')
+  @ApiOperation({ summary: 'Cập nhật gói dịch vụ' })
   async update(
     @Body() data: UpdateServicePlanDto,
     @CurrentUser() user: UserDto,
   ) {
-    return await this.service.update(data, user);
+    return this.service.update(data, user);
   }
 
-  @ApiOperation({ summary: 'Chi tiết gói dịch vụ' })
-  @Post('find-by-id')
-  async findById(@Body() body: IdDto) {
-    return await this.service.findById(body);
-  }
-
-  @ApiOperation({ summary: 'Xóa gói dịch vụ' })
   @Post('delete')
+  @ApiOperation({ summary: 'Xoá gói dịch vụ' })
   async delete(@Body() body: IdDto, @CurrentUser() user: UserDto) {
-    return await this.service.delete(body, user);
+    return this.service.delete(body, user);
   }
 
-  @ApiOperation({ summary: 'Lấy danh sách gói dịch vụ cho select box' })
   @Post('select-box')
+  @ApiOperation({ summary: 'Danh sách gói dịch vụ cho select box' })
   async selectBox() {
-    return await this.service.selectBox();
+    return this.service.selectBox();
   }
 }

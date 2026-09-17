@@ -1,9 +1,8 @@
 import { ChildModule } from '@/common/decorators/module.decorator';
-import { MiddlewareConsumer, NestModule } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
 import { MulterModule } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { PREFIX_MODULE } from '../config-module';
+import { MAX_FILE_SIZE_BYTES } from './upload-file.constant';
 import { UploadFileController } from './upload-file.controller';
 import { UploadFileService } from './upload-file.service';
 
@@ -11,14 +10,15 @@ import { UploadFileService } from './upload-file.service';
   prefix: PREFIX_MODULE.upload,
   controllers: [UploadFileController],
   imports: [
-    ConfigModule,
     MulterModule.register({
       storage: memoryStorage(),
+      limits: {
+        fileSize: MAX_FILE_SIZE_BYTES,
+        files: 20,
+      },
     }),
   ],
   providers: [UploadFileService],
   exports: [UploadFileService],
 })
-export class UploadFileModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {}
-}
+export class UploadFileModule {}

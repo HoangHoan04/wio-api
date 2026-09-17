@@ -23,10 +23,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     sub?: string;
     isRefreshToken?: boolean;
   }) {
-    if (payload.isRefreshToken)
+    if (payload.isRefreshToken) {
       throw new UnauthorizedException(
         'Không thể dùng refresh token để xác thực',
       );
+    }
 
     const userId = payload.uid || payload.sub;
     const user = await this.userRepo.findOne({
@@ -34,16 +35,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
 
     if (!user) throw new UnauthorizedException('Không có quyền truy cập!');
-    if (!user.isActive)
+    if (!user.isActive) {
       throw new UnauthorizedException('Tài khoản đã bị ngưng hoạt động');
+    }
 
     return {
       id: user.id,
       email: user.email,
       isActive: user.isActive,
       role: user.role,
-      isAdmin:
-        user.isAdmin || user.role === enumData.USER_ROLE.ADMIN.code,
+      isAdmin: user.role === enumData.USER_ROLE.ADMIN.code,
     };
   }
 }

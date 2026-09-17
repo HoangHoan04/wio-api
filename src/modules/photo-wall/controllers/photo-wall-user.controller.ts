@@ -7,39 +7,42 @@ import { FilterPhotoWallDto } from '../dto';
 import { PhotoWallService } from '../photo-wall.service';
 
 @ApiTags('User - PhotoWall')
-@Controller('photo-wall')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
+@Controller('photo-wall')
 export class PhotoWallUserController {
   constructor(private readonly service: PhotoWallService) {}
 
   @Post('pagination')
-  @ApiOperation({ summary: 'Lấy danh sách' })
-  async pagination(@Body() body: PaginationDto<FilterPhotoWallDto>) {
-    return await this.service.pagination(body);
+  @ApiOperation({ summary: 'Danh sách ảnh của tôi' })
+  async pagination(
+    @Body() body: PaginationDto<FilterPhotoWallDto>,
+    @CurrentUser() user: UserDto,
+  ) {
+    return this.service.paginationForUser(body, user);
   }
 
-  @ApiOperation({ summary: 'Chi tiết' })
   @Post('find-by-id')
-  async findById(@Body() body: IdDto) {
-    return await this.service.findById(body);
+  @ApiOperation({ summary: 'Chi tiết ảnh' })
+  async findById(@Body() body: IdDto, @CurrentUser() user: UserDto) {
+    return this.service.findById(body, user);
   }
 
-  @ApiOperation({ summary: 'Duyệt ảnh' })
   @Post('approve')
+  @ApiOperation({ summary: 'Duyệt ảnh' })
   async approve(@Body() body: IdDto, @CurrentUser() user: UserDto) {
-    return await this.service.approve(body, user);
+    return this.service.approve(body, user);
   }
 
-  @ApiOperation({ summary: 'Từ chối duyệt ảnh' })
   @Post('reject')
+  @ApiOperation({ summary: 'Từ chối duyệt ảnh' })
   async reject(@Body() body: IdDto, @CurrentUser() user: UserDto) {
-    return await this.service.reject(body, user);
+    return this.service.reject(body, user);
   }
 
-  @ApiOperation({ summary: 'Xóa ảnh' })
   @Post('delete')
+  @ApiOperation({ summary: 'Xoá ảnh' })
   async delete(@Body() body: IdDto, @CurrentUser() user: UserDto) {
-    return await this.service.delete(body, user);
+    return this.service.delete(body, user);
   }
 }

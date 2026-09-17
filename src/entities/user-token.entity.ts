@@ -1,34 +1,35 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity } from 'typeorm';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Column, Entity, Index } from 'typeorm';
 import { BaseEntity } from './base.entity';
 
 @Entity('user_tokens')
+@Index(['userId', 'isRevoked'])
 export class UserTokenEntity extends BaseEntity {
-  @ApiProperty({ description: 'ID của user liên kết' })
+  @ApiPropertyOptional({ description: 'ID user sở hữu token' })
   @Column({ type: 'uuid', nullable: true })
   userId?: string;
 
-  @ApiProperty({ description: 'Access Token' })
+  @ApiPropertyOptional({ description: 'Access token' })
   @Column({ type: 'text', nullable: true })
   accessToken?: string;
 
-  @ApiProperty({ description: 'Refresh Token' })
+  @ApiPropertyOptional({ description: 'Refresh token' })
   @Column({ type: 'text', nullable: true })
   refreshToken?: string;
 
-  @ApiProperty({ description: 'Địa chỉ IP đăng nhập' })
+  @ApiPropertyOptional({ description: 'Địa chỉ IP đăng nhập' })
   @Column({ type: 'varchar', length: 50, nullable: true })
   ipAddress?: string;
 
-  @ApiProperty({ description: 'Thiết bị đăng nhập' })
+  @ApiPropertyOptional({ description: 'Chuỗi User-Agent của thiết bị' })
   @Column({ type: 'varchar', length: 255, nullable: true })
   userAgent?: string;
 
-  @ApiProperty({ description: 'Thời gian hết hạn' })
+  @ApiPropertyOptional({ description: 'Thời điểm hết hạn token' })
   @Column({ type: 'timestamptz', nullable: true })
   expiresAt?: Date;
 
-  @ApiProperty({ description: 'Trạng thái thu hồi token' })
+  @ApiProperty({ description: 'Token đã bị thu hồi' })
   @Column({ type: 'boolean', default: false, nullable: false })
   isRevoked: boolean;
 }

@@ -1,42 +1,45 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from './base.entity';
+import { GuestEntity } from './guest.entity';
 import { InvitationEntity } from './invitation.entity';
 
 @Entity('wishes')
 @Index(['invitationId', 'isApproved'])
 export class WishEntity extends BaseEntity {
+  @ApiProperty({ description: 'ID thiệp cưới' })
   @Column({ type: 'uuid', nullable: false })
-  @ApiProperty({ description: 'ID thiệp' })
   invitationId: string;
 
+  @ApiPropertyOptional({ description: 'ID khách mời gửi lời chúc' })
   @Column({ type: 'uuid', nullable: true })
-  @ApiProperty({ description: 'Guest Id', required: false })
   guestId?: string;
 
+  @ApiProperty({ description: 'Tên người gửi lời chúc' })
   @Column({ type: 'varchar', length: 100, nullable: false })
-  @ApiProperty({ description: 'Tên người gửi' })
   guestName: string;
 
+  @ApiProperty({ description: 'Nội dung lời chúc' })
   @Column({ type: 'text', nullable: false })
-  @ApiProperty({ description: 'Nội dung' })
   content: string;
 
+  @ApiProperty({ description: 'Lời chúc đã được duyệt hiển thị' })
   @Column({ type: 'boolean', default: true, nullable: false })
-  @ApiProperty({ description: 'Đã duyệt' })
   isApproved: boolean;
 
+  @ApiProperty({ description: 'Ghim lời chúc lên đầu' })
   @Column({ type: 'boolean', default: false, nullable: false })
-  @ApiProperty({ description: 'Ghim' })
   isPinned: boolean;
 
+  @ApiPropertyOptional({ description: 'Thời điểm duyệt lời chúc' })
   @Column({ type: 'timestamptz', nullable: true })
-  @ApiProperty({ description: 'Ngày duyệt', required: false })
   approvedAt?: Date;
 
-  @ManyToOne(() => InvitationEntity, (invitation) => invitation.wishes, {
-    onDelete: 'CASCADE',
-  })
+  @ManyToOne(() => InvitationEntity, (i) => i.wishes, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'invitationId' })
   invitation: InvitationEntity;
+
+  @ManyToOne(() => GuestEntity, { onDelete: 'SET NULL', nullable: true })
+  @JoinColumn({ name: 'guestId' })
+  guest?: GuestEntity;
 }

@@ -1,4 +1,8 @@
-import { WishRepository, InvitationRepository } from '@/repositories';
+import {
+  GuestRepository,
+  InvitationRepository,
+  WishRepository,
+} from '@/repositories';
 import { TypeOrmExModule } from '@/typeorm';
 import { Module } from '@nestjs/common';
 import { WishService } from './wish.service';
@@ -8,8 +12,10 @@ import { WishService } from './wish.service';
     TypeOrmExModule.forCustomRepository([
       WishRepository,
       InvitationRepository,
+      GuestRepository,
     ]),
   ],
+  controllers: [],
   providers: [WishService],
   exports: [WishService],
 })

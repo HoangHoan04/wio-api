@@ -4,60 +4,73 @@ import { ActionLogRepository } from '@/repositories';
 import { Injectable } from '@nestjs/common';
 import { FindOptionsWhere } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { ActionLogCreateDto } from './action-log.dto';
+import { ActionLogCreateDto, ActionLogFilterDto } from './action-log.dto';
 
 @Injectable()
 export class ActionLogService {
-  constructor(private repo: ActionLogRepository) {}
+  constructor(private readonly repo: ActionLogRepository) {}
 
+  /* ============================================================
+   * CREATE — 1 bản ghi
+   * ============================================================ */
   async create(dto: ActionLogCreateDto): Promise<void> {
-    const actionLog = new ActionLogEntity();
-    actionLog.id = uuidv4();
-    actionLog.createdById = dto.createdById;
-    actionLog.createdByCode = dto.createdByCode;
-    actionLog.createdByName = dto.createdByName;
-    actionLog.createdNote = dto.createdNote;
-    actionLog.actionType = dto.actionType;
-    actionLog.entityId = dto.entityId;
-    actionLog.entityName = dto.entityName;
-    actionLog.oldValue = dto.oldValue;
-    actionLog.newValue = dto.newValue;
-    actionLog.ipAddress = dto.ipAddress;
-    actionLog.userAgent = dto.userAgent;
-    actionLog.location = dto.location;
+    const actionLog = this.repo.create({
+      id: uuidv4(),
+      createdById: dto.createdById,
+      createdByCode: dto.createdByCode,
+      createdByName: dto.createdByName,
+      createdNote: dto.createdNote,
+      actionType: dto.actionType,
+      entityId: dto.entityId,
+      entityName: dto.entityName,
+      oldValue: dto.oldValue,
+      newValue: dto.newValue,
+      ipAddress: dto.ipAddress,
+      userAgent: dto.userAgent,
+      location: dto.location,
+    });
+
     await this.repo.insert(actionLog);
   }
 
+  /* ============================================================
+   * CREATE — nhiều bản ghi (bulk)
+   * ============================================================ */
   async createList(dto: ActionLogCreateDto[]): Promise<void> {
-    const lstInsert: ActionLogEntity[] = [];
-    for (const item of dto) {
-      const actionLog = new ActionLogEntity();
-      actionLog.id = uuidv4();
-      actionLog.createdById = item.createdById;
-      actionLog.createdByCode = item.createdByCode;
-      actionLog.createdByName = item.createdByName;
-      actionLog.createdNote = item.createdNote;
-      actionLog.actionType = item.actionType;
-      actionLog.entityId = item.entityId;
-      actionLog.entityName = item.entityName;
-      actionLog.oldValue = item.oldValue;
-      actionLog.newValue = item.newValue;
-      actionLog.ipAddress = item.ipAddress;
-      actionLog.userAgent = item.userAgent;
-      actionLog.location = item.location;
+    if (!dto?.length) return;
 
-      lstInsert.push(actionLog);
-    }
+    const lstInsert: ActionLogEntity[] = dto.map((item) =>
+      this.repo.create({
+        id: uuidv4(),
+        createdById: item.createdById,
+        createdByCode: item.createdByCode,
+        createdByName: item.createdByName,
+        createdNote: item.createdNote,
+        actionType: item.actionType,
+        entityId: item.entityId,
+        entityName: item.entityName,
+        oldValue: item.oldValue,
+        newValue: item.newValue,
+        ipAddress: item.ipAddress,
+        userAgent: item.userAgent,
+        location: item.location,
+      }),
+    );
+
     await this.repo.insert(lstInsert);
   }
 
-  async pagination(data: PaginationDto) {
+  /* ============================================================
+   * PAGINATION
+   * ============================================================ */
+  async pagination(data: PaginationDto<ActionLogFilterDto>) {
     const { skip = 0, take = 10, where = {} } = data || {};
     const whereCon: FindOptionsWhere<ActionLogEntity> = {};
 
     if (where.entityName) whereCon.entityName = where.entityName;
     if (where.entityId) whereCon.entityId = where.entityId;
-    if (where.createdBy) whereCon.createdById = where.createdBy;
+    if (where.createdById) whereCon.createdById = where.createdById;
+    if (where.createdByName) whereCon.createdByName = where.createdByName;
     if (where.actionType) whereCon.actionType = where.actionType;
 
     const [list, total] = await this.repo.findAndCount({
@@ -67,9 +80,6 @@ export class ActionLogService {
       order: { createdAt: 'DESC' },
     });
 
-    return {
-      data: list,
-      total,
-    };
+    return { data: list, total };
   }
 }

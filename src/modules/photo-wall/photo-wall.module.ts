@@ -1,4 +1,8 @@
-import { InvitationRepository, PhotoWallRepository } from '@/repositories';
+import {
+  GuestRepository,
+  InvitationRepository,
+  PhotoWallRepository,
+} from '@/repositories';
 import { TypeOrmExModule } from '@/typeorm';
 import { Module } from '@nestjs/common';
 import { PhotoWallService } from './photo-wall.service';
@@ -8,8 +12,10 @@ import { PhotoWallService } from './photo-wall.service';
     TypeOrmExModule.forCustomRepository([
       PhotoWallRepository,
       InvitationRepository,
+      GuestRepository,
     ]),
   ],
+  controllers: [],
   providers: [PhotoWallService],
   exports: [PhotoWallService],
 })

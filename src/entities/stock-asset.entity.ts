@@ -1,46 +1,49 @@
 import { enumData } from '@/common/constanst/enumData';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity, Index } from 'typeorm';
 import { BaseEntity } from './base.entity';
 
 @Entity('stock_assets')
 @Index('IDX_stock_asset_kind_active', ['kind', 'isActive', 'sortOrder'])
 export class StockAssetEntity extends BaseEntity {
+  @ApiProperty({ description: 'Tên hiển thị của asset' })
   @Column({ type: 'varchar', length: 150, nullable: false })
-  @ApiProperty({ description: 'Tên hiển thị' })
   title: string;
 
-  @Column({ type: 'varchar', length: 40, nullable: false })
+  @ApiProperty({
+    description: 'Danh mục asset',
+    enum: enumData.STOCK_ASSET_CATEGORY,
+  })
   @Index()
-  @ApiProperty({ description: 'Danh mục', enum: enumData.STOCK_ASSET_CATEGORY })
+  @Column({ type: 'varchar', length: 40, nullable: false })
   category: string;
 
+  @ApiPropertyOptional({ description: 'Từ khóa tìm kiếm', type: [String] })
   @Column({ type: 'simple-array', nullable: true })
-  @ApiProperty({ description: 'Từ khóa tìm kiếm', required: false })
   tags?: string[];
 
+  @ApiProperty({ description: 'URL file asset (PNG/WebP/JPEG)' })
   @Column({ type: 'text', nullable: false })
-  @ApiProperty({ description: 'URL PNG/WebP/JPEG (CORS)' })
   src: string;
 
+  @ApiPropertyOptional({ description: 'URL ảnh thumbnail (mặc định = src)' })
   @Column({ type: 'text', nullable: true })
-  @ApiProperty({ description: 'Thumbnail, mặc định = src', required: false })
   thumb?: string;
 
-  @Column({ type: 'varchar', length: 20, nullable: false, default: 'sticker' })
-  @Index()
   @ApiProperty({ description: 'Loại asset', enum: enumData.STOCK_ASSET_KIND })
+  @Index()
+  @Column({ type: 'varchar', length: 20, nullable: false })
   kind: string;
 
+  @ApiPropertyOptional({ description: 'Bản quyền / nguồn của asset' })
   @Column({ type: 'varchar', length: 120, nullable: true })
-  @ApiProperty({ description: 'Bản quyền / nguồn', required: false })
   license?: string;
 
-  @Column({ type: 'int', default: 0, nullable: false })
   @ApiProperty({ description: 'Thứ tự hiển thị' })
+  @Column({ type: 'int', default: 0, nullable: false })
   sortOrder: number;
 
+  @ApiProperty({ description: 'Đang hiển thị trên editor' })
   @Column({ type: 'boolean', default: true, nullable: false })
-  @ApiProperty({ description: 'Đang hiện trên editor' })
   isActive: boolean;
 }

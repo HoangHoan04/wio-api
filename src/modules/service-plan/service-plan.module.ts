@@ -9,6 +9,7 @@ import { ServicePlanService } from './service-plan.service';
     TypeOrmExModule.forCustomRepository([ServicePlanRepository]),
     ActionLogModule,
   ],
+  controllers: [],
   providers: [ServicePlanService],
   exports: [ServicePlanService],
 })

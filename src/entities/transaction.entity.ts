@@ -1,5 +1,5 @@
 import { enumData } from '@/common/constanst/enumData';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { PromotionEntity } from './promotion.entity';
@@ -7,44 +7,72 @@ import { SubscriptionEntity } from './subscription.entity';
 import { UserEntity } from './user.entity';
 
 @Entity('transactions')
-@Index(['providerRef'], { unique: true, where: `"providerRef" IS NOT NULL AND "isDeleted" = false` })
+@Index(['providerRef'], {
+  unique: true,
+  where: `"providerRef" IS NOT NULL AND "isDeleted" = false`,
+})
 export class TransactionEntity extends BaseEntity {
-  @Column({ type: 'uuid', nullable: false })
+  @ApiProperty({ description: 'ID user thực hiện giao dịch' })
   @Index()
-  @ApiProperty({ description: 'ID người dùng' })
+  @Column({ type: 'uuid', nullable: false })
   userId: string;
 
+  @ApiPropertyOptional({ description: 'ID thuê bao liên quan' })
   @Column({ type: 'uuid', nullable: true })
-  @ApiProperty({ description: 'ID thuê bao', required: false })
   subscriptionId?: string;
 
+  @ApiPropertyOptional({ description: 'ID khuyến mãi áp dụng' })
   @Column({ type: 'uuid', nullable: true })
-  @ApiProperty({ description: 'ID khuyến mãi', required: false })
   promotionId?: string;
 
-  @Column({ type: 'bigint', nullable: false })
-  @ApiProperty({ description: 'Số tiền VND' })
+  @ApiProperty({ description: 'Số tiền giao dịch (VND)' })
+  @Column({
+    type: 'bigint',
+    nullable: false,
+    transformer: {
+      to: (v: number) => v,
+      from: (v: string) => Number(v),
+    },
+  })
   amountVnd: number;
 
+  @ApiProperty({ description: 'Số tiền được giảm (VND)' })
+  @Column({
+    type: 'bigint',
+    nullable: false,
+    default: 0,
+    transformer: {
+      to: (v: number) => v,
+      from: (v: string) => Number(v),
+    },
+  })
+  discountVnd: number;
+
+  @ApiProperty({
+    description: 'Phương thức thanh toán',
+    enum: enumData.TX_METHOD,
+  })
   @Column({ type: 'varchar', length: 30, nullable: false })
-  @ApiProperty({ description: 'Cổng thanh toán', enum: enumData.TX_METHOD })
   method: string;
 
-  @Column({ type: 'varchar', length: 30, nullable: false })
+  @ApiProperty({
+    description: 'Trạng thái giao dịch',
+    enum: enumData.TX_STATUS,
+  })
   @Index()
-  @ApiProperty({ description: 'Trạng thái', enum: enumData.TX_STATUS })
+  @Column({ type: 'varchar', length: 30, nullable: false })
   status: string;
 
+  @ApiPropertyOptional({ description: 'Mã giao dịch từ provider' })
   @Column({ type: 'varchar', length: 255, nullable: true })
-  @ApiProperty({ description: 'Mã giao dịch provider', required: false })
   providerRef?: string;
 
+  @ApiPropertyOptional({ description: 'Payload webhook thô từ provider' })
   @Column({ type: 'jsonb', nullable: true })
-  @ApiProperty({ description: 'Payload webhook', required: false })
   rawPayload?: Record<string, any>;
 
+  @ApiPropertyOptional({ description: 'Thời điểm thanh toán thành công' })
   @Column({ type: 'timestamptz', nullable: true })
-  @ApiProperty({ description: 'Thời điểm thanh toán', required: false })
   paidAt?: Date;
 
   @ManyToOne(() => UserEntity, { onDelete: 'CASCADE' })

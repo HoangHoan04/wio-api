@@ -11,12 +11,12 @@ export class ReviewPublicController {
   @Get('list')
   @ApiOperation({ summary: 'Danh sách đánh giá đã duyệt cho trang chủ' })
   async list(@Query() query: PublicReviewListDto) {
-    return await this.service.listPublic(query);
+    return this.service.listPublic(query);
   }
 
   @Post('create')
   @ApiOperation({ summary: 'Khách gửi đánh giá (chờ duyệt)' })
   async create(@Body() body: PublicCreateReviewDto) {
-    return await this.service.createPublic(body);
+    return this.service.createPublic(body);
   }
 }

@@ -1,5 +1,6 @@
 import { enumData } from '@/common/constanst/enumData';
 import { IdDto, PaginationDto, UserDto } from '@/dto';
+import { MusicBackgroundEntity } from '@/entities';
 import { MusicBackgroundRepository } from '@/repositories';
 import { InjectQueue } from '@nestjs/bull';
 import {
@@ -10,14 +11,24 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Queue } from 'bull';
-import { FindOptionsWhere } from 'typeorm';
+import { FindOptionsWhere, ILike } from 'typeorm';
+import { v4 as uuidv4 } from 'uuid';
 import { UploadFileService } from '../upload-file/upload-file.service';
+import { YoutubeAudioService } from '../youtube-audio';
 import {
-  YoutubeAudioProviderType,
-  YoutubeAudioService,
-} from '../youtube-audio';
+  DEFAULT_YOUTUBE_PROVIDER,
+  MAX_YOUTUBE_DURATION_SECONDS,
+  MUSIC_AUDIO_BUCKET,
+  QUEUE_TIMEOUT_MS,
+  YOUTUBE_IMPORT_JOB,
+  YOUTUBE_IMPORT_QUEUE,
+  YoutubeProvider,
+} from './constants/music-background.constant';
 import {
+  CancelImportDto,
   CreateMusicBackgroundDto,
+  FilterMusicBackgroundDto,
+  GetYoutubeInfoDto,
   ImportYoutubeDto,
   UpdateMusicBackgroundDto,
 } from './dto';
@@ -25,6 +36,19 @@ import {
   extractYoutubeVideoId,
   normalizeYoutubeUrl,
 } from './utils/youtube-url.util';
+
+/* ============================================================
+ * JOB DATA
+ * ============================================================ */
+export type YoutubeJobData = {
+  youtubeUrl: string;
+  title: string;
+  author: string;
+  duration: string;
+  provider: YoutubeProvider;
+  userId?: string;
+  type: string;
+};
 
 @Injectable()
 export class MusicBackgroundService {
@@ -35,22 +59,30 @@ export class MusicBackgroundService {
     private readonly uploadFileService: UploadFileService,
     private readonly youtubeAudioService: YoutubeAudioService,
     private readonly configService: ConfigService,
-    @InjectQueue('youtube-import') private readonly youtubeQueue: Queue,
+    @InjectQueue(YOUTUBE_IMPORT_QUEUE) private readonly youtubeQueue: Queue,
   ) {}
 
-  async paginationActive(data?: PaginationDto<any>, user?: UserDto) {
-    const { skip = 0, take = 10, where = {} } = data || {};
-    const whereCon: FindOptionsWhere<any> = {
+  /* ============================================================
+   * PAGINATION — Public (chỉ nhạc READY + active)
+   * ============================================================ */
+  async paginationActive(
+    data: PaginationDto<FilterMusicBackgroundDto> = {},
+    user?: UserDto,
+  ) {
+    const { skip = 0, take = 10, where = {} } = data;
+
+    const whereCon: FindOptionsWhere<MusicBackgroundEntity> = {
       isDeleted: false,
       isActive: true,
-      status: enumData.MUSIC_PROCESS_STATUS.COMPLETED.code,
+      status: enumData.MUSIC_STATUS.READY.code,
     };
 
-    if (where.type === 'user' && user) {
-      whereCon.type = 'user';
+    // User chỉ thấy nhạc ADMIN + nhạc USER của chính mình
+    if (where.type === enumData.MUSIC_TYPE.USER.code && user) {
+      whereCon.type = enumData.MUSIC_TYPE.USER.code;
       whereCon.createdBy = user.id;
     } else {
-      whereCon.type = 'admin';
+      whereCon.type = enumData.MUSIC_TYPE.ADMIN.code;
     }
 
     const [list, total] = await this.musicRepo.findAndCount({
@@ -63,9 +95,21 @@ export class MusicBackgroundService {
     return { data: list, total };
   }
 
-  async pagination(data: PaginationDto<any>) {
+  /* ============================================================
+   * PAGINATION — Admin (xem hết)
+   * ============================================================ */
+  async pagination(data: PaginationDto<FilterMusicBackgroundDto>) {
     const { skip = 0, take = 10, where = {} } = data;
-    const whereCon: FindOptionsWhere<any> = { isDeleted: false };
+
+    const whereCon: FindOptionsWhere<MusicBackgroundEntity> = {
+      isDeleted: false,
+    };
+
+    if (where.name) whereCon.name = ILike(`%${where.name}%`);
+    if (where.author) whereCon.author = ILike(`%${where.author}%`);
+    if (where.isActive !== undefined) whereCon.isActive = where.isActive;
+    if (where.status) whereCon.status = where.status;
+    if (where.type) whereCon.type = where.type;
 
     const [list, total] = await this.musicRepo.findAndCount({
       where: whereCon,
@@ -77,51 +121,102 @@ export class MusicBackgroundService {
     return { data: list, total };
   }
 
-  async findOne(id: string) {
-    const music = await this.musicRepo.findOne({ where: { id } });
-    if (!music) {
-      throw new NotFoundException('Không tìm thấy nhạc nền');
-    }
-    return music;
+  /* ============================================================
+   * FIND BY ID
+   * ============================================================ */
+  async findById(id: string) {
+    const music = await this.musicRepo.findOne({
+      where: { id, isDeleted: false },
+    });
+    if (!music) throw new NotFoundException('Không tìm thấy nhạc nền');
+    return { message: 'Thành công', data: music };
   }
 
-  async create(createDto: CreateMusicBackgroundDto, user?: UserDto) {
+  /* ============================================================
+   * CREATE — user tự upload
+   * ============================================================ */
+  async create(dto: CreateMusicBackgroundDto, user?: UserDto) {
+    // Nếu có audioUrl → READY, ngược lại PENDING
+    const status = dto.audioUrl
+      ? enumData.MUSIC_STATUS.READY.code
+      : enumData.MUSIC_STATUS.PENDING.code;
+
     const music = this.musicRepo.create({
-      ...createDto,
-      status: enumData.MUSIC_PROCESS_STATUS.COMPLETED.code,
+      ...dto,
+      id: uuidv4(),
+      status,
+      isActive: dto.isActive ?? !!dto.audioUrl,
       createdBy: user?.id,
     });
-    return this.musicRepo.save(music);
+
+    const saved = await this.musicRepo.save(music);
+    return { message: 'Tạo nhạc nền thành công', data: saved };
   }
 
-  async update(id: string, updateDto: UpdateMusicBackgroundDto) {
-    const music = await this.findOne(id);
-    Object.assign(music, updateDto);
-    return this.musicRepo.save(music);
+  /* ============================================================
+   * UPDATE
+   * ============================================================ */
+  async update(dto: UpdateMusicBackgroundDto, user?: UserDto) {
+    const { id, ...rest } = dto;
+
+    const music = await this.musicRepo.findOne({
+      where: { id, isDeleted: false },
+    });
+    if (!music) throw new NotFoundException('Không tìm thấy nhạc nền');
+
+    Object.assign(music, rest);
+    music.updatedBy = user?.id;
+
+    const saved = await this.musicRepo.save(music);
+    return { message: 'Cập nhật nhạc nền thành công', data: saved };
   }
 
-  async remove(id: string) {
-    const music = await this.findOne(id);
-    return this.musicRepo.remove(music);
+  /* ============================================================
+   * DELETE (soft)
+   * ============================================================ */
+  async remove(id: string, user?: UserDto) {
+    const music = await this.musicRepo.findOne({
+      where: { id, isDeleted: false },
+    });
+    if (!music) throw new NotFoundException('Không tìm thấy nhạc nền');
+
+    music.isDeleted = true;
+    music.updatedBy = user?.id;
+    await this.musicRepo.save(music);
+
+    return { message: 'Xoá nhạc nền thành công' };
   }
 
+  /* ============================================================
+   * INCREMENT USAGE (atomic)
+   * ============================================================ */
   async incrementUsage(data: IdDto) {
-    const music = await this.findOne(data.id);
-    music.usageCount += 1;
-    return this.musicRepo.save(music);
+    const music = await this.musicRepo.findOne({
+      where: { id: data.id, isDeleted: false },
+    });
+    if (!music) throw new NotFoundException('Không tìm thấy nhạc nền');
+
+    await this.musicRepo.increment({ id: data.id }, 'usageCount', 1);
+
+    return { message: 'Đã tăng lượt sử dụng' };
   }
 
+  /* ============================================================
+   * IMPORT YOUTUBE (queue + fallback)
+   * ============================================================ */
   async importYoutube(dto: ImportYoutubeDto, user?: UserDto) {
     const youtubeUrl = normalizeYoutubeUrl(dto.youtubeUrl);
     const provider =
       dto.provider ||
-      this.configService.get<YoutubeAudioProviderType>('YOUTUBE_AUDIO_PROVIDER') ||
-      'youtube-dl-exec';
+      this.configService.get<YoutubeProvider>('YOUTUBE_AUDIO_PROVIDER') ||
+      DEFAULT_YOUTUBE_PROVIDER;
+
     const videoId = extractYoutubeVideoId(youtubeUrl);
     if (!videoId) {
       throw new BadRequestException('Link YouTube không hợp lệ');
     }
 
+    // Metadata nhanh từ oEmbed
     let title = 'YouTube Audio';
     let author = 'Unknown';
 
@@ -134,42 +229,45 @@ export class MusicBackgroundService {
         author = data.author_name || author;
       }
     } catch (e) {
-      this.logger.warn(`oEmbed failed during import submission: ${e}`);
+      this.logger.warn(`oEmbed failed: ${e}`);
     }
 
-    const jobData = {
+    const jobData: YoutubeJobData = {
       youtubeUrl,
       title,
       author,
       duration: '—',
       provider,
       userId: user?.id,
-      type: dto.type || (user ? 'user' : 'admin'),
+      type:
+        dto.type ||
+        (user ? enumData.MUSIC_TYPE.USER.code : enumData.MUSIC_TYPE.ADMIN.code),
     };
 
-    this.logger.log(`[IMPORT] Attempting to add job to queue (provider=${provider})...`);
-    const queueTimeout = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('Queue timeout — Redis unavailable')), 1000),
-    );
+    this.logger.log(`[IMPORT] Enqueue job (provider=${provider})...`);
 
     try {
       await Promise.race([
-        this.youtubeQueue.add('import', jobData, {
+        this.youtubeQueue.add(YOUTUBE_IMPORT_JOB, jobData, {
           attempts: 3,
           backoff: { type: 'exponential', delay: 5000 },
         }),
-        queueTimeout,
+        new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error('Queue timeout — Redis unavailable')),
+            QUEUE_TIMEOUT_MS,
+          ),
+        ),
       ]);
-      this.logger.log(
-        `[IMPORT] Enqueued job via Redis queue. URL=${youtubeUrl} provider=${provider}`,
-      );
+      this.logger.log(`[IMPORT] Enqueued. URL=${youtubeUrl}`);
     } catch (queueError: any) {
       this.logger.warn(
-        `[IMPORT] Queue unavailable (${queueError.message}), running directly in background...`,
+        `[IMPORT] Queue unavailable (${queueError.message}), chạy nền...`,
       );
+
       setImmediate(() => {
         this.processYoutube(jobData).catch((err) => {
-          this.logger.error(`[IMPORT] Background processing failed: ${err.message}`);
+          this.logger.error(`[IMPORT] Background failed: ${err.message}`);
         });
       });
     }
@@ -177,119 +275,103 @@ export class MusicBackgroundService {
     return { message: 'Đã thêm vào hàng đợi xử lý', provider };
   }
 
-  async processYoutube(data: {
-    youtubeUrl: string;
-    title: string;
-    author: string;
-    duration: string;
-    provider: YoutubeAudioProviderType;
-    userId?: string;
-    type?: string;
-  }) {
-    let music: any = null;
+  /* ============================================================
+   * PROCESS YOUTUBE
+   * ============================================================ */
+  async processYoutube(data: YoutubeJobData) {
+    let music: MusicBackgroundEntity | null = null;
     const startTime = Date.now();
     const elapsed = () => `${((Date.now() - startTime) / 1000).toFixed(1)}s`;
 
     this.logger.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
     this.logger.log(`[IMPORT START] provider=${data.provider}`);
     this.logger.log(`[IMPORT] URL: ${data.youtubeUrl}`);
-    this.logger.log(`[IMPORT] Title: ${data.title}`);
     this.logger.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
 
     try {
-      this.logger.log(`[IMPORT][${elapsed()}] Step 1/4: Saving DB record (status=PROCESSING)...`);
+      // Step 1 — Tạo record PROCESSING
+      this.logger.log(`[IMPORT][${elapsed()}] Step 1/4: Saving DB record...`);
       music = this.musicRepo.create({
+        id: uuidv4(),
         name: data.title,
         author: data.author,
         duration: data.duration,
         youtubeUrl: data.youtubeUrl,
-        status: enumData.MUSIC_PROCESS_STATUS.PROCESSING.code,
+        status: enumData.MUSIC_STATUS.PROCESSING.code,
         isActive: false,
         usageCount: 0,
-        type: data.type || 'user', 
-        createdAt: new Date(),
-        createdBy: data.userId, 
+        type: data.type,
+        createdBy: data.userId,
       });
       await this.musicRepo.save(music);
-      this.logger.log(`[IMPORT][${elapsed()}] Step 1/4: DB record saved. musicId=${music.id}`);
+      this.logger.log(`[IMPORT][${elapsed()}] Step 1/4: musicId=${music.id}`);
 
-      this.logger.log(`[IMPORT][${elapsed()}] Step 2/4: Starting audio download via ${data.provider}...`);
-      this.logger.log(`[IMPORT][${elapsed()}]   → This may take several minutes for large videos`);
-
+      // Step 2 — Download audio
+      this.logger.log(`[IMPORT][${elapsed()}] Step 2/4: Downloading...`);
       const result = await this.youtubeAudioService.downloadAudio(
         data.youtubeUrl,
         data.provider,
-        { maxDurationSeconds: 600 },
+        { maxDurationSeconds: MAX_YOUTUBE_DURATION_SECONDS },
       );
 
-      this.logger.log(`[IMPORT][${elapsed()}] Step 2/4: Download complete.`);
-      this.logger.log(`[IMPORT][${elapsed()}]   → hasStream=${!!result.stream} hasFilePath=${!!result.filePath} hasDirectUrl=${!!result.directUrl}`);
-      this.logger.log(`[IMPORT][${elapsed()}]   → mimeType=${result.mimeType}`);
-
-      this.logger.log(`[IMPORT][${elapsed()}] Step 3/4: Uploading audio to storage...`);
-
+      // Step 3 — Upload
+      this.logger.log(`[IMPORT][${elapsed()}] Step 3/4: Uploading...`);
       let uploadResult: { fileName: string; fileUrl: string };
 
       if (result.stream) {
-        this.logger.log(`[IMPORT][${elapsed()}]   → Uploading from stream...`);
         uploadResult = await this.uploadFileService.uploadAudioFromStream(
           result.stream,
-          'wio-audio-background',
+          MUSIC_AUDIO_BUCKET,
           result.mimeType,
         );
       } else if (result.filePath) {
-        this.logger.log(`[IMPORT][${elapsed()}]   → Uploading from file: ${result.filePath}`);
         uploadResult = await this.uploadFileService.uploadAudioFromFilePath(
           result.filePath,
-          'wio-audio-background',
+          MUSIC_AUDIO_BUCKET,
           result.mimeType,
         );
       } else if (result.directUrl) {
-        this.logger.log(`[IMPORT][${elapsed()}]   → Downloading from directUrl then re-uploading...`);
         const response = await fetch(result.directUrl);
         if (!response.ok || !response.body) {
           throw new Error('Không thể tải file từ public API');
         }
         uploadResult = await this.uploadFileService.uploadAudioFromStream(
           response.body as unknown as NodeJS.ReadableStream,
-          'wio-audio-background',
+          MUSIC_AUDIO_BUCKET,
           result.mimeType,
         );
       } else {
-        throw new Error('Provider did not return audio stream, file or URL');
+        throw new Error('Provider không trả stream/file/URL');
       }
 
-      this.logger.log(`[IMPORT][${elapsed()}] Step 3/4: Upload complete.`);
-      this.logger.log(`[IMPORT][${elapsed()}]   → fileUrl=${uploadResult.fileUrl}`);
-
-      this.logger.log(`[IMPORT][${elapsed()}] Step 4/4: Updating DB record (status=COMPLETED)...`);
+      // Step 4 — Update record
+      this.logger.log(`[IMPORT][${elapsed()}] Step 4/4: Updating DB...`);
       music.audioUrl = uploadResult.fileUrl;
-      
+
       if (result.info) {
-        music.duration = result.info.durationText || music.duration;
-        if (result.info.title && result.info.title !== 'YouTube Video' && result.info.title !== 'YouTube Audio') {
+        if (result.info.durationText) music.duration = result.info.durationText;
+        if (
+          result.info.title &&
+          !['YouTube Video', 'YouTube Audio'].includes(result.info.title)
+        ) {
           music.name = result.info.title;
         }
         if (result.info.author && result.info.author !== 'Unknown') {
           music.author = result.info.author;
         }
       }
-      
-      music.status = enumData.MUSIC_PROCESS_STATUS.COMPLETED.code;
+
+      music.status = enumData.MUSIC_STATUS.READY.code;
       music.isActive = true;
 
-      const savedMusic = await this.musicRepo.save(music);
-      this.logger.log(`[IMPORT][${elapsed()}] Step 4/4: Done! musicId=${savedMusic.id}`);
-      this.logger.log(`[IMPORT SUCCESS] Total time: ${elapsed()} — "${music.name}"`);
-      this.logger.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-      return savedMusic;
+      const saved = await this.musicRepo.save(music);
+      this.logger.log(`[IMPORT SUCCESS] ${elapsed()} — "${saved.name}"`);
+      return saved;
     } catch (error: any) {
-      this.logger.error(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
       this.logger.error(`[IMPORT FAILED][${elapsed()}] ${error.message}`);
-      this.logger.error(`[IMPORT FAILED] Stack: ${error.stack}`);
-      this.logger.error(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+
       if (music) {
-        music.status = enumData.MUSIC_PROCESS_STATUS.FAILED.code;
+        music.status = enumData.MUSIC_STATUS.FAILED.code;
         music.isActive = false;
         await this.musicRepo.save(music).catch(() => null);
       }
@@ -297,12 +379,13 @@ export class MusicBackgroundService {
     }
   }
 
-  async getYoutubeInfo(url: string, provider?: YoutubeAudioProviderType) {
-    const normalizedUrl = normalizeYoutubeUrl(url);
+  /* ============================================================
+   * GET YOUTUBE INFO
+   * ============================================================ */
+  async getYoutubeInfo(dto: GetYoutubeInfoDto) {
+    const normalizedUrl = normalizeYoutubeUrl(dto.url);
     const videoId = extractYoutubeVideoId(normalizedUrl);
-    if (!videoId) {
-      throw new BadRequestException('Link YouTube không hợp lệ');
-    }
+    if (!videoId) throw new BadRequestException('Link YouTube không hợp lệ');
 
     let title = 'YouTube Video';
     let author = 'Unknown';
@@ -310,6 +393,7 @@ export class MusicBackgroundService {
     let durationSeconds = 0;
     let durationText = '—';
 
+    // ---- oEmbed ----
     try {
       const oEmbedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
       const res = await fetch(oEmbedUrl);
@@ -323,12 +407,14 @@ export class MusicBackgroundService {
       this.logger.warn(`oEmbed failed: ${e}`);
     }
 
+    // ---- Duration từ lemnoslife (public API) ----
     try {
       const lemnoUrl = `https://yt.lemnoslife.com/videos?part=contentDetails&id=${videoId}`;
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 4000);
       const res = await fetch(lemnoUrl, { signal: controller.signal });
       clearTimeout(timeout);
+
       if (res.ok) {
         const data = await res.json();
         const iso = data?.items?.[0]?.contentDetails?.duration;
@@ -339,11 +425,11 @@ export class MusicBackgroundService {
             const m = parseInt(match[2] || '0', 10);
             const s = parseInt(match[3] || '0', 10);
             durationSeconds = h * 3600 + m * 60 + s;
-            const totalMin = Math.floor(durationSeconds / 60);
-            const secs = durationSeconds % 60;
-            durationText = h > 0
-              ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-              : `${totalMin}:${String(secs).padStart(2, '0')}`;
+
+            durationText =
+              h > 0
+                ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+                : `${Math.floor(durationSeconds / 60)}:${String(durationSeconds % 60).padStart(2, '0')}`;
           }
         }
       }
@@ -351,10 +437,14 @@ export class MusicBackgroundService {
       this.logger.warn(`lemnoslife duration fetch failed: ${e}`);
     }
 
+    // ---- Fallback qua yt-dlp nếu thiếu duration ----
     if (durationSeconds === 0 || durationText === '—') {
       try {
-        this.logger.log(`[INFO FALLBACK] Lemnoslife duration missing, falling back to python-yt-dlp info for: ${normalizedUrl}`);
-        const info = await this.youtubeAudioService.getInfo(normalizedUrl, provider || 'python-yt-dlp');
+        this.logger.log(`[INFO FALLBACK] Python yt-dlp for: ${normalizedUrl}`);
+        const info = await this.youtubeAudioService.getInfo(
+          normalizedUrl,
+          dto.provider || 'python-yt-dlp',
+        );
         if (info) {
           title = info.title || title;
           author = info.author || author;
@@ -363,38 +453,51 @@ export class MusicBackgroundService {
           thumbnailUrl = info.thumbnail || thumbnailUrl;
         }
       } catch (err: any) {
-        this.logger.warn(`Fallback to python-yt-dlp info failed: ${err.message}`);
+        this.logger.warn(`yt-dlp info fallback failed: ${err.message}`);
       }
     }
 
-    return { id: videoId, title, author, durationSeconds, durationText, thumbnail: thumbnailUrl, thumbnailUrl, youtubeUrl: normalizedUrl };
+    return {
+      id: videoId,
+      title,
+      author,
+      durationSeconds,
+      durationText,
+      thumbnail: thumbnailUrl,
+      thumbnailUrl,
+      youtubeUrl: normalizedUrl,
+    };
   }
 
-  async cancelImport(url: string) {
-    const normalizedUrl = normalizeYoutubeUrl(url);
-    this.logger.log(`[IMPORT CANCEL] Request to cancel import for: ${normalizedUrl}`);
-    
+  /* ============================================================
+   * CANCEL IMPORT
+   * ============================================================ */
+  async cancelImport(dto: CancelImportDto) {
+    const normalizedUrl = normalizeYoutubeUrl(dto.url);
+    this.logger.log(`[IMPORT CANCEL] Request: ${normalizedUrl}`);
+
     const music = await this.musicRepo.findOne({
       where: [
         {
           youtubeUrl: normalizedUrl,
-          status: enumData.MUSIC_PROCESS_STATUS.PROCESSING.code,
+          status: enumData.MUSIC_STATUS.PROCESSING.code,
         },
         {
-          youtubeUrl: url,
-          status: enumData.MUSIC_PROCESS_STATUS.PROCESSING.code,
+          youtubeUrl: dto.url,
+          status: enumData.MUSIC_STATUS.PROCESSING.code,
         },
       ],
     });
 
-    if (music) {
-      music.status = enumData.MUSIC_PROCESS_STATUS.FAILED.code;
-      music.isActive = false;
-      await this.musicRepo.save(music);
-      this.logger.log(`[IMPORT CANCEL] Updated musicId ${music.id} status to FAILED`);
-      return { success: true, message: 'Đã hủy tải bài hát' };
+    if (!music) {
+      return { success: false, message: 'Không tìm thấy bài hát đang xử lý' };
     }
 
-    return { success: false, message: 'Không tìm thấy bài hát đang xử lý' };
+    music.status = enumData.MUSIC_STATUS.FAILED.code;
+    music.isActive = false;
+    await this.musicRepo.save(music);
+
+    this.logger.log(`[IMPORT CANCEL] musicId=${music.id} → FAILED`);
+    return { success: true, message: 'Đã huỷ tải bài hát' };
   }
 }

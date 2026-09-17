@@ -2,6 +2,7 @@ import {
   GuestRepository,
   InvitationRepository,
   SlugHistoryRepository,
+  SubscriptionRepository,
   TableRepository,
   WishRepository,
 } from '@/repositories';
@@ -14,11 +15,13 @@ import { InvitationService } from './invitation.service';
     TypeOrmExModule.forCustomRepository([
       InvitationRepository,
       SlugHistoryRepository,
+      SubscriptionRepository,
       GuestRepository,
       TableRepository,
       WishRepository,
     ]),
   ],
+  controllers: [],
   providers: [InvitationService],
   exports: [InvitationService],
 })

@@ -1,228 +1,266 @@
 import { enumData } from '@/common/constanst/enumData';
 import { IsEnumCode } from '@/common/decorators';
-import { ApiProperty, PartialType } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
   IsDate,
+  IsInt,
   IsNotEmpty,
   IsNumber,
   IsObject,
   IsOptional,
   IsString,
   IsUUID,
+  MaxLength,
   ValidateNested,
 } from 'class-validator';
 
+/* ============================================================
+ * NESTED — HOST
+ * ============================================================ */
 export class InvitationHostDto {
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ description: 'ID host (nếu update)' })
   @IsOptional()
   @IsUUID()
   id?: string;
 
-  @ApiProperty({ enum: enumData.HOST_ROLE })
+  @ApiProperty({ description: 'Vai trò', enum: enumData.HOST_ROLE })
   @IsNotEmpty()
   @IsEnumCode(enumData.HOST_ROLE)
   role: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Họ và tên đầy đủ' })
   @IsNotEmpty()
   @IsString()
   fullName: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ description: 'Tên ngắn' })
   @IsOptional()
   @IsString()
   shortName?: string;
 
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsString()
-  honorific?: string;
-
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ description: 'URL ảnh' })
   @IsOptional()
   @IsString()
   photoUrl?: string;
 
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @Type(() => Date)
-  @IsDate()
-  dob?: Date;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsString()
-  bio?: string;
-
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ description: 'MXH' })
   @IsOptional()
   @IsObject()
-  family?: Record<string, any>;
+  social?: Record<string, string>;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ description: 'Thứ tự' })
   @IsOptional()
-  @IsObject()
-  extra?: Record<string, any>;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsNumber()
+  @IsInt()
   sortOrder?: number;
 }
 
+/* ============================================================
+ * NESTED — EVENT
+ * ============================================================ */
 export class InvitationEventDto {
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsUUID()
   id?: string;
 
-  @ApiProperty({ enum: enumData.EVENT_KEY })
+  @ApiProperty({ description: 'Loại sự kiện', enum: enumData.EVENT_KEY })
   @IsNotEmpty()
   @IsEnumCode(enumData.EVENT_KEY)
   eventKey: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Tiêu đề' })
   @IsNotEmpty()
   @IsString()
   title: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ description: 'Thời gian bắt đầu' })
   @IsOptional()
   @Type(() => Date)
   @IsDate()
   startsAt?: Date;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ description: 'Thời gian kết thúc' })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  endsAt?: Date;
+
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   venue?: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   address?: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   mapsUrl?: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsNumber()
   lat?: number;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsNumber()
   lng?: number;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   dressCode?: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsBoolean()
   isPrimary?: boolean;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
-  @IsNumber()
+  @IsInt()
   sortOrder?: number;
 }
 
+/* ============================================================
+ * NESTED — GIFT
+ * ============================================================ */
 export class InvitationGiftDto {
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsUUID()
   id?: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Nhãn tài khoản' })
   @IsNotEmpty()
   @IsString()
   label: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   bankName?: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   accountNumber?: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   accountOwner?: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   qrUrl?: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({
+    description: 'Bên nhận quà',
+    enum: enumData.GUEST_SIDE,
+  })
   @IsOptional()
-  @IsNumber()
+  @IsEnumCode(enumData.GUEST_SIDE)
+  side?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
   sortOrder?: number;
 }
 
+/* ============================================================
+ * NESTED — TIMELINE
+ * ============================================================ */
 export class InvitationTimelineDto {
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  id?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  eventId?: string;
+
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   timeLabel?: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Tiêu đề mốc' })
   @IsNotEmpty()
   @IsString()
   title: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   description?: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
-  @IsNumber()
+  @IsString()
+  iconUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
   sortOrder?: number;
 }
 
+/* ============================================================
+ * NESTED — PHOTO
+ * ============================================================ */
 export class InvitationPhotoDto {
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  id?: string;
+
+  @ApiProperty({ description: 'URL ảnh' })
   @IsNotEmpty()
   @IsString()
   url: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   storageKey?: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   caption?: string;
 
-  @ApiProperty({ required: false, enum: enumData.PHOTO_KIND })
+  @ApiPropertyOptional({ enum: enumData.PHOTO_KIND })
   @IsOptional()
   @IsEnumCode(enumData.PHOTO_KIND)
   kind?: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
-  @IsNumber()
+  @IsInt()
   sortOrder?: number;
 }
 
+/* ============================================================
+ * NESTED — GUEST GROUP
+ * ============================================================ */
 export class GuestGroupDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  id?: string;
+
   @ApiProperty()
   @IsNotEmpty()
   @IsString()
@@ -233,123 +271,212 @@ export class GuestGroupDto {
   @IsString()
   name: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ enum: enumData.GUEST_SIDE })
   @IsOptional()
-  @IsNumber()
+  @IsEnumCode(enumData.GUEST_SIDE)
+  side?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsInt()
   sortOrder?: number;
 }
 
-export class CreateInvitationDto {
-  @ApiProperty({ required: false })
+/* ============================================================
+ * NESTED — WEDDING INFO (cô dâu / chú rể)
+ * ============================================================ */
+export class WeddingInfoDto {
+  @ApiProperty({ description: 'Tên cô dâu' })
+  @IsNotEmpty()
+  @IsString()
+  brideName: string;
+
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  brideShortName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  bridePhotoUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  brideBio?: string;
+
+  @ApiProperty({ description: 'Tên chú rể' })
+  @IsNotEmpty()
+  @IsString()
+  groomName: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  groomShortName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  groomPhotoUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  groomBio?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  loveStartedAt?: Date;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  loveStory?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  hashtag?: string;
+}
+
+/* ============================================================
+ * CREATE INVITATION
+ * ============================================================ */
+export class CreateInvitationDto {
+  @ApiPropertyOptional({ description: 'ID user (admin tạo hộ)' })
+  @IsOptional()
+  @IsUUID()
   userId?: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ description: 'ID template' })
   @IsOptional()
   @IsUUID()
   templateId?: string;
 
-  @ApiProperty({ enum: enumData.CARD_TYPE })
+  // ---- Phân loại ----
+  @ApiProperty({ description: 'Chế độ thiết kế', enum: enumData.DESIGN_MODE })
   @IsNotEmpty()
-  @IsEnumCode(enumData.CARD_TYPE)
-  cardType: string;
+  @IsEnumCode(enumData.DESIGN_MODE)
+  designMode: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Phong cách cưới', enum: enumData.WEDDING_THEME })
+  @IsNotEmpty()
+  @IsEnumCode(enumData.WEDDING_THEME)
+  weddingTheme: string;
+
+  // ---- Nội dung ----
+  @ApiProperty({ description: 'Tiêu đề thiệp' })
   @IsNotEmpty()
   @IsString()
+  @MaxLength(200)
   title: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Slug công khai' })
   @IsNotEmpty()
   @IsString()
+  @MaxLength(100)
   slug: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   invitationText?: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   thankYouText?: string;
 
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsString()
-  hashtag?: string;
-
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   heroImageUrl?: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ description: 'Bật/tắt section' })
   @IsOptional()
   @IsObject()
   sectionConfig?: Record<string, boolean>;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ description: 'ID nhạc nền' })
   @IsOptional()
-  @IsArray()
-  enabledModules?: string[];
+  @IsUUID()
+  musicId?: string;
 
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsObject()
-  music?: { url?: string; type?: string; autoplay?: boolean; name?: string };
-
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ description: 'Config nhạc' })
   @IsOptional()
   @IsObject()
-  extraContent?: Record<string, any>;
+  musicConfig?: { autoplay?: boolean; loop?: boolean; volume?: number };
 
-  @ApiProperty({ required: false })
-  @IsOptional()
-  customDesign?: any;
-
-  @ApiProperty({ required: false })
+  // ---- Chỉ dùng cho CANVA ----
+  @ApiPropertyOptional()
   @IsOptional()
   @IsObject()
-  coverConfig?: Record<string, any>;
+  customDesign?: Record<string, any>;
 
-  @ApiProperty({ type: [InvitationHostDto], required: false })
+  // ---- Chỉ dùng cho AI_SCAN ----
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsObject()
+  aiGeneratedMeta?: Record<string, any>;
+
+  // ---- SEO ----
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  seoTitle?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  seoDescription?: string;
+
+  // ---- Nested ----
+  @ApiPropertyOptional({ type: WeddingInfoDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => WeddingInfoDto)
+  weddingInfo?: WeddingInfoDto;
+
+  @ApiPropertyOptional({ type: [InvitationHostDto] })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => InvitationHostDto)
   hosts?: InvitationHostDto[];
 
-  @ApiProperty({ type: [InvitationEventDto], required: false })
+  @ApiPropertyOptional({ type: [InvitationEventDto] })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => InvitationEventDto)
   events?: InvitationEventDto[];
 
-  @ApiProperty({ type: [InvitationGiftDto], required: false })
+  @ApiPropertyOptional({ type: [InvitationGiftDto] })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => InvitationGiftDto)
   gifts?: InvitationGiftDto[];
 
-  @ApiProperty({ type: [InvitationTimelineDto], required: false })
+  @ApiPropertyOptional({ type: [InvitationTimelineDto] })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => InvitationTimelineDto)
   timelines?: InvitationTimelineDto[];
 
-  @ApiProperty({ type: [InvitationPhotoDto], required: false })
+  @ApiPropertyOptional({ type: [InvitationPhotoDto] })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => InvitationPhotoDto)
   photos?: InvitationPhotoDto[];
 
-  @ApiProperty({ type: [GuestGroupDto], required: false })
+  @ApiPropertyOptional({ type: [GuestGroupDto] })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
@@ -357,50 +484,64 @@ export class CreateInvitationDto {
   guestGroups?: GuestGroupDto[];
 }
 
+/* ============================================================
+ * UPDATE INVITATION
+ * ============================================================ */
 export class UpdateInvitationDto extends PartialType(CreateInvitationDto) {
   @ApiProperty()
   @IsUUID()
   @IsNotEmpty()
   id: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   slugReason?: string;
 }
 
+/* ============================================================
+ * FILTER
+ * ============================================================ */
 export class FilterInvitationDto {
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
+  @IsUUID()
   userId?: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
+  @IsUUID()
   templateId?: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ enum: enumData.DESIGN_MODE })
   @IsOptional()
-  @IsEnumCode(enumData.CARD_TYPE)
-  cardType?: string;
+  @IsEnumCode(enumData.DESIGN_MODE)
+  designMode?: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ enum: enumData.WEDDING_THEME })
+  @IsOptional()
+  @IsEnumCode(enumData.WEDDING_THEME)
+  weddingTheme?: string;
+
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   slug?: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   title?: string;
 
-  @ApiProperty({ required: false, enum: enumData.INVITATION_STATUS })
+  @ApiPropertyOptional({ enum: enumData.INVITATION_STATUS })
   @IsOptional()
   @IsEnumCode(enumData.INVITATION_STATUS)
   status?: string;
 }
 
+/* ============================================================
+ * ADMIN
+ * ============================================================ */
 export class AdminForceResetSlugDto {
   @ApiProperty()
   @IsNotEmpty()

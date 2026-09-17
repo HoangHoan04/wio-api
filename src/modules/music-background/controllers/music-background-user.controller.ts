@@ -1,52 +1,73 @@
-import { IdDto, UserDto } from '@/dto';
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { CreateMusicBackgroundDto, GetYoutubeInfoDto, ImportYoutubeDto } from '../dto';
-import { MusicBackgroundService } from '../music-background.service';
+import { enumData } from '@/common/constanst/enumData';
 import { CurrentUser } from '@/common/decorators';
 import { JwtAuthGuard } from '@/common/guards';
+import { IdDto, PaginationDto, UserDto } from '@/dto';
+import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  CancelImportDto,
+  CreateMusicBackgroundDto,
+  FilterMusicBackgroundDto,
+  GetYoutubeInfoDto,
+  ImportYoutubeDto,
+} from '../dto';
+import { MusicBackgroundService } from '../music-background.service';
 
 @ApiTags('User - Music Background')
-@Controller('music-background')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
+@Controller('music-background')
 export class MusicBackgroundUserController {
-  constructor(private readonly musicService: MusicBackgroundService) {}
+  constructor(private readonly service: MusicBackgroundService) {}
 
   @Post('active')
-  @ApiOperation({ summary: 'Lấy danh sách nhạc nền hoạt động' })
-  findAllActive(@Body() query: any, @CurrentUser() user: UserDto) {
-    return this.musicService.paginationActive(query, user);
+  @ApiOperation({ summary: 'Danh sách nhạc nền đang hoạt động' })
+  async findAllActive(
+    @Body() query: PaginationDto<FilterMusicBackgroundDto>,
+    @CurrentUser() user: UserDto,
+  ) {
+    return this.service.paginationActive(query, user);
   }
 
   @Post('import-youtube')
   @ApiOperation({ summary: 'Khách hàng nhập nhạc từ YouTube' })
-  importYoutube(@Body() importDto: ImportYoutubeDto, @CurrentUser() user: UserDto) {
-    return this.musicService.importYoutube(importDto, user);
+  async importYoutube(
+    @Body() dto: ImportYoutubeDto,
+    @CurrentUser() user: UserDto,
+  ) {
+    return this.service.importYoutube(
+      { ...dto, type: enumData.MUSIC_TYPE.USER.code },
+      user,
+    );
   }
 
   @Post('create')
   @ApiOperation({ summary: 'Khách hàng lưu thông tin nhạc tự upload' })
-  createUserMusic(@Body() createDto: CreateMusicBackgroundDto, @CurrentUser() user: UserDto) {
-    createDto.type = 'user';
-    return this.musicService.create(createDto, user);
+  async createUserMusic(
+    @Body() dto: CreateMusicBackgroundDto,
+    @CurrentUser() user: UserDto,
+  ) {
+    return this.service.create(
+      { ...dto, type: enumData.MUSIC_TYPE.USER.code },
+      user,
+    );
   }
 
   @Post('info')
   @ApiOperation({ summary: 'Lấy metadata YouTube (không tải)' })
-  getYoutubeInfo(@Body() body: GetYoutubeInfoDto) {
-    return this.musicService.getYoutubeInfo(body.url, body.provider);
+  async getYoutubeInfo(@Body() dto: GetYoutubeInfoDto) {
+    return this.service.getYoutubeInfo(dto);
   }
 
   @Post('increment-usage')
   @ApiOperation({ summary: 'Tăng lượt dùng bài hát' })
-  incrementUsage(@Body() data: IdDto) {
-    return this.musicService.incrementUsage(data);
+  async incrementUsage(@Body() dto: IdDto) {
+    return this.service.incrementUsage(dto);
   }
 
   @Post('cancel-import')
-  @ApiOperation({ summary: 'Hủy quá trình import YouTube' })
-  cancelImport(@Body('url') url: string) {
-    return this.musicService.cancelImport(url);
+  @ApiOperation({ summary: 'Huỷ quá trình import YouTube' })
+  async cancelImport(@Body() dto: CancelImportDto) {
+    return this.service.cancelImport(dto);
   }
 }

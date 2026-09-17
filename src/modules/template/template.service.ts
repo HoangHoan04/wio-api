@@ -1,299 +1,342 @@
 import { enumData } from '@/common/constanst/enumData';
 import { IdDto, PaginationDto, UserDto } from '@/dto';
-import { TemplateCardTypeEntity, TemplateEntity } from '@/entities';
-import { TemplateCardTypeRepository, TemplateRepository } from '@/repositories';
+import { TemplateEntity } from '@/entities';
+import { TemplateCategoryRepository, TemplateRepository } from '@/repositories';
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { FindOptionsWhere, ILike } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { ActionLogCreateDto } from '../action-log/action-log.dto';
 import { ActionLogService } from '../action-log/action-log.service';
 import {
   CreateTemplateDto,
+  FilterTemplateDto,
   SetIsDeletedTemplateDto,
   SetIsShowTemplateDto,
   SetPremiumTemplateDto,
   UpdateTemplateDto,
 } from './dto';
 
+/* ============================================================
+ * RELATIONS
+ * ============================================================ */
+const NESTED_RELATIONS = {
+  categories: true,
+  minPlan: true,
+} as const;
+
 @Injectable()
 export class TemplateService {
   constructor(
     private readonly repo: TemplateRepository,
-    private readonly cardTypeRepo: TemplateCardTypeRepository,
+    private readonly categoryRepo: TemplateCategoryRepository,
     private readonly actionLogService: ActionLogService,
   ) {}
 
-  async pagination(data: PaginationDto) {
-    const qb = this.repo
-      .createQueryBuilder('tpl')
-      .leftJoinAndSelect('tpl.minPlan', 'minPlan')
-      .leftJoinAndSelect('tpl.cardTypes', 'cardTypes');
+  /* ============================================================
+   * HELPER — Log ActionLog
+   * ============================================================ */
+  private async logAction(
+    user: UserDto,
+    actionType: string,
+    entity: TemplateEntity,
+    note: string,
+    oldValue?: any,
+    newValue?: any,
+  ) {
+    const dto: ActionLogCreateDto = {
+      entityId: entity.id,
+      entityName: 'TemplateEntity',
+      actionType,
+      createdById: user.id,
+      createdByCode: user.id,
+      createdByName: user.fullName || user.email || 'Admin',
+      createdNote: note,
+      oldValue,
+      newValue,
+    };
+    await this.actionLogService.create(dto);
+  }
 
-    if (data.where?.name !== undefined)
-      qb.andWhere('tpl.name ILIKE :name', { name: `%${data.where.name}%` });
-    if (data.where?.themeCode !== undefined)
-      qb.andWhere('tpl.themeCode = :themeCode', {
-        themeCode: data.where.themeCode,
-      });
-    if (data.where?.isShow !== undefined)
-      qb.andWhere('tpl.isShow = :isShow', { isShow: data.where.isShow });
-    if (data.where?.isPremium !== undefined)
-      qb.andWhere('tpl.isPremium = :isPremium', {
-        isPremium: data.where.isPremium,
-      });
-    if (data.where?.minPlanId !== undefined)
-      qb.andWhere('tpl.minPlanId = :minPlanId', {
-        minPlanId: data.where.minPlanId,
-      });
-    if ([true, false].includes(data.where?.isDeleted))
-      qb.andWhere('tpl.isDeleted = :isDeleted', {
-        isDeleted: data.where.isDeleted,
-      });
-    if (data.where?.cardType) {
-      qb.andWhere(
-        `EXISTS (
-          SELECT 1 FROM template_card_types tct
-          WHERE tct."templateId" = tpl.id
-            AND tct."cardType" = :cardType
-            AND tct."isDeleted" = false
-        )`,
-        { cardType: data.where.cardType },
-      );
-    }
+  /* ============================================================
+   * PAGINATION
+   * ============================================================ */
+  async pagination(data: PaginationDto<FilterTemplateDto>) {
+    const { skip = 0, take = 10, where = {} } = data;
+    const whereCon: FindOptionsWhere<TemplateEntity> = {};
 
-    const [list, total] = await qb
-      .skip(data.skip)
-      .take(data.take)
-      .orderBy('tpl.createdAt', 'DESC')
-      .getManyAndCount();
+    // Nếu không truyền isDeleted → mặc định false
+    whereCon.isDeleted = where.isDeleted ?? false;
+
+    if (where.name) whereCon.name = ILike(`%${where.name}%`);
+    if (where.themeCode) whereCon.themeCode = where.themeCode;
+    if (where.weddingTheme) whereCon.weddingTheme = where.weddingTheme;
+    if (where.isShow !== undefined) whereCon.isShow = where.isShow;
+    if (where.isPremium !== undefined) whereCon.isPremium = where.isPremium;
+    if (where.minPlanId) whereCon.minPlanId = where.minPlanId;
+
+    const [list, total] = await this.repo.findAndCount({
+      where: whereCon,
+      relations: NESTED_RELATIONS,
+      skip,
+      take,
+      order: { sortOrder: 'ASC', createdAt: 'DESC' },
+    });
 
     return { data: list, total };
   }
 
+  /* ============================================================
+   * FIND BY ID
+   * ============================================================ */
   async findById(data: IdDto) {
     const item = await this.repo.findOne({
-      where: { id: data.id },
-      relations: ['minPlan'],
+      where: { id: data.id, isDeleted: false },
+      relations: NESTED_RELATIONS,
     });
     if (!item) throw new NotFoundException('Không tìm thấy mẫu giao diện');
     return { message: 'Thành công', data: item };
   }
 
+  /* ============================================================
+   * INCREMENT VIEW / PREVIEW
+   * ============================================================ */
   async incrementView(data: IdDto) {
-    const item = await this.repo.findOne({ where: { id: data.id } });
+    const item = await this.repo.findOne({
+      where: { id: data.id, isDeleted: false },
+    });
     if (!item) throw new NotFoundException('Không tìm thấy mẫu giao diện');
-    item.viewCount = (item.viewCount ?? 0) + 1;
-    await this.repo.save(item);
-    return {
-      message: 'Cập nhật lượt dùng thành công',
-      data: { viewCount: item.viewCount },
-    };
+
+    await this.repo.increment({ id: data.id }, 'viewCount', 1);
+
+    return { message: 'Cập nhật lượt xem thành công' };
   }
 
   async incrementPreview(data: IdDto) {
-    const item = await this.repo.findOne({ where: { id: data.id } });
+    const item = await this.repo.findOne({
+      where: { id: data.id, isDeleted: false },
+    });
     if (!item) throw new NotFoundException('Không tìm thấy mẫu giao diện');
-    item.previewCount = (item.previewCount ?? 0) + 1;
-    await this.repo.save(item);
-    return {
-      message: 'Cập nhật lượt xem trước thành công',
-      data: { previewCount: item.previewCount },
-    };
+
+    await this.repo.increment({ id: data.id }, 'previewCount', 1);
+
+    return { message: 'Cập nhật lượt xem trước thành công' };
   }
 
+  /* ============================================================
+   * CREATE
+   * ============================================================ */
   async create(user: UserDto, dto: CreateTemplateDto) {
-    const template = new TemplateEntity();
-    template.id = uuidv4();
-    template.name = dto.name;
-    template.description = dto.description;
-    template.tags = dto.tags ?? [];
-    template.features = dto.features ?? null;
-    template.thumbnailUrl = dto.thumbnailUrl;
-    template.themeCode = dto.themeCode;
-    template.slug =
-      enumData.THEME_CODE[dto.themeCode]?.slug ||
-      `${dto.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`;
-    template.isShow = true;
-    template.isPremium = dto.isPremium;
-    template.minPlanId = dto.minPlanId;
-    template.trialDays = dto.trialDays;
-    template.themeLayout = dto.themeLayout;
-    template.presetTokens = dto.presetTokens;
-    template.createdBy = user.id;
-    template.createdAt = new Date();
+    const slug = dto.slug || this.generateSlug(dto.name);
 
-    const saved = await this.repo.save(template);
-    await this.syncCardTypes(saved.id, dto.cardTypes);
+    const entity = this.repo.create({
+      id: uuidv4(),
+      name: dto.name,
+      slug,
+      description: dto.description,
+      weddingTheme: dto.weddingTheme,
+      tags: dto.tags,
+      colorMood: dto.colorMood,
+      features: dto.features,
+      themeLayout: dto.themeLayout,
+      presetTokens: dto.presetTokens,
+      thumbnailUrl: dto.thumbnailUrl,
+      previewUrl: dto.previewUrl,
+      themeCode: dto.themeCode,
+      isShow: dto.isShow ?? true,
+      isPremium: dto.isPremium ?? false,
+      minPlanId: dto.minPlanId,
+      trialDays: dto.trialDays ?? 3,
+      sortOrder: dto.sortOrder ?? 0,
+      viewCount: 0,
+      usedCount: 0,
+      createdBy: user.id,
+    });
 
-    const actionLogDto: ActionLogCreateDto = {
-      entityId: template.id,
-      entityName: 'TemplateEntity',
-      actionType: enumData.ACTION_TYPE.CREATE.code,
-      createdById: user.id,
-      createdByCode: user.id,
-      createdByName: user.fullName || user.email,
-      createdNote: `Nhân viên ${user.fullName} tạo mới template: ${template.name} `,
-      oldValue: '{}',
-      newValue: JSON.stringify(template),
-    };
+    const saved = await this.repo.save(entity);
 
-    await this.actionLogService.create(actionLogDto);
-    return { message: 'Tạo thành công', data: saved };
+    // Đồng bộ categories
+    if (dto.categories?.length) {
+      await this.syncCategories(saved.id, dto.categories);
+    }
+
+    await this.logAction(
+      user,
+      enumData.ACTION_TYPE.CREATE.code,
+      saved,
+      `Tạo mẫu giao diện: ${saved.name}`,
+      undefined,
+      saved,
+    );
+
+    return { message: 'Tạo template thành công', data: saved };
   }
 
+  /* ============================================================
+   * UPDATE
+   * ============================================================ */
   async update(dto: UpdateTemplateDto, user: UserDto) {
-    const template = await this.repo.findOne({
+    const entity = await this.repo.findOne({
       where: { id: dto.id, isDeleted: false },
+      relations: NESTED_RELATIONS,
     });
-    if (!template) throw new NotFoundException('Không tìm thấy mẫu giao diện');
+    if (!entity) throw new NotFoundException('Không tìm thấy mẫu giao diện');
 
-    const oldValueStr = JSON.stringify(template);
+    const oldValue = { ...entity };
 
-    template.updatedBy = user.id;
-    template.updatedAt = new Date();
-    if (dto.name !== undefined) {
-      template.name = dto.name;
-      if (
-        !template.slug ||
-        !enumData.THEME_CODE[dto.themeCode || template.themeCode]?.slug
-      ) {
-        template.slug = `${dto.name.toLowerCase().trim().replace(/\s+/g, '-')}-${Date.now()}`;
-      }
+    if (dto.name !== undefined) entity.name = dto.name;
+    if (dto.slug !== undefined) entity.slug = dto.slug;
+    if (dto.description !== undefined) entity.description = dto.description;
+    if (dto.weddingTheme !== undefined) {
+      entity.weddingTheme = dto.weddingTheme;
     }
-    if (dto.description !== undefined) template.description = dto.description;
-    if (dto.tags !== undefined) template.tags = dto.tags;
-    if (dto.features !== undefined) template.features = dto.features;
-    if (dto.thumbnailUrl !== undefined)
-      template.thumbnailUrl = dto.thumbnailUrl;
-    if (dto.themeCode !== undefined) {
-      template.themeCode = dto.themeCode;
-      if (enumData.THEME_CODE[dto.themeCode]?.slug) {
-        template.slug = enumData.THEME_CODE[dto.themeCode].slug;
-      }
+    if (dto.tags !== undefined) entity.tags = dto.tags;
+    if (dto.colorMood !== undefined) entity.colorMood = dto.colorMood;
+    if (dto.features !== undefined) entity.features = dto.features;
+    if (dto.themeLayout !== undefined) entity.themeLayout = dto.themeLayout;
+    if (dto.presetTokens !== undefined) entity.presetTokens = dto.presetTokens;
+    if (dto.thumbnailUrl !== undefined) {
+      entity.thumbnailUrl = dto.thumbnailUrl;
     }
-    if (dto.isPremium !== undefined) template.isPremium = dto.isPremium;
-    if (dto.minPlanId !== undefined) template.minPlanId = dto.minPlanId;
-    if (dto.trialDays !== undefined) template.trialDays = dto.trialDays;
-    if (dto.themeLayout !== undefined) template.themeLayout = dto.themeLayout;
-    if (dto.presetTokens !== undefined) template.presetTokens = dto.presetTokens;
+    if (dto.previewUrl !== undefined) entity.previewUrl = dto.previewUrl;
+    if (dto.themeCode !== undefined) entity.themeCode = dto.themeCode;
+    if (dto.isShow !== undefined) entity.isShow = dto.isShow;
+    if (dto.isPremium !== undefined) entity.isPremium = dto.isPremium;
+    if (dto.minPlanId !== undefined) entity.minPlanId = dto.minPlanId;
+    if (dto.trialDays !== undefined) entity.trialDays = dto.trialDays;
+    if (dto.sortOrder !== undefined) entity.sortOrder = dto.sortOrder;
 
-    const saved = await this.repo.save(template);
-    await this.syncCardTypes(saved.id, dto.cardTypes);
+    entity.updatedBy = user.id;
+    const saved = await this.repo.save(entity);
 
-    const actionLogDto: ActionLogCreateDto = {
-      entityId: template.id,
-      entityName: 'TemplateEntity',
-      actionType: enumData.ACTION_TYPE.UPDATE.code,
-      createdById: user.id,
-      createdByCode: user.id,
-      createdByName: user.fullName || user.email,
-      createdNote: `Nhân viên ${user.fullName} cập nhật template: ${template.name} `,
-      oldValue: oldValueStr,
-      newValue: JSON.stringify(saved),
-    };
+    // Đồng bộ categories nếu có
+    if (dto.categories !== undefined) {
+      await this.syncCategories(saved.id, dto.categories);
+    }
 
-    await this.actionLogService.create(actionLogDto);
-    return { message: 'Cập nhật thành công', data: saved };
+    await this.logAction(
+      user,
+      enumData.ACTION_TYPE.UPDATE.code,
+      saved,
+      `Cập nhật mẫu giao diện: ${saved.name}`,
+      oldValue,
+      saved,
+    );
+
+    return { message: 'Cập nhật template thành công', data: saved };
   }
 
+  /* ============================================================
+   * SET STATUS
+   * ============================================================ */
   async setIsShow(dto: SetIsShowTemplateDto, user: UserDto) {
-    const template = await this.repo.findOne({
-      where: { id: dto.id, isDeleted: false },
-    });
-    if (!template) throw new NotFoundException('Không tìm thấy mẫu giao diện');
-
-    const oldValueStr = JSON.stringify(template);
-
-    template.isShow = dto.isShow;
-    template.updatedBy = user.id;
-    template.updatedAt = new Date();
-
-    const saved = await this.repo.save(template);
-
-    const actionLogDto: ActionLogCreateDto = {
-      entityId: template.id,
-      entityName: 'TemplateEntity',
-      actionType: enumData.ACTION_TYPE.UPDATE.code,
-      createdById: user.id,
-      createdByCode: user.id,
-      createdByName: user.fullName || user.email,
-      createdNote: `Nhân viên ${user.fullName} cập nhật trạng thái hiển thị của template: ${template.name} thành ${dto.isShow} `,
-      oldValue: oldValueStr,
-      newValue: JSON.stringify(saved),
-    };
-
-    await this.actionLogService.create(actionLogDto);
-    return { message: 'Cập nhật thành công', data: saved };
+    return this.setBooleanFlag(
+      dto.id,
+      'isShow',
+      dto.isShow,
+      user,
+      `Cập nhật trạng thái hiển thị: ${dto.isShow}`,
+    );
   }
 
   async setPremium(dto: SetPremiumTemplateDto, user: UserDto) {
-    const template = await this.repo.findOne({
-      where: { id: dto.id, isDeleted: false },
-    });
-    if (!template) throw new NotFoundException('Không tìm thấy mẫu giao diện');
-
-    const oldValueStr = JSON.stringify(template);
-
-    template.isPremium = dto.isPremium;
-    template.updatedBy = user.id;
-    template.updatedAt = new Date();
-
-    const saved = await this.repo.save(template);
-
-    const actionLogDto: ActionLogCreateDto = {
-      entityId: template.id,
-      entityName: 'TemplateEntity',
-      actionType: enumData.ACTION_TYPE.UPDATE.code,
-      createdById: user.id,
-      createdByCode: user.id,
-      createdByName: user.fullName || user.email,
-      createdNote: `Nhân viên ${user.fullName} cập nhật trạng thái premium của template: ${template.name} thành ${dto.isPremium} `,
-      oldValue: oldValueStr,
-      newValue: JSON.stringify(saved),
-    };
-
-    await this.actionLogService.create(actionLogDto);
-    return { message: 'Cập nhật thành công', data: saved };
+    return this.setBooleanFlag(
+      dto.id,
+      'isPremium',
+      dto.isPremium,
+      user,
+      `Cập nhật trạng thái premium: ${dto.isPremium}`,
+    );
   }
 
   async setIsDeleted(dto: SetIsDeletedTemplateDto, user: UserDto) {
-    const template = await this.repo.findOne({
-      where: { id: dto.id },
-    });
-    if (!template) throw new NotFoundException('Không tìm thấy mẫu giao diện');
-
-    const oldValueStr = JSON.stringify(template);
-
-    template.isDeleted = dto.isDeleted;
-    template.updatedBy = user.id;
-    template.updatedAt = new Date();
-
-    const saved = await this.repo.save(template);
-
-    const actionLogDto: ActionLogCreateDto = {
-      entityId: template.id,
-      entityName: 'TemplateEntity',
-      actionType: enumData.ACTION_TYPE.UPDATE.code,
-      createdById: user.id,
-      createdByCode: user.id,
-      createdByName: user.fullName || user.email,
-      createdNote: `Nhân viên ${user.fullName} cập nhật trạng thái xóa của template: ${template.name} thành ${dto.isDeleted} `,
-      oldValue: oldValueStr,
-      newValue: JSON.stringify(saved),
-    };
-
-    await this.actionLogService.create(actionLogDto);
-    return { message: 'Cập nhật thành công', data: saved };
+    return this.setBooleanFlag(
+      dto.id,
+      'isDeleted',
+      dto.isDeleted,
+      user,
+      `Cập nhật trạng thái xoá: ${dto.isDeleted}`,
+    );
   }
 
-  private async syncCardTypes(templateId: string, cardTypes?: string[]) {
-    if (cardTypes === undefined) return;
-    await this.cardTypeRepo.delete({ templateId });
-    for (const cardType of cardTypes) {
-      const row = new TemplateCardTypeEntity();
-      row.id = uuidv4();
-      row.templateId = templateId;
-      row.cardType = cardType;
-      await this.cardTypeRepo.save(row);
-    }
+  private async setBooleanFlag(
+    id: string,
+    field: 'isShow' | 'isPremium' | 'isDeleted',
+    value: boolean,
+    user: UserDto,
+    note: string,
+  ) {
+    const entity = await this.repo.findOne({ where: { id } });
+    if (!entity) throw new NotFoundException('Không tìm thấy mẫu giao diện');
+
+    const oldValue = { [field]: entity[field] };
+    entity[field] = value;
+    entity.updatedBy = user.id;
+
+    const saved = await this.repo.save(entity);
+
+    await this.logAction(
+      user,
+      enumData.ACTION_TYPE.UPDATE.code,
+      saved,
+      note,
+      oldValue,
+      { [field]: value },
+    );
+
+    return { message: 'Cập nhật template thành công', data: saved };
+  }
+
+  /* ============================================================
+   * PUBLIC — Danh sách template cho user
+   * ============================================================ */
+  async listPublic(weddingTheme?: string) {
+    const where: FindOptionsWhere<TemplateEntity> = {
+      isDeleted: false,
+      isShow: true,
+    };
+    if (weddingTheme) where.weddingTheme = weddingTheme;
+
+    const list = await this.repo.find({
+      where,
+      relations: NESTED_RELATIONS,
+      order: { sortOrder: 'ASC', createdAt: 'DESC' },
+    });
+
+    return { message: 'Thành công', data: list };
+  }
+
+  /* ============================================================
+   * PRIVATE — Sync categories
+   * ============================================================ */
+  private async syncCategories(templateId: string, categories: string[]) {
+    // Xoá cũ
+    await this.categoryRepo.delete({ templateId });
+
+    // Tạo mới
+    if (!categories.length) return;
+
+    const entities = categories.map((category) =>
+      this.categoryRepo.create({
+        id: uuidv4(),
+        templateId,
+        category,
+      }),
+    );
+
+    await this.categoryRepo.save(entities);
+  }
+
+  /* ============================================================
+   * PRIVATE — Generate slug
+   * ============================================================ */
+  private generateSlug(name: string): string {
+    return name
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 100);
   }
 }

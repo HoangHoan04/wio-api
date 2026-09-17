@@ -1,72 +1,110 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional } from 'class-validator';
+import { enumData } from '@/common/constanst/enumData';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsNotEmpty,
+  IsObject,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
 
-export class ActionLogFilterDto {
-  @ApiProperty({ required: true })
-  @IsNotEmpty()
-  entityId: string;
-
-  @ApiProperty({ required: true })
-  @IsNotEmpty()
-  entityName: string;
-
-  @ApiProperty({ required: true })
-  @IsOptional()
-  actionType: string;
-
-  @ApiProperty({ required: true })
-  @IsOptional()
-  createdByName: string;
-}
-
+/* ============================================================
+ * CREATE DTO
+ * ============================================================ */
 export class ActionLogCreateDto {
   @ApiProperty({ description: 'ID người dùng thực hiện hành động' })
   @IsNotEmpty()
+  @IsUUID()
   createdById: string;
 
   @ApiProperty({ description: 'Mã người dùng thực hiện hành động' })
   @IsNotEmpty()
+  @IsString()
   createdByCode: string;
 
   @ApiProperty({ description: 'Tên người dùng thực hiện hành động' })
   @IsNotEmpty()
+  @IsString()
   createdByName: string;
 
-  @ApiProperty({ description: 'Ghi chú bổ sung về hành động' })
+  @ApiPropertyOptional({ description: 'Ghi chú bổ sung về hành động' })
   @IsOptional()
+  @IsString()
   createdNote?: string;
 
-  @ApiProperty({
-    description: 'Loại hành động: ',
+  @ApiPropertyOptional({
+    description: 'Loại hành động',
+    enum: enumData.ACTION_TYPE,
   })
   @IsOptional()
+  @IsString()
   actionType?: string;
 
-  @ApiProperty({ description: 'ID thực thể bị tác động' })
+  @ApiPropertyOptional({ description: 'ID thực thể bị tác động' })
   @IsOptional()
+  @IsUUID()
   entityId?: string;
 
-  @ApiProperty({ description: 'Tên bảng thực thể bị tác động' })
+  @ApiPropertyOptional({ description: 'Tên bảng thực thể bị tác động' })
   @IsOptional()
+  @IsString()
   entityName?: string;
 
-  @ApiProperty({ description: 'Lưu trữ giá trị cũ dưới dạng JSON' })
+  @ApiPropertyOptional({ description: 'Giá trị cũ của thực thể (JSON)' })
   @IsOptional()
-  oldValue?: any;
+  @IsObject()
+  oldValue?: Record<string, any>;
 
-  @ApiProperty({ description: 'Lưu trữ giá trị mới dưới dạng JSON' })
+  @ApiPropertyOptional({ description: 'Giá trị mới của thực thể (JSON)' })
   @IsOptional()
-  newValue?: any;
+  @IsObject()
+  newValue?: Record<string, any>;
 
-  @ApiProperty({ description: 'Địa chỉ IP của người dùng' })
+  @ApiPropertyOptional({ description: 'Địa chỉ IP của người dùng' })
   @IsOptional()
+  @IsString()
   ipAddress?: string;
 
-  @ApiProperty({ description: 'User agent string của trình duyệt' })
+  @ApiPropertyOptional({ description: 'Chuỗi User-Agent của trình duyệt' })
   @IsOptional()
+  @IsString()
   userAgent?: string;
 
-  @ApiProperty({ description: 'Vị trí địa lý ước tính' })
+  @ApiPropertyOptional({ description: 'Vị trí địa lý ước tính' })
   @IsOptional()
+  @IsString()
   location?: string;
+}
+
+/* ============================================================
+ * FILTER DTO (dùng cho pagination)
+ * ============================================================ */
+export class ActionLogFilterDto {
+  @ApiPropertyOptional({ description: 'ID thực thể bị tác động' })
+  @IsOptional()
+  @IsUUID()
+  entityId?: string;
+
+  @ApiPropertyOptional({ description: 'Tên bảng thực thể bị tác động' })
+  @IsOptional()
+  @IsString()
+  entityName?: string;
+
+  @ApiPropertyOptional({
+    description: 'Loại hành động',
+    enum: enumData.ACTION_TYPE,
+  })
+  @IsOptional()
+  @IsString()
+  actionType?: string;
+
+  @ApiPropertyOptional({ description: 'ID người thực hiện hành động' })
+  @IsOptional()
+  @IsUUID()
+  createdById?: string;
+
+  @ApiPropertyOptional({ description: 'Tên người thực hiện hành động' })
+  @IsOptional()
+  @IsString()
+  createdByName?: string;
 }

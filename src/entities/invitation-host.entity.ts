@@ -1,58 +1,46 @@
 import { enumData } from '@/common/constanst/enumData';
-import { ApiProperty } from '@nestjs/swagger';
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { InvitationEntity } from './invitation.entity';
 
 @Entity('invitation_hosts')
+@Index(['invitationId', 'role'])
 export class InvitationHostEntity extends BaseEntity {
+  @ApiProperty({ description: 'ID thiệp cưới' })
   @Column({ type: 'uuid', nullable: false })
-  @ApiProperty({ description: 'ID thiệp' })
   invitationId: string;
 
+  @ApiProperty({
+    description: 'Vai trò của người xuất hiện trên thiệp',
+    enum: enumData.HOST_ROLE,
+  })
   @Column({ type: 'varchar', length: 40, nullable: false })
-  @ApiProperty({ description: 'Vai trò', enum: enumData.HOST_ROLE })
   role: string;
 
+  @ApiProperty({ description: 'Họ và tên đầy đủ' })
   @Column({ type: 'varchar', length: 150, nullable: false })
-  @ApiProperty({ description: 'Họ tên' })
   fullName: string;
 
+  @ApiPropertyOptional({ description: 'Tên ngắn hiển thị' })
   @Column({ type: 'varchar', length: 80, nullable: true })
-  @ApiProperty({ description: 'Tên ngắn', required: false })
   shortName?: string;
 
-  @Column({ type: 'varchar', length: 80, nullable: true })
-  @ApiProperty({ description: 'Danh xưng', required: false })
-  honorific?: string;
-
+  @ApiPropertyOptional({ description: 'URL ảnh đại diện' })
   @Column({ type: 'text', nullable: true })
-  @ApiProperty({ description: 'Ảnh', required: false })
   photoUrl?: string;
 
-  @Column({ type: 'date', nullable: true })
-  @ApiProperty({ description: 'Ngày sinh', required: false })
-  dob?: Date;
-
-  @Column({ type: 'text', nullable: true })
-  @ApiProperty({ description: 'Tiểu sử', required: false })
-  bio?: string;
-
+  @ApiPropertyOptional({
+    description: 'Liên kết mạng xã hội (facebook, instagram…)',
+  })
   @Column({ type: 'jsonb', nullable: true })
-  @ApiProperty({ description: 'Gia đình', required: false })
-  family?: Record<string, any>;
+  social?: Record<string, string>;
 
-  @Column({ type: 'jsonb', nullable: true })
-  @ApiProperty({ description: 'Thuộc tính theo loại thiệp', required: false })
-  extra?: Record<string, any>;
-
+  @ApiProperty({ description: 'Thứ tự hiển thị' })
   @Column({ type: 'int', default: 0, nullable: false })
-  @ApiProperty({ description: 'Thứ tự' })
   sortOrder: number;
 
-  @ManyToOne(() => InvitationEntity, (invitation) => invitation.hosts, {
-    onDelete: 'CASCADE',
-  })
+  @ManyToOne(() => InvitationEntity, (i) => i.hosts, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'invitationId' })
   invitation: InvitationEntity;
 }
