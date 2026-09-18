@@ -33,8 +33,8 @@ FROM node:22-alpine AS production
 
 WORKDIR /app
 
-RUN apk add --no-cache wget \
-  && addgroup -S wio && adduser -S wio -G wio
+RUN apk add --no-cache wget python3 make g++ \
+  && ln -sf python3 /usr/bin/python
 
 ENV NODE_ENV=production
 ENV PORT=4300
@@ -45,11 +45,11 @@ RUN yarn install --frozen-lockfile --production \
 
 COPY --from=builder /app/dist ./dist
 
-USER wio
+USER node
 
 EXPOSE 4300
 
 HEALTHCHECK --interval=20s --timeout=5s --start-period=30s --retries=5 \
-  CMD wget -qO- http://127.0.0.1:4300/health || exit 1
+  CMD sh -c 'wget -qO- http://127.0.0.1:${PORT:-4300}/health || exit 1'
 
 CMD ["node", "dist/main"]
