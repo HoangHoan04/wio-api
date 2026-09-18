@@ -11,14 +11,18 @@ Env trên VPS lấy từ **Doppler** (`DOPPLER_TOKEN`). CD ghi `PORT=3000` vào 
 
 ## GitHub Environment secrets
 
+Job CD dùng environment `production` khi push `main`. Secret phải nằm trong **Environments → production**, không chỉ repo secrets.
+
 | Secret | Mục đích |
 |---|---|
-| `SERVER_HOST` / `SERVER_USER` / `SSH_PRIVATE_KEY` | SSH VPS |
-| `DOPPLER_TOKEN` | Env production/dev |
+| `SERVER_HOST` / `SERVER_USER` | SSH VPS (đã có) |
+| `SSH_PRIVATE_KEY` | **Bắt buộc** — nội dung private key (`-----BEGIN ... PRIVATE KEY-----`). Thiếu key thì CD fail: `can't connect without a private SSH key`. Tên thay thế: `SSH_KEY` |
+| `SSH_PASSPHRASE` | Nếu key có passphrase |
+| `DOPPLER_TOKEN` | Env app trên VPS |
 | `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | Notify |
-| `DEPLOY_URL` | URL hiện trong Telegram (optional) |
+| `DEPLOY_URL` | Optional |
 
-Repo secrets không thay cho Environment secrets. Job CD có `environment: production` khi push `main`.
+Thêm key: Settings → Environments → **production** → Environment secrets → `SSH_PRIVATE_KEY`. Dán nguyên file `~/.ssh/id_ed25519` (hoặc `id_rsa`), gồm dòng BEGIN/END. Public key tương ứng phải nằm trong `~/.ssh/authorized_keys` trên VPS.
 
 ## VPS
 

@@ -61,6 +61,15 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Check SSH secrets
+        env:
+          SSH_KEY_VALUE: ${{ secrets.SSH_PRIVATE_KEY || secrets.SSH_KEY }}
+        run: |
+          if [ -z "$SSH_KEY_VALUE" ]; then
+            echo "::error::Thiếu SSH private key. Vào Settings → Environments → production → Environment secrets, thêm SSH_PRIVATE_KEY (nội dung file id_rsa / id_ed25519). Có thể dùng tên SSH_KEY. SERVER_HOST và SERVER_USER đã có, chỉ thiếu key."
+            exit 1
+          fi
+
       - name: Deploy to Server via SSH
         uses: appleboy/ssh-action@v1
         env:
@@ -70,7 +79,10 @@ jobs:
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key: ${{ secrets.SSH_PRIVATE_KEY || secrets.SSH_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          password: ${{ secrets.SERVER_PASSWORD || secrets.SSH_PASSWORD }}
+          port: ${{ secrets.SSH_PORT || 22 }}
           envs: DOPPLER_TOKEN,GITHUB_TOKEN,GITHUB_ACTOR
           script: |
             IS_PROD=${{ github.ref_name == 'main' || github.ref_name == 'production' }}
