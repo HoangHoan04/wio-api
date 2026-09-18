@@ -28,7 +28,6 @@ export class MusicBackgroundProcessor {
       this.logger.log(`Finished job ${job.id} — URL=${youtubeUrl}`);
     } catch (err: any) {
       this.logger.error(`Job ${job.id} failed: ${err.message}`, err.stack);
-      throw err; // để Bull retry theo `attempts`
     }
   }
 }

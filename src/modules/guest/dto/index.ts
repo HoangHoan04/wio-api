@@ -1,3 +1,4 @@
+import { IsEnumCode } from '@/common/decorators';
 import { enumData } from '@/common/constanst/enumData';
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
@@ -5,7 +6,6 @@ import {
   IsArray,
   IsBoolean,
   IsDate,
-  IsEnum,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -40,6 +40,16 @@ export class CreateGuestDto {
   @IsString()
   salutation?: string;
 
+  @ApiPropertyOptional({ description: 'Số điện thoại' })
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @ApiPropertyOptional({ description: 'Email' })
+  @IsOptional()
+  @IsString()
+  email?: string;
+
   @ApiPropertyOptional({ description: 'ID nhóm khách' })
   @IsOptional()
   @IsUUID()
@@ -50,7 +60,7 @@ export class CreateGuestDto {
     enum: enumData.GUEST_GROUP,
   })
   @IsOptional()
-  @IsEnum(enumData.GUEST_GROUP)
+  @IsEnumCode(enumData.GUEST_GROUP)
   groupCode?: string;
 
   @ApiPropertyOptional({ description: 'Khách VIP?' })
@@ -73,7 +83,7 @@ export class CreateGuestDto {
     enum: enumData.RSVP_STATUS,
   })
   @IsOptional()
-  @IsEnum(enumData.RSVP_STATUS)
+  @IsEnumCode(enumData.RSVP_STATUS)
   rsvpStatus?: string;
 
   @ApiPropertyOptional({ description: 'Số người đi kèm (kể cả khách)' })
@@ -171,7 +181,7 @@ export class FilterGuestDto {
     enum: enumData.RSVP_STATUS,
   })
   @IsOptional()
-  @IsEnum(enumData.RSVP_STATUS)
+  @IsEnumCode(enumData.RSVP_STATUS)
   rsvpStatus?: string;
 
   @ApiPropertyOptional({ description: 'Số người đi kèm' })
@@ -218,7 +228,7 @@ export class RsvpGuestDto {
     enum: enumData.RSVP_STATUS,
   })
   @IsOptional()
-  @IsEnum(enumData.RSVP_STATUS)
+  @IsEnumCode(enumData.RSVP_STATUS)
   rsvpStatus?: string;
 
   @ApiPropertyOptional({ description: 'Số người tham dự' })

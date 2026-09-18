@@ -178,6 +178,8 @@ export class GuestService {
       tableId: dto.tableId,
       fullName: dto.fullName,
       salutation: dto.salutation || 'Kính mời',
+      phone: dto.phone,
+      email: dto.email,
       groupId: await this.resolveGroupId(
         dto.invitationId,
         dto.groupId,
@@ -225,6 +227,8 @@ export class GuestService {
           tableId: g.tableId,
           fullName: g.fullName,
           salutation: g.salutation || 'Kính mời',
+          phone: g.phone,
+          email: g.email,
           groupId: await this.resolveGroupId(
             dto.invitationId,
             g.groupId,
@@ -267,6 +271,8 @@ export class GuestService {
     if (dto.tableId !== undefined) entity.tableId = dto.tableId;
     if (dto.fullName !== undefined) entity.fullName = dto.fullName;
     if (dto.salutation !== undefined) entity.salutation = dto.salutation;
+    if (dto.phone !== undefined) entity.phone = dto.phone;
+    if (dto.email !== undefined) entity.email = dto.email;
     if (dto.groupId !== undefined || dto.groupCode !== undefined) {
       entity.groupId = await this.resolveGroupId(
         entity.invitationId,
@@ -371,6 +377,8 @@ export class GuestService {
         hosts: true,
         gifts: true,
         guestGroups: true,
+        weddingInfo: true,
+        music: true,
       },
     });
     assertPublishedInvitation(invitation);

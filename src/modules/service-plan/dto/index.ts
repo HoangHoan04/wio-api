@@ -72,6 +72,20 @@ export class CreateServicePlanDto {
   @IsBoolean()
   hasCustomDesign: boolean;
 
+  @ApiPropertyOptional({ description: 'Số lần AI scan tối đa' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  maxAiScans?: number;
+
+  @ApiPropertyOptional({ description: 'Số trang canvas tối đa' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  maxCanvasPages?: number;
+
   @ApiProperty({ description: 'Số ngày hiệu lực' })
   @IsNotEmpty()
   @Type(() => Number)

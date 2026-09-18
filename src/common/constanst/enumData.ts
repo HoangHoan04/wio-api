@@ -68,6 +68,26 @@ export const enumData = {
     AI_SCAN: { code: 'AI_SCAN', name: 'AI quét ảnh', color: '#F59E0B' },
   },
 
+  CREATED_VIA: {
+    BLANK: { code: 'BLANK', name: 'Tự thiết kế trống', color: '#8B5CF6' },
+    TEMPLATE: { code: 'TEMPLATE', name: 'Từ thiệp mẫu', color: '#0EA5E9' },
+    CANVAS_PRESET: {
+      code: 'CANVAS_PRESET',
+      name: 'Từ preset Canva',
+      color: '#6366F1',
+    },
+    AI_SCAN: { code: 'AI_SCAN', name: 'AI quét ảnh', color: '#F59E0B' },
+  },
+
+  TEMPLATE_KIND: {
+    CODE_THEME: { code: 'CODE_THEME', name: 'Theme React', color: '#0EA5E9' },
+    CANVAS_PRESET: {
+      code: 'CANVAS_PRESET',
+      name: 'Preset Canva',
+      color: '#8B5CF6',
+    },
+  },
+
   INVITATION_STATUS: {
     DRAFT: { code: 'DRAFT', name: 'Bản nháp', color: '#94A3B8' },
     PUBLISHED: { code: 'PUBLISHED', name: 'Đã xuất bản', color: '#16A34A' },
@@ -89,6 +109,48 @@ export const enumData = {
     },
     BEACH: { code: 'BEACH', name: 'Biển', color: '#06B6D4' },
     RUSTIC: { code: 'RUSTIC', name: 'Mộc mạc', color: '#A16207' },
+  },
+
+  THEME_CODE: {
+    CRIMSON_BAROQUE: { code: 'CRIMSON_BAROQUE', name: 'Crimson Baroque' },
+    AUTUMN_BLOOM: { code: 'AUTUMN_BLOOM', name: 'Autumn Bloom' },
+    SPRING_BLOOM: { code: 'SPRING_BLOOM', name: 'Spring Bloom' },
+    ROSY_BLOOM: { code: 'ROSY_BLOOM', name: 'Rosy Bloom' },
+    PHOENIX_PAIR: { code: 'PHOENIX_PAIR', name: 'Phoenix Pair' },
+    TWIN_PHOENIX: { code: 'TWIN_PHOENIX', name: 'Twin Phoenix' },
+    DRAGON_BLESSING: { code: 'DRAGON_BLESSING', name: 'Dragon Blessing' },
+    GOLDEN_PHOENIX: { code: 'GOLDEN_PHOENIX', name: 'Golden Phoenix' },
+    REGAL_UNION: { code: 'REGAL_UNION', name: 'Regal Union' },
+    EMERALD_STORY: { code: 'EMERALD_STORY', name: 'Emerald Story' },
+    BLUSH_GARDEN: { code: 'BLUSH_GARDEN', name: 'Blush Garden' },
+    IVORY_BLOSSOM: { code: 'IVORY_BLOSSOM', name: 'Ivory Blossom' },
+    VINTAGE_MINIMAL: { code: 'VINTAGE_MINIMAL', name: 'Vintage Minimal' },
+    RUBY_ENVELOPE: { code: 'RUBY_ENVELOPE', name: 'Ruby Envelope' },
+    REGAL_CRIMSON: { code: 'REGAL_CRIMSON', name: 'Regal Crimson' },
+    EMERALD_UNION: { code: 'EMERALD_UNION', name: 'Emerald Union' },
+    SCARLET_UNION: { code: 'SCARLET_UNION', name: 'Scarlet Union' },
+    BOHO_FLORAL_BROWN: { code: 'BOHO_FLORAL_BROWN', name: 'Autumn Bloom' },
+    BOHO_FLORAL_GREEN: { code: 'BOHO_FLORAL_GREEN', name: 'Spring Bloom' },
+    BOHO_FLORAL_PINK: { code: 'BOHO_FLORAL_PINK', name: 'Rosy Bloom' },
+    DRAGON_PHOENIX_RED: { code: 'DRAGON_PHOENIX_RED', name: 'Dragon Blessing' },
+    RED_DOUBLE_HAPPINESS: { code: 'RED_DOUBLE_HAPPINESS', name: 'Scarlet Union' },
+    ROYAL_RED: { code: 'ROYAL_RED', name: 'Regal Crimson' },
+    BURGUNDY_ROMANCE: {
+      code: 'BURGUNDY_ROMANCE',
+      name: 'Hồng ngọc - Rượu vang quý phái',
+    },
+    OLIVE_MEDITERRANEAN: {
+      code: 'OLIVE_MEDITERRANEAN',
+      name: 'Olive - Địa Trung Hải tinh tế',
+    },
+    PURE_WHITE_ELEGANCE: {
+      code: 'PURE_WHITE_ELEGANCE',
+      name: 'Bạch ngọc - Trắng tinh khôi',
+    },
+    VINTAGE_NOSTALGIA: {
+      code: 'VINTAGE_NOSTALGIA',
+      name: 'Thư tình - Cổ điển hoài niệm',
+    },
   },
 
   INVITATION_MODULE: {
@@ -254,7 +316,13 @@ export const enumData = {
   AI_SCAN_STATUS: {
     PENDING: { code: 'PENDING', name: 'Chờ xử lý', color: '#94A3B8' },
     PROCESSING: { code: 'PROCESSING', name: 'Đang xử lý', color: '#F59E0B' },
+    NEEDS_REVIEW: {
+      code: 'NEEDS_REVIEW',
+      name: 'Cần rà soát',
+      color: '#F97316',
+    },
     COMPLETED: { code: 'COMPLETED', name: 'Hoàn thành', color: '#16A34A' },
+    APPLIED: { code: 'APPLIED', name: 'Đã áp dụng', color: '#0EA5E9' },
     FAILED: { code: 'FAILED', name: 'Thất bại', color: '#DC2626' },
   },
 

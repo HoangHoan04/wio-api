@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wio-api
+  namespace: wio
+  labels:
+    app: wio-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: wio-api
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: wio-api
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/YOUR_GH_OWNER/wio-api:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 4300
+              name: http
+          envFrom:
+            - configMapRef:
+                name: wio-api
+            - secretRef:
+                name: wio-api
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 40
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 150m
+              memory: 256Mi
+            limits:
+              cpu: '1'
+              memory: 1Gi

@@ -105,6 +105,10 @@ export class StockAssetService {
       tags: dto.tags ?? [],
       src: dto.src.trim(),
       thumb: dto.thumb?.trim() || dto.src.trim(),
+      width: dto.width,
+      height: dto.height,
+      mimeType: dto.mimeType,
+      isPremium: dto.isPremium ?? false,
       license: dto.license?.trim(),
       sortOrder: dto.sortOrder ?? 0,
       isActive: dto.isActive ?? true,
@@ -129,6 +133,10 @@ export class StockAssetService {
     if (dto.thumb !== undefined) {
       entity.thumb = dto.thumb?.trim() || entity.src;
     }
+    if (dto.width !== undefined) entity.width = dto.width;
+    if (dto.height !== undefined) entity.height = dto.height;
+    if (dto.mimeType !== undefined) entity.mimeType = dto.mimeType;
+    if (dto.isPremium !== undefined) entity.isPremium = dto.isPremium;
     if (dto.license !== undefined) {
       entity.license = dto.license?.trim() || undefined;
     }

@@ -48,6 +48,7 @@ deploy/certbot/
 # temp directory
 .temp
 .tmp
+/tmp
 
 # Runtime data
 pids

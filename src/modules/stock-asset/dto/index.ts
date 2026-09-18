@@ -74,6 +74,31 @@ export class CreateStockAssetDto {
   @IsString()
   thumb?: string;
 
+  @ApiPropertyOptional({ description: 'Chiều rộng (px)' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  width?: number;
+
+  @ApiPropertyOptional({ description: 'Chiều cao (px)' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  height?: number;
+
+  @ApiPropertyOptional({ description: 'MIME type' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  mimeType?: string;
+
+  @ApiPropertyOptional({ description: 'Asset trả phí?' })
+  @IsOptional()
+  @IsBoolean()
+  isPremium?: boolean;
+
   @ApiPropertyOptional({ description: 'Bản quyền / nguồn' })
   @IsOptional()
   @IsString()

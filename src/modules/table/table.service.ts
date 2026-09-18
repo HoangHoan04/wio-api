@@ -139,6 +139,7 @@ export class TableService {
       description: dto.description,
       positionX: dto.positionX,
       positionY: dto.positionY,
+      shape: dto.shape,
       createdBy: user.id,
     });
 
@@ -169,6 +170,7 @@ export class TableService {
     if (dto.description !== undefined) entity.description = dto.description;
     if (dto.positionX !== undefined) entity.positionX = dto.positionX;
     if (dto.positionY !== undefined) entity.positionY = dto.positionY;
+    if (dto.shape !== undefined) entity.shape = dto.shape;
 
     entity.updatedBy = user.id;
     const saved = await this.repo.save(entity);

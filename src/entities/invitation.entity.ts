@@ -19,6 +19,7 @@ import { InvitationHostEntity } from './invitation-host.entity';
 import { InvitationPhotoEntity } from './invitation-photo.entity';
 import { InvitationTimelineEntity } from './invitation-timeline.entity';
 import { InvitationVersionEntity } from './invitation-version.entity';
+import { MusicBackgroundEntity } from './music-background.entity';
 import { NotificationEntity } from './notification.entity';
 import { PhotoWallEntity } from './photo-wall.entity';
 import { SlugHistoryEntity } from './slug-history.entity';
@@ -41,7 +42,7 @@ export class InvitationEntity extends BaseEntity {
   userId: string;
 
   @ApiProperty({
-    description: 'Chế độ thiết kế thiệp',
+    description: 'Chế độ thiết kế thiệp (renderer)',
     enum: enumData.DESIGN_MODE,
   })
   @Column({
@@ -52,8 +53,25 @@ export class InvitationEntity extends BaseEntity {
   })
   designMode: string;
 
+  @ApiProperty({
+    description: 'Luồng tạo thiệp',
+    enum: enumData.CREATED_VIA,
+  })
+  @Column({
+    type: 'varchar',
+    length: 30,
+    nullable: false,
+    default: enumData.CREATED_VIA.TEMPLATE.code,
+  })
+  createdVia: string;
+
   @ApiProperty({ description: 'Phong cách cưới', enum: enumData.WEDDING_THEME })
-  @Column({ type: 'varchar', length: 30, nullable: false })
+  @Column({
+    type: 'varchar',
+    length: 30,
+    nullable: false,
+    default: enumData.WEDDING_THEME.CLASSIC.code,
+  })
   weddingTheme: string;
 
   @ApiPropertyOptional({
@@ -102,10 +120,16 @@ export class InvitationEntity extends BaseEntity {
   primaryEventAt?: Date;
 
   @ApiPropertyOptional({
-    description: 'Bật/tắt các section hiển thị trên thiệp',
+    description: 'Bật/tắt section + extras (displayOrder, galleryLayout…)',
   })
   @Column({ type: 'jsonb', nullable: true })
-  sectionConfig?: Record<string, boolean>;
+  sectionConfig?: Record<string, any>;
+
+  @ApiPropertyOptional({
+    description: 'Snapshot theme/template lúc tạo thiệp',
+  })
+  @Column({ type: 'jsonb', nullable: true })
+  themeSnapshot?: Record<string, any>;
 
   @ApiPropertyOptional({ description: 'ID nhạc nền' })
   @Column({ type: 'uuid', nullable: true })
@@ -119,7 +143,15 @@ export class InvitationEntity extends BaseEntity {
   @Column({ type: 'jsonb', nullable: true })
   customDesign?: Record<string, any>;
 
-  @ApiPropertyOptional({ description: 'Metadata do AI sinh ra (AI_SCAN mode)' })
+  @ApiProperty({ description: 'Version schema design document' })
+  @Column({ type: 'int', default: 1, nullable: false })
+  designSchemaVersion: number;
+
+  @ApiPropertyOptional({ description: 'ID phiên bản đang live' })
+  @Column({ type: 'uuid', nullable: true })
+  currentVersionId?: string;
+
+  @ApiPropertyOptional({ description: 'Metadata do AI sinh ra (deprecated)' })
   @Column({ type: 'jsonb', nullable: true })
   aiGeneratedMeta?: Record<string, any>;
 
@@ -162,6 +194,10 @@ export class InvitationEntity extends BaseEntity {
   @ManyToOne(() => TemplateEntity, { onDelete: 'SET NULL', nullable: true })
   @JoinColumn({ name: 'templateId' })
   template?: TemplateEntity;
+
+  @ManyToOne(() => MusicBackgroundEntity, { onDelete: 'SET NULL', nullable: true })
+  @JoinColumn({ name: 'musicId' })
+  music?: MusicBackgroundEntity;
 
   @OneToOne(() => WeddingInfoEntity, (w) => w.invitation, { cascade: true })
   weddingInfo: WeddingInfoEntity;

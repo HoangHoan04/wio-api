@@ -31,6 +31,14 @@ export class GuestEntity extends BaseEntity {
   @Column({ type: 'varchar', length: 20, nullable: true })
   salutation?: string;
 
+  @ApiPropertyOptional({ description: 'Số điện thoại khách' })
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  phone?: string;
+
+  @ApiPropertyOptional({ description: 'Email khách' })
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  email?: string;
+
   @ApiProperty({ description: 'Khách VIP' })
   @Column({ type: 'boolean', default: false, nullable: false })
   isVip: boolean;

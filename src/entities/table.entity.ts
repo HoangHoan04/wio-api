@@ -1,3 +1,4 @@
+import { enumData } from '@/common/constanst/enumData';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   Column,
@@ -41,6 +42,10 @@ export class TableEntity extends BaseEntity {
   @ApiPropertyOptional({ description: 'Vị trí Y trên sơ đồ' })
   @Column({ type: 'int', nullable: true })
   positionY?: number;
+
+  @ApiPropertyOptional({ description: 'Hình dạng bàn', enum: enumData.TABLE_SHAPE })
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  shape?: string;
 
   @ManyToOne(() => InvitationEntity, (i) => i.tables, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'invitationId' })

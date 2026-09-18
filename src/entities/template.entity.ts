@@ -46,10 +46,10 @@ export class TemplateEntity extends BaseEntity {
   colorMood?: string;
 
   @ApiPropertyOptional({
-    description: 'Cấu hình tính năng: {rsvp, gallery, music…}',
+    description: 'Cấu hình tính năng / danh sách nổi bật (jsonb)',
   })
   @Column({ type: 'jsonb', nullable: true })
-  features?: Record<string, boolean>;
+  features?: Record<string, any>;
 
   @ApiPropertyOptional({ description: 'Bố cục section mặc định' })
   @Column({ type: 'jsonb', nullable: true })
@@ -70,6 +70,26 @@ export class TemplateEntity extends BaseEntity {
   @ApiProperty({ description: 'Mã code giao diện (theme)' })
   @Column({ type: 'varchar', length: 100, nullable: false })
   themeCode: string;
+
+  @ApiProperty({
+    description: 'Loại template',
+    enum: enumData.TEMPLATE_KIND,
+  })
+  @Column({
+    type: 'varchar',
+    length: 30,
+    nullable: false,
+    default: enumData.TEMPLATE_KIND.CODE_THEME.code,
+  })
+  kind: string;
+
+  @ApiPropertyOptional({ description: 'Preset elements cho editor Canva' })
+  @Column({ type: 'jsonb', nullable: true })
+  canvasPreset?: Record<string, any>;
+
+  @ApiProperty({ description: 'Version template để invitation snapshot' })
+  @Column({ type: 'int', default: 1, nullable: false })
+  version: number;
 
   @ApiProperty({ description: 'Hiển thị template cho người dùng' })
   @Column({ type: 'boolean', default: true, nullable: false })

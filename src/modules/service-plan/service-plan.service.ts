@@ -128,6 +128,8 @@ export class ServicePlanService {
       hasAnalytics: dto.hasAnalytics,
       hasCustomSlug: dto.hasCustomSlug,
       hasCustomDesign: dto.hasCustomDesign,
+      maxAiScans: dto.maxAiScans ?? 0,
+      maxCanvasPages: dto.maxCanvasPages ?? 1,
       durationDays: dto.durationDays,
       priceVnd: dto.priceVnd,
       isActive: dto.isActive ?? true,
@@ -176,6 +178,10 @@ export class ServicePlanService {
     }
     if (dto.hasCustomDesign !== undefined) {
       entity.hasCustomDesign = dto.hasCustomDesign;
+    }
+    if (dto.maxAiScans !== undefined) entity.maxAiScans = dto.maxAiScans;
+    if (dto.maxCanvasPages !== undefined) {
+      entity.maxCanvasPages = dto.maxCanvasPages;
     }
     if (dto.durationDays !== undefined) entity.durationDays = dto.durationDays;
     if (dto.priceVnd !== undefined) entity.priceVnd = dto.priceVnd;

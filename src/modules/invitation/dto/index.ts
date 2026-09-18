@@ -1,7 +1,8 @@
+import { normalizeEventKey } from '@/utils/invitation.utils';
 import { enumData } from '@/common/constanst/enumData';
 import { IsEnumCode } from '@/common/decorators';
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
@@ -68,6 +69,7 @@ export class InvitationEventDto {
 
   @ApiProperty({ description: 'Loại sự kiện', enum: enumData.EVENT_KEY })
   @IsNotEmpty()
+  @Transform(({ value }) => normalizeEventKey(value))
   @IsEnumCode(enumData.EVENT_KEY)
   eventKey: string;
 
@@ -170,6 +172,16 @@ export class InvitationGiftDto {
   @IsOptional()
   @IsEnumCode(enumData.GUEST_SIDE)
   side?: string;
+
+  @ApiPropertyOptional({ description: 'Mã BIN ngân hàng' })
+  @IsOptional()
+  @IsString()
+  bankBin?: string;
+
+  @ApiPropertyOptional({ description: 'Hiển thị trên thiệp' })
+  @IsOptional()
+  @IsBoolean()
+  isVisible?: boolean;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -304,7 +316,22 @@ export class WeddingInfoDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  brideFatherName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  brideMotherName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
   brideBio?: string;
+
+  @ApiPropertyOptional({ description: 'MXH / extras cô dâu (title, familyTitle, address…)' })
+  @IsOptional()
+  @IsObject()
+  brideSocial?: Record<string, string>;
 
   @ApiProperty({ description: 'Tên chú rể' })
   @IsNotEmpty()
@@ -324,7 +351,22 @@ export class WeddingInfoDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  groomFatherName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  groomMotherName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
   groomBio?: string;
+
+  @ApiPropertyOptional({ description: 'MXH / extras chú rể (title, familyTitle, address…)' })
+  @IsOptional()
+  @IsObject()
+  groomSocial?: Record<string, string>;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -363,6 +405,14 @@ export class CreateInvitationDto {
   @IsEnumCode(enumData.DESIGN_MODE)
   designMode: string;
 
+  @ApiPropertyOptional({
+    description: 'Luồng tạo thiệp',
+    enum: enumData.CREATED_VIA,
+  })
+  @IsOptional()
+  @IsEnumCode(enumData.CREATED_VIA)
+  createdVia?: string;
+
   @ApiProperty({ description: 'Phong cách cưới', enum: enumData.WEDDING_THEME })
   @IsNotEmpty()
   @IsEnumCode(enumData.WEDDING_THEME)
@@ -396,10 +446,10 @@ export class CreateInvitationDto {
   @IsString()
   heroImageUrl?: string;
 
-  @ApiPropertyOptional({ description: 'Bật/tắt section' })
+  @ApiPropertyOptional({ description: 'Bật/tắt section + extras' })
   @IsOptional()
   @IsObject()
-  sectionConfig?: Record<string, boolean>;
+  sectionConfig?: Record<string, any>;
 
   @ApiPropertyOptional({ description: 'ID nhạc nền' })
   @IsOptional()
@@ -416,6 +466,11 @@ export class CreateInvitationDto {
   @IsOptional()
   @IsObject()
   customDesign?: Record<string, any>;
+
+  @ApiPropertyOptional({ description: 'Version schema design document' })
+  @IsOptional()
+  @IsInt()
+  designSchemaVersion?: number;
 
   // ---- Chỉ dùng cho AI_SCAN ----
   @ApiPropertyOptional()

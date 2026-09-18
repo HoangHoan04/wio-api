@@ -6,9 +6,9 @@ import { InvitationEntity } from './invitation.entity';
 @Entity('ai_scan_jobs')
 @Index(['invitationId', 'status'])
 export class AiScanJobEntity extends BaseEntity {
-  @ApiProperty({ description: 'ID thiệp cưới' })
-  @Column({ type: 'uuid', nullable: false })
-  invitationId: string;
+  @ApiProperty({ description: 'ID thiệp cưới (nullable đến lúc apply)' })
+  @Column({ type: 'uuid', nullable: true })
+  invitationId?: string;
 
   @ApiProperty({ description: 'ID user upload ảnh' })
   @Column({ type: 'uuid', nullable: false })
@@ -35,6 +35,14 @@ export class AiScanJobEntity extends BaseEntity {
   @Column({ type: 'jsonb', nullable: true })
   result?: Record<string, any>;
 
+  @ApiPropertyOptional({ description: 'Nội dung đã trích từ ảnh' })
+  @Column({ type: 'jsonb', nullable: true })
+  extractedContent?: Record<string, any>;
+
+  @ApiPropertyOptional({ description: 'Design Canva/theme đã dựng' })
+  @Column({ type: 'jsonb', nullable: true })
+  reconstructedDesign?: Record<string, any>;
+
   @ApiPropertyOptional({ description: 'Design tokens đã mapping' })
   @Column({ type: 'jsonb', nullable: true })
   designTokens?: Record<string, any>;
@@ -57,7 +65,8 @@ export class AiScanJobEntity extends BaseEntity {
 
   @ManyToOne(() => InvitationEntity, (i) => i.aiScanJobs, {
     onDelete: 'CASCADE',
+    nullable: true,
   })
   @JoinColumn({ name: 'invitationId' })
-  invitation: InvitationEntity;
+  invitation?: InvitationEntity;
 }

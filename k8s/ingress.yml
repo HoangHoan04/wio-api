@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: wio-api
+  namespace: wio
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: 20m
+    nginx.ingress.kubernetes.io/proxy-read-timeout: '120'
+spec:
+  tls:
+    - hosts:
+        - api.tiemcuoitanthoi.id.vn
+      secretName: wio-api-tls
+  rules:
+    - host: api.tiemcuoitanthoi.id.vn
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: wio-api
+                port:
+                  number: 80

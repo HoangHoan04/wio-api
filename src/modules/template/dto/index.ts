@@ -1,10 +1,11 @@
 import { enumData } from '@/common/constanst/enumData';
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
+import { IsEnumCode } from '@/common/decorators';
+import { normalizeTemplateFeatures } from '../template.utils';
 import {
   IsArray,
   IsBoolean,
-  IsEnum,
   IsInt,
   IsNotEmpty,
   IsObject,
@@ -43,7 +44,7 @@ export class CreateTemplateDto {
     enum: enumData.WEDDING_THEME,
   })
   @IsNotEmpty()
-  @IsEnum(enumData.WEDDING_THEME)
+  @IsEnumCode(enumData.WEDDING_THEME)
   weddingTheme: string;
 
   @ApiPropertyOptional({ description: 'Từ khoá tìm kiếm', type: [String] })
@@ -58,10 +59,11 @@ export class CreateTemplateDto {
   @MaxLength(50)
   colorMood?: string;
 
-  @ApiPropertyOptional({ description: 'Cấu hình tính năng' })
+  @ApiPropertyOptional({ description: 'Cấu hình tính năng / danh sách nổi bật' })
   @IsOptional()
+  @Transform(({ value }) => normalizeTemplateFeatures(value))
   @IsObject()
-  features?: Record<string, boolean>;
+  features?: Record<string, any>;
 
   @ApiPropertyOptional({ description: 'Bố cục section mặc định' })
   @IsOptional()
@@ -88,6 +90,25 @@ export class CreateTemplateDto {
   @IsString()
   @MaxLength(100)
   themeCode: string;
+
+  @ApiPropertyOptional({
+    description: 'Loại template',
+    enum: enumData.TEMPLATE_KIND,
+  })
+  @IsOptional()
+  @IsEnumCode(enumData.TEMPLATE_KIND)
+  kind?: string;
+
+  @ApiPropertyOptional({ description: 'Preset Canva' })
+  @IsOptional()
+  @IsObject()
+  canvasPreset?: Record<string, any>;
+
+  @ApiPropertyOptional({ description: 'Version template' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  version?: number;
 
   @ApiPropertyOptional({ description: 'Hiển thị template?', default: true })
   @IsOptional()
@@ -130,7 +151,7 @@ export class CreateTemplateDto {
   })
   @IsOptional()
   @IsArray()
-  @IsEnum(enumData.WEDDING_THEME, { each: true })
+  @IsEnumCode(enumData.WEDDING_THEME, { each: true })
   categories?: string[];
 }
 
@@ -187,6 +208,11 @@ export class SetIsDeletedTemplateDto {
  * FILTER
  * ============================================================ */
 export class FilterTemplateDto {
+  @ApiPropertyOptional({ description: 'ID template' })
+  @IsOptional()
+  @IsUUID()
+  id?: string;
+
   @ApiPropertyOptional({ description: 'Tên template' })
   @IsOptional()
   @IsString()
@@ -197,12 +223,25 @@ export class FilterTemplateDto {
   @IsString()
   themeCode?: string;
 
+  @ApiPropertyOptional({ description: 'Slug template' })
+  @IsOptional()
+  @IsString()
+  slug?: string;
+
+  @ApiPropertyOptional({
+    description: 'Loại template',
+    enum: enumData.TEMPLATE_KIND,
+  })
+  @IsOptional()
+  @IsEnumCode(enumData.TEMPLATE_KIND)
+  kind?: string;
+
   @ApiPropertyOptional({
     description: 'Phong cách cưới',
     enum: enumData.WEDDING_THEME,
   })
   @IsOptional()
-  @IsEnum(enumData.WEDDING_THEME)
+  @IsEnumCode(enumData.WEDDING_THEME)
   weddingTheme?: string;
 
   @ApiPropertyOptional({ description: 'Đang hiển thị?' })

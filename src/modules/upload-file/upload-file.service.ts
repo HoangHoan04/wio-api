@@ -63,9 +63,23 @@ export class UploadFileService {
     return `${y}${m}${d}-${random}`;
   }
 
-  private getExtension(mimetype: string): string {
+  private getExtension(mimetype: string, fallback = 'bin'): string {
     const ext = lookupMimeExt(mimetype);
-    return ext || 'bin';
+    if (ext && ext !== 'bin') return ext;
+    const fromMime: Record<string, string> = {
+      'audio/mpeg': 'mp3',
+      'audio/mp3': 'mp3',
+      'audio/wav': 'wav',
+      'audio/ogg': 'ogg',
+      'audio/opus': 'ogg',
+      'audio/webm': 'webm',
+      'audio/mp4': 'm4a',
+      'audio/x-m4a': 'm4a',
+      'audio/aac': 'aac',
+      'video/webm': 'webm',
+      'video/mp4': 'mp4',
+    };
+    return fromMime[mimetype] || fallback;
   }
 
   private detectFileCategory(
@@ -138,17 +152,18 @@ export class UploadFileService {
     stream: NodeJS.ReadableStream,
     folder: string,
     mimeType: string,
+    fileExt?: string,
   ): Promise<UploadResult> {
     return new Promise((resolve, reject) => {
       const fileId = this.generateFileId();
-      const ext = this.getExtension(mimeType);
-
+      const ext = (fileExt || this.getExtension(mimeType, 'mp3'))
+        .replace('.', '')
+        .toLowerCase();
       const uploadStream = cloudinary.uploader.upload_stream(
         {
           folder,
           public_id: fileId,
           resource_type: 'video',
-          format: ext,
         },
         (error, result) => {
           if (error) {
@@ -313,10 +328,14 @@ export class UploadFileService {
     }
 
     const stream = createReadStream(filePath);
+    const ext = filePath.includes('.')
+      ? filePath.split('.').pop()?.toLowerCase()
+      : undefined;
     return this.uploadStreamToCloudinary(
       stream,
       folder || UPLOAD_FOLDER.AUDIO_BACKGROUND,
       mimeType,
+      ext,
     );
   }
 

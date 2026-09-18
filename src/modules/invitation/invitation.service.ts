@@ -8,6 +8,7 @@ import {
   InvitationHostEntity,
   InvitationPhotoEntity,
   InvitationTimelineEntity,
+  InvitationVersionEntity,
   TemplateEntity,
   WeddingInfoEntity,
 } from '@/entities';
@@ -21,7 +22,11 @@ import {
 } from '@/repositories';
 import {
   defaultSectionConfig,
+  normalizeEventKey,
+  normalizeSectionConfig,
   pickPrimaryEventAt,
+  resolveCreatedVia,
+  resolveRuntimeDesignMode,
   toCardViewModel,
 } from '@/utils/invitation.utils';
 import { assertOwner } from '@/utils/owner.utils';
@@ -61,6 +66,7 @@ const NESTED_RELATIONS = {
   gifts: true,
   guestGroups: true,
   template: true,
+  music: true,
 } as const;
 
 @Injectable()
@@ -129,23 +135,60 @@ export class InvitationService {
     await this.assertTemplateAccess(dto.templateId, ownerId);
 
     const slug = await this.assignSlug(dto.slug, dto.title);
+    const sectionConfig = normalizeSectionConfig(
+      dto.sectionConfig || defaultSectionConfig(),
+    );
+    const designMode = resolveRuntimeDesignMode(dto);
+    const createdVia = resolveCreatedVia({
+      createdVia: dto.createdVia,
+      designMode: dto.designMode,
+      templateId: dto.templateId,
+    });
+
+    let weddingTheme =
+      dto.weddingTheme || enumData.WEDDING_THEME.CLASSIC.code;
+    let themeSnapshot: Record<string, any> | undefined;
+
+    if (dto.templateId) {
+      const template = await this.repo.manager.findOne(TemplateEntity, {
+        where: { id: dto.templateId, isDeleted: false },
+      });
+      if (template) {
+        const dtoIsDefault =
+          !dto.weddingTheme ||
+          dto.weddingTheme === enumData.WEDDING_THEME.CLASSIC.code;
+        weddingTheme = dtoIsDefault
+          ? template.weddingTheme || dto.weddingTheme
+          : dto.weddingTheme;
+        themeSnapshot = {
+          themeCode: template.themeCode,
+          themeLayout: template.themeLayout,
+          presetTokens: template.presetTokens,
+          version: template.version ?? 1,
+          kind: template.kind,
+        };
+      }
+    }
 
     const entity = this.repo.create({
       id: uuidv4(),
       userId: ownerId,
       templateId: dto.templateId,
-      designMode: dto.designMode,
-      weddingTheme: dto.weddingTheme,
+      designMode,
+      createdVia,
+      weddingTheme,
       title: dto.title,
       slug,
       status: enumData.INVITATION_STATUS.DRAFT.code,
       invitationText: dto.invitationText,
       thankYouText: dto.thankYouText,
       heroImageUrl: dto.heroImageUrl,
-      sectionConfig: dto.sectionConfig || defaultSectionConfig(),
+      sectionConfig,
+      themeSnapshot,
       musicId: dto.musicId,
       musicConfig: dto.musicConfig,
       customDesign: dto.customDesign,
+      designSchemaVersion: dto.designSchemaVersion ?? 1,
       aiGeneratedMeta: dto.aiGeneratedMeta,
       seoTitle: dto.seoTitle,
       seoDescription: dto.seoDescription,
@@ -178,6 +221,7 @@ export class InvitationService {
     }
 
     const saved = await this.repo.save(entity);
+    await this.snapshotVersion(saved.id, user.id, 'create');
     return { message: 'Tạo thiệp thành công', data: saved };
   }
 
@@ -193,10 +237,6 @@ export class InvitationService {
 
     assertOwner(user, entity.userId, 'Bạn không có quyền chỉnh sửa thiệp này');
 
-    if (entity.status === enumData.INVITATION_STATUS.PUBLISHED.code) {
-      throw new ForbiddenException('Thiệp đã xuất bản không thể chỉnh sửa');
-    }
-
     if (dto.templateId !== undefined) {
       await this.assertTemplateAccess(dto.templateId, entity.userId);
       entity.templateId = dto.templateId ?? undefined;
@@ -207,7 +247,13 @@ export class InvitationService {
     }
 
     if (dto.title !== undefined) entity.title = dto.title;
-    if (dto.designMode !== undefined) entity.designMode = dto.designMode;
+    if (dto.designMode !== undefined) {
+      entity.designMode = resolveRuntimeDesignMode({
+        designMode: dto.designMode,
+        customDesign: dto.customDesign ?? entity.customDesign,
+      });
+    }
+    if (dto.createdVia !== undefined) entity.createdVia = dto.createdVia;
     if (dto.weddingTheme !== undefined) entity.weddingTheme = dto.weddingTheme;
     if (dto.invitationText !== undefined) {
       entity.invitationText = dto.invitationText;
@@ -215,12 +261,15 @@ export class InvitationService {
     if (dto.thankYouText !== undefined) entity.thankYouText = dto.thankYouText;
     if (dto.heroImageUrl !== undefined) entity.heroImageUrl = dto.heroImageUrl;
     if (dto.sectionConfig !== undefined) {
-      entity.sectionConfig = dto.sectionConfig;
+      entity.sectionConfig = normalizeSectionConfig(dto.sectionConfig);
     }
     if (dto.musicId !== undefined) entity.musicId = dto.musicId;
     if (dto.musicConfig !== undefined) entity.musicConfig = dto.musicConfig;
     if (dto.customDesign !== undefined) {
       entity.customDesign = dto.customDesign;
+    }
+    if (dto.designSchemaVersion !== undefined) {
+      entity.designSchemaVersion = dto.designSchemaVersion;
     }
     if (dto.aiGeneratedMeta !== undefined) {
       entity.aiGeneratedMeta = dto.aiGeneratedMeta;
@@ -242,12 +291,18 @@ export class InvitationService {
       }
     }
 
-    // Nested — replace nếu có
+    // Nested — replace nếu có. Timeline trước event vì FK eventId.
     if (dto.hosts !== undefined) {
       await this.repo.manager.delete(InvitationHostEntity, {
         invitationId: entity.id,
       });
       entity.hosts = this.mapHosts(dto.hosts);
+    }
+    if (dto.timelines !== undefined) {
+      await this.repo.manager.delete(InvitationTimelineEntity, {
+        invitationId: entity.id,
+      });
+      entity.timelines = this.mapTimelines(dto.timelines);
     }
     if (dto.events !== undefined) {
       await this.repo.manager.delete(InvitationEventEntity, {
@@ -260,12 +315,6 @@ export class InvitationService {
         invitationId: entity.id,
       });
       entity.gifts = this.mapGifts(dto.gifts);
-    }
-    if (dto.timelines !== undefined) {
-      await this.repo.manager.delete(InvitationTimelineEntity, {
-        invitationId: entity.id,
-      });
-      entity.timelines = this.mapTimelines(dto.timelines);
     }
     if (dto.photos !== undefined) {
       await this.assertPhotoQuota(entity.userId, dto.photos.length);
@@ -285,6 +334,7 @@ export class InvitationService {
     entity.updatedBy = user.id;
 
     const saved = await this.repo.save(entity);
+    await this.snapshotVersion(saved.id, user.id, 'update');
     return { message: 'Cập nhật thiệp thành công', data: saved };
   }
 
@@ -315,8 +365,8 @@ export class InvitationService {
     if (!item || item.status !== enumData.INVITATION_STATUS.PUBLISHED.code) {
       throw new NotFoundException('Không tìm thấy thiệp');
     }
+    await this.repo.increment({ id: item.id }, 'viewCount', 1);
     item.viewCount = (item.viewCount || 0) + 1;
-    await this.repo.save(item);
 
     return { message: 'Thành công', data: toCardViewModel(item) };
   }
@@ -342,6 +392,7 @@ export class InvitationService {
 
     entity.updatedBy = user.id;
     const saved = await this.repo.save(entity);
+    await this.snapshotVersion(saved.id, user.id, 'publish');
     return { message: 'Xuất bản thành công', data: saved };
   }
 
@@ -574,6 +625,7 @@ export class InvitationService {
       this.repo.manager.create(InvitationEventEntity, {
         ...item,
         id: item.id || uuidv4(),
+        eventKey: normalizeEventKey(item.eventKey),
         sortOrder: item.sortOrder ?? idx,
         isPrimary: item.isPrimary ?? idx === 0,
       }),
@@ -721,5 +773,67 @@ export class InvitationService {
     await this.slugHistoryRepo.save(history);
 
     entity.slug = newSlug;
+  }
+
+  private async snapshotVersion(
+    invitationId: string,
+    userId: string,
+    note: string,
+  ) {
+    const invitation = await this.repo.findOne({
+      where: { id: invitationId, isDeleted: false },
+      relations: NESTED_RELATIONS,
+    });
+    if (!invitation) return;
+
+    const last = await this.repo.manager.findOne(InvitationVersionEntity, {
+      where: { invitationId, isDeleted: false },
+      order: { versionNumber: 'DESC' },
+    });
+    const version = this.repo.manager.create(InvitationVersionEntity, {
+      id: uuidv4(),
+      invitationId,
+      versionNumber: (last?.versionNumber || 0) + 1,
+      snapshot: this.toSnapshotPayload({
+        title: invitation.title,
+        slug: invitation.slug,
+        designMode: invitation.designMode,
+        createdVia: invitation.createdVia,
+        sectionConfig: invitation.sectionConfig,
+        customDesign: invitation.customDesign,
+        themeSnapshot: invitation.themeSnapshot,
+        weddingInfo: invitation.weddingInfo,
+        hosts: invitation.hosts,
+        events: invitation.events,
+        gifts: invitation.gifts,
+        photos: invitation.photos,
+        timelines: invitation.timelines,
+      }),
+      note,
+      createdByUserId: userId,
+    });
+    const saved = await this.repo.manager.save(version);
+    await this.repo.update(invitationId, { currentVersionId: saved.id });
+  }
+
+  private toSnapshotPayload(value: unknown): Record<string, any> {
+    try {
+      return JSON.parse(
+        JSON.stringify(value, (key, nested) => {
+          if (
+            key === 'invitation' ||
+            key === 'user' ||
+            key === 'template' ||
+            key === 'music' ||
+            key === 'versions'
+          ) {
+            return undefined;
+          }
+          return nested;
+        }),
+      );
+    } catch {
+      return {};
+    }
   }
 }

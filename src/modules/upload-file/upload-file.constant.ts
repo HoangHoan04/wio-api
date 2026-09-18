@@ -25,7 +25,9 @@ export const AUDIO_MIMES = [
   'audio/mp3',
   'audio/wav',
   'audio/ogg',
+  'audio/opus',
   'audio/webm',
+  'audio/mp4',
   'audio/x-m4a',
   'audio/aac',
 ] as const;

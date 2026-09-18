@@ -1,7 +1,15 @@
 import { enumData } from '@/common/constanst/enumData';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
+import {
+  Column,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+} from 'typeorm';
 import { BaseEntity } from './base.entity';
+import { InvitationTimelineEntity } from './invitation-timeline.entity';
 import { InvitationEntity } from './invitation.entity';
 
 @Entity('invitation_events')
@@ -62,4 +70,7 @@ export class InvitationEventEntity extends BaseEntity {
   @ManyToOne(() => InvitationEntity, (i) => i.events, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'invitationId' })
   invitation: InvitationEntity;
+
+  @OneToMany(() => InvitationTimelineEntity, (t) => t.event)
+  timelines: InvitationTimelineEntity[];
 }

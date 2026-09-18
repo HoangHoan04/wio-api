@@ -45,6 +45,14 @@ export class ServicePlanEntity extends BaseEntity {
   @Column({ type: 'boolean', default: false, nullable: false })
   hasCustomDesign: boolean;
 
+  @ApiProperty({ description: 'Số lần AI scan tối đa' })
+  @Column({ type: 'int', default: 0, nullable: false })
+  maxAiScans: number;
+
+  @ApiProperty({ description: 'Số trang canvas tối đa' })
+  @Column({ type: 'int', default: 1, nullable: false })
+  maxCanvasPages: number;
+
   @ApiProperty({ description: 'Số ngày hiệu lực của gói' })
   @Column({ type: 'int', nullable: false })
   durationDays: number;

@@ -1,3 +1,4 @@
+import { enumData } from '@/common/constanst/enumData';
 import {
   GuestRepository,
   InvitationRepository,
@@ -21,5 +22,28 @@ export class AnalyticsService {
 
   async overview() {}
 
-  async publicOverview() {}
+  async publicOverview() {
+    const [publishedInvitations, templates, reviews] = await Promise.all([
+      this.invitationRepo.count({
+        where: {
+          isDeleted: false,
+          status: enumData.INVITATION_STATUS.PUBLISHED.code,
+        },
+      }),
+      this.templateRepo.count({
+        where: { isDeleted: false, isShow: true },
+      }),
+      this.reviewRepo.count({
+        where: {
+          isDeleted: false,
+          status: enumData.REVIEW_STATUS.APPROVED.code,
+        },
+      }),
+    ]);
+
+    return {
+      message: 'Thành công',
+      data: { publishedInvitations, templates, reviews },
+    };
+  }
 }

@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wio-api
+  namespace: wio
+data:
+  NODE_ENV: production
+  PORT: "4300"
+  TZ: Asia/Ho_Chi_Minh
+  TRUST_PROXY: "true"
+  ENABLE_SWAGGER: "false"
+  TYPEORM_HOST: postgres
+  TYPEORM_PORT: "5432"
+  TYPEORM_DATABASE: wio
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  CUSTOMER_URL: https://tiemcuoitanthoi.id.vn
+  ADMIN_URL: https://admin.tiemcuoitanthoi.id.vn
+  CORS_ORIGINS: https://tiemcuoitanthoi.id.vn,https://www.tiemcuoitanthoi.id.vn,https://admin.tiemcuoitanthoi.id.vn
+  GOOGLE_FRONTEND_REDIRECT_URL: https://tiemcuoitanthoi.id.vn
+  FACEBOOK_FRONTEND_REDIRECT_URL: https://tiemcuoitanthoi.id.vn
+  GOOGLE_CALLBACK_URL: https://api.tiemcuoitanthoi.id.vn/api/auth/google/callback
+  FACEBOOK_CALLBACK_URL: https://api.tiemcuoitanthoi.id.vn/api/auth/facebook/callback

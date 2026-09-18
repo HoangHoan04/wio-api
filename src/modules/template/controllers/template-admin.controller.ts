@@ -2,8 +2,26 @@ import { enumData } from '@/common/constanst/enumData';
 import { CurrentUser, RequireRoles } from '@/common/decorators';
 import { JwtAuthGuard } from '@/common/guards';
 import { IdDto, PaginationDto, UserDto } from '@/dto';
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Header,
+  Post,
+  Res,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
+import { Response } from 'express';
 import {
   CreateTemplateDto,
   FilterTemplateDto,
@@ -71,5 +89,57 @@ export class TemplateAdminController {
     @CurrentUser() user: UserDto,
   ) {
     return this.service.setIsDeleted(body, user);
+  }
+
+  @Post('download-sample-excel')
+  @ApiOperation({ summary: 'Tải file Excel mẫu nhập mẫu thiệp' })
+  @Header(
+    'Content-Type',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  )
+  @Header(
+    'Content-Disposition',
+    'attachment; filename="mau-thiep-sample.xlsx"',
+  )
+  async downloadSampleExcel(@Res() res: Response) {
+    const buffer = await this.service.downloadSampleExcel();
+    res.send(buffer);
+  }
+
+  @Post('import-excel')
+  @ApiOperation({ summary: 'Nhập mẫu thiệp từ Excel' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+      },
+    },
+  })
+  @UseInterceptors(FileInterceptor('file'))
+  async importExcel(
+    @CurrentUser() user: UserDto,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file?.buffer) {
+      throw new BadRequestException('Vui lòng chọn file Excel');
+    }
+    return this.service.importExcel(file.buffer, user);
+  }
+
+  @Post('export-excel')
+  @ApiOperation({ summary: 'Xuất danh sách mẫu thiệp ra Excel' })
+  @Header(
+    'Content-Type',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  )
+  @Header('Content-Disposition', 'attachment; filename="mau-thiep.xlsx"')
+  async exportExcel(
+    @Body() body: FilterTemplateDto,
+    @Res() res: Response,
+  ) {
+    const buffer = await this.service.exportExcel(body || {});
+    res.send(buffer);
   }
 }

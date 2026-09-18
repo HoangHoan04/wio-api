@@ -1,4 +1,3 @@
-# Stage 1: Build
 FROM node:22-alpine AS builder
 
 WORKDIR /app
@@ -12,7 +11,6 @@ RUN yarn install --frozen-lockfile
 COPY . .
 RUN yarn build
 
-# Stage 2: one-off migration job. Do not deploy this target as an API replica.
 FROM node:22-alpine AS migration
 
 WORKDIR /app
@@ -29,16 +27,17 @@ COPY tsconfig.json tsconfig.build.json ./
 
 ENV NODE_ENV=production
 
-EXPOSE 4300
-
 CMD ["yarn", "migration:run:prod"]
 
-# Stage 3: Production runtime (no auto-migration)
 FROM node:22-alpine AS production
 
 WORKDIR /app
 
+RUN apk add --no-cache wget \
+  && addgroup -S wio && adduser -S wio -G wio
+
 ENV NODE_ENV=production
+ENV PORT=4300
 
 COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile --production \
@@ -46,8 +45,11 @@ RUN yarn install --frozen-lockfile --production \
 
 COPY --from=builder /app/dist ./dist
 
-USER node
+USER wio
 
 EXPOSE 4300
+
+HEALTHCHECK --interval=20s --timeout=5s --start-period=30s --retries=5 \
+  CMD wget -qO- http://127.0.0.1:4300/health || exit 1
 
 CMD ["node", "dist/main"]

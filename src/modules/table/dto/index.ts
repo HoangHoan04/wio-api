@@ -51,6 +51,11 @@ export class CreateTableDto {
   @Type(() => Number)
   @IsInt()
   positionY?: number;
+
+  @ApiPropertyOptional({ description: 'Hình dạng bàn' })
+  @IsOptional()
+  @IsString()
+  shape?: string;
 }
 
 /* ============================================================
@@ -93,6 +98,11 @@ export class UpdateTableDto {
   @Type(() => Number)
   @IsInt()
   positionY?: number;
+
+  @ApiPropertyOptional({ description: 'Hình dạng bàn' })
+  @IsOptional()
+  @IsString()
+  shape?: string;
 }
 
 /* ============================================================

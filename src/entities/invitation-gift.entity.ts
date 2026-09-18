@@ -37,6 +37,14 @@ export class InvitationGiftEntity extends BaseEntity {
   @Column({ type: 'varchar', length: 20, nullable: true })
   side?: string;
 
+  @ApiPropertyOptional({ description: 'Mã BIN ngân hàng (VietQR)' })
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  bankBin?: string;
+
+  @ApiProperty({ description: 'Hiển thị trên thiệp' })
+  @Column({ type: 'boolean', default: true, nullable: false })
+  isVisible: boolean;
+
   @ApiProperty({ description: 'Thứ tự hiển thị' })
   @Column({ type: 'int', default: 0, nullable: false })
   sortOrder: number;

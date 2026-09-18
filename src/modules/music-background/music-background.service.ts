@@ -11,6 +11,8 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Queue } from 'bull';
+import { rm } from 'fs/promises';
+import * as path from 'path';
 import { FindOptionsWhere, ILike } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { UploadFileService } from '../upload-file/upload-file.service';
@@ -41,6 +43,7 @@ import {
  * JOB DATA
  * ============================================================ */
 export type YoutubeJobData = {
+  musicId?: string;
   youtubeUrl: string;
   title: string;
   author: string;
@@ -77,8 +80,8 @@ export class MusicBackgroundService {
       status: enumData.MUSIC_STATUS.READY.code,
     };
 
-    // User chỉ thấy nhạc ADMIN + nhạc USER của chính mình
-    if (where.type === enumData.MUSIC_TYPE.USER.code && user) {
+    const requestedType = String(where.type || '').toUpperCase();
+    if (requestedType === enumData.MUSIC_TYPE.USER.code && user) {
       whereCon.type = enumData.MUSIC_TYPE.USER.code;
       whereCon.createdBy = user.id;
     } else {
@@ -232,16 +235,31 @@ export class MusicBackgroundService {
       this.logger.warn(`oEmbed failed: ${e}`);
     }
 
+    const music = this.musicRepo.create({
+      id: uuidv4(),
+      name: title,
+      author,
+      duration: '—',
+      youtubeUrl,
+      status: enumData.MUSIC_STATUS.PROCESSING.code,
+      isActive: false,
+      usageCount: 0,
+      type:
+        dto.type ||
+        (user ? enumData.MUSIC_TYPE.USER.code : enumData.MUSIC_TYPE.ADMIN.code),
+      createdBy: user?.id,
+    });
+    await this.musicRepo.save(music);
+
     const jobData: YoutubeJobData = {
+      musicId: music.id,
       youtubeUrl,
       title,
       author,
       duration: '—',
       provider,
       userId: user?.id,
-      type:
-        dto.type ||
-        (user ? enumData.MUSIC_TYPE.USER.code : enumData.MUSIC_TYPE.ADMIN.code),
+      type: music.type,
     };
 
     this.logger.log(`[IMPORT] Enqueue job (provider=${provider})...`);
@@ -249,8 +267,9 @@ export class MusicBackgroundService {
     try {
       await Promise.race([
         this.youtubeQueue.add(YOUTUBE_IMPORT_JOB, jobData, {
-          attempts: 3,
-          backoff: { type: 'exponential', delay: 5000 },
+          attempts: 1,
+          removeOnComplete: true,
+          removeOnFail: true,
         }),
         new Promise<never>((_, reject) =>
           setTimeout(
@@ -289,21 +308,34 @@ export class MusicBackgroundService {
     this.logger.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
 
     try {
-      // Step 1 — Tạo record PROCESSING
       this.logger.log(`[IMPORT][${elapsed()}] Step 1/4: Saving DB record...`);
-      music = this.musicRepo.create({
-        id: uuidv4(),
-        name: data.title,
-        author: data.author,
-        duration: data.duration,
-        youtubeUrl: data.youtubeUrl,
-        status: enumData.MUSIC_STATUS.PROCESSING.code,
-        isActive: false,
-        usageCount: 0,
-        type: data.type,
-        createdBy: data.userId,
-      });
-      await this.musicRepo.save(music);
+      if (data.musicId) {
+        music = await this.musicRepo.findOne({
+          where: { id: data.musicId, isDeleted: false },
+        });
+      }
+      if (!music) {
+        music = this.musicRepo.create({
+          id: data.musicId || uuidv4(),
+          name: data.title,
+          author: data.author,
+          duration: data.duration,
+          youtubeUrl: data.youtubeUrl,
+          status: enumData.MUSIC_STATUS.PROCESSING.code,
+          isActive: false,
+          usageCount: 0,
+          type: data.type,
+          createdBy: data.userId,
+        });
+        await this.musicRepo.save(music);
+      } else if (music.status === enumData.MUSIC_STATUS.READY.code) {
+        this.logger.log(`[IMPORT] Already ready: ${music.id}`);
+        return music;
+      } else {
+        music.status = enumData.MUSIC_STATUS.PROCESSING.code;
+        music.isActive = false;
+        await this.musicRepo.save(music);
+      }
       this.logger.log(`[IMPORT][${elapsed()}] Step 1/4: musicId=${music.id}`);
 
       // Step 2 — Download audio
@@ -365,6 +397,12 @@ export class MusicBackgroundService {
       music.isActive = true;
 
       const saved = await this.musicRepo.save(music);
+      if (result.filePath) {
+        await rm(path.dirname(result.filePath), {
+          force: true,
+          recursive: true,
+        }).catch(() => undefined);
+      }
       this.logger.log(`[IMPORT SUCCESS] ${elapsed()} — "${saved.name}"`);
       return saved;
     } catch (error: any) {

@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -41,15 +40,14 @@ export class YoutubeAudioService {
     const configured = this.configService.get<YoutubeAudioProviderType>(
       'YOUTUBE_AUDIO_PROVIDER',
     );
-    this.defaultProvider = configured || 'youtube-dl-exec';
+    this.defaultProvider = configured || 'python-yt-dlp';
   }
 
   getInfo(
     url: string,
     providerName?: YoutubeAudioProviderType,
   ): Promise<YoutubeAudioInfo> {
-    const provider = this.resolveProvider(providerName);
-    return provider.getInfo(url);
+    return this.withFallback(providerName, (provider) => provider.getInfo(url));
   }
 
   async downloadAudio(
@@ -57,9 +55,10 @@ export class YoutubeAudioService {
     providerName?: YoutubeAudioProviderType,
     options?: DownloadOptions,
   ): Promise<YoutubeAudioResult> {
-    const provider = this.resolveProvider(providerName);
-    this.logger.log(`[${provider.name}] Downloading audio from ${url}`);
-    return provider.downloadAudio(url, options);
+    return this.withFallback(providerName, (provider) => {
+      this.logger.log(`[${provider.name}] Downloading audio from ${url}`);
+      return provider.downloadAudio(url, options);
+    });
   }
 
   async getDirectAudioUrl(
@@ -94,16 +93,47 @@ export class YoutubeAudioService {
     return Array.from(this.providers.keys());
   }
 
-  private resolveProvider(
-    name?: YoutubeAudioProviderType,
-  ): IYoutubeAudioProvider {
-    const providerName = name || this.defaultProvider;
-    const provider = this.providers.get(providerName);
-    if (!provider) {
-      throw new BadRequestException(
-        `Provider không hợp lệ: ${providerName}. Các provider khả dụng: ${this.listProviders().join(', ')}`,
-      );
+  private async withFallback<T>(
+    preferred: YoutubeAudioProviderType | undefined,
+    run: (provider: IYoutubeAudioProvider) => Promise<T>,
+  ): Promise<T> {
+    const order = this.providerOrder(preferred);
+    let lastError: Error | null = null;
+
+    for (const name of order) {
+      const provider = this.providers.get(name);
+      if (!provider) continue;
+      try {
+        return await run(provider);
+      } catch (error: any) {
+        lastError = error;
+        if (this.isNonRetryable(error)) throw error;
+        this.logger.warn(
+          `[${provider.name}] failed, trying next provider: ${error.message}`,
+        );
+      }
     }
-    return provider;
+
+    throw (
+      lastError ||
+      new InternalServerErrorException('Không thể tải nhạc từ YouTube')
+    );
+  }
+
+  private providerOrder(
+    preferred?: YoutubeAudioProviderType,
+  ): YoutubeAudioProviderType[] {
+    const all: YoutubeAudioProviderType[] = [
+      'python-yt-dlp',
+      'public-api',
+      'youtube-dl-exec',
+    ];
+    const first = preferred || this.defaultProvider;
+    return [first, ...all.filter((name) => name !== first)];
+  }
+
+  private isNonRetryable(error: any): boolean {
+    const message = String(error?.message || '');
+    return message.includes('quá dài') || message.includes('không hợp lệ');
   }
 }

@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: wio
+resources:
+  - namespace.yml
+  - configmap.yml
+  - postgres.yml
+  - redis.yml
+  - deployment.yml
+  - service.yml
+  - ingress.yml
+  - hpa.yml
+images:
+  - name: ghcr.io/YOUR_GH_OWNER/wio-api
+    newName: ghcr.io/YOUR_GH_OWNER/wio-api
+    newTag: latest

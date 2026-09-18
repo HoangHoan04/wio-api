@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from './base.entity';
+import { InvitationEventEntity } from './invitation-event.entity';
 import { InvitationEntity } from './invitation.entity';
 
 @Entity('invitation_timelines')
@@ -41,4 +42,11 @@ export class InvitationTimelineEntity extends BaseEntity {
   })
   @JoinColumn({ name: 'invitationId' })
   invitation: InvitationEntity;
+
+  @ManyToOne(() => InvitationEventEntity, (e) => e.timelines, {
+    onDelete: 'SET NULL',
+    nullable: true,
+  })
+  @JoinColumn({ name: 'eventId' })
+  event?: InvitationEventEntity;
 }

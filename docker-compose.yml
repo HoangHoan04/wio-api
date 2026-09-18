@@ -63,6 +63,12 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:4300/health']
+      interval: 20s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
     networks:
       - wio_api_net
 

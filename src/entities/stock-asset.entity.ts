@@ -35,6 +35,22 @@ export class StockAssetEntity extends BaseEntity {
   @Column({ type: 'varchar', length: 20, nullable: false })
   kind: string;
 
+  @ApiPropertyOptional({ description: 'Chiều rộng (px)' })
+  @Column({ type: 'int', nullable: true })
+  width?: number;
+
+  @ApiPropertyOptional({ description: 'Chiều cao (px)' })
+  @Column({ type: 'int', nullable: true })
+  height?: number;
+
+  @ApiPropertyOptional({ description: 'MIME type' })
+  @Column({ type: 'varchar', length: 80, nullable: true })
+  mimeType?: string;
+
+  @ApiProperty({ description: 'Asset trả phí?' })
+  @Column({ type: 'boolean', default: false, nullable: false })
+  isPremium: boolean;
+
   @ApiPropertyOptional({ description: 'Bản quyền / nguồn của asset' })
   @Column({ type: 'varchar', length: 120, nullable: true })
   license?: string;
