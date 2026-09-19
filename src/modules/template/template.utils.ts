@@ -36,7 +36,10 @@ export function parseBool(val: unknown, fallback = false): boolean {
   return fallback;
 }
 
-export function parseIntValue(val: unknown, fallback?: number): number | undefined {
+export function parseIntValue(
+  val: unknown,
+  fallback?: number,
+): number | undefined {
   if (val === null || val === undefined || val === '') return fallback;
   const n = Number(cellToString(val));
   return Number.isFinite(n) ? Math.trunc(n) : fallback;
@@ -52,7 +55,12 @@ export function parseStringList(val: unknown): string[] {
 }
 
 export function parseJsonObject(val: unknown): Record<string, any> | undefined {
-  if (val && typeof val === 'object' && !Array.isArray(val) && !(val as any).richText) {
+  if (
+    val &&
+    typeof val === 'object' &&
+    !Array.isArray(val) &&
+    !(val as any).richText
+  ) {
     return val as Record<string, any>;
   }
   const raw = cellToString(val);
@@ -453,7 +461,9 @@ export function getTemplateExcelEnumGroups(): TemplateExcelEnumGroup[] {
 
 type EnumRange = { columnKey: string; start: number; end: number };
 
-export function addTemplateExcelEnumSheet(workbook: ExcelJS.Workbook): EnumRange[] {
+export function addTemplateExcelEnumSheet(
+  workbook: ExcelJS.Workbook,
+): EnumRange[] {
   const sheet = workbook.addWorksheet(TEMPLATE_EXCEL_ENUM_SHEET);
   sheet.columns = [
     { header: 'Nhóm', key: 'group', width: 28 },
@@ -488,7 +498,8 @@ export function addTemplateExcelEnumSheet(workbook: ExcelJS.Workbook): EnumRange
     group.items.forEach((item, index) => {
       sheet.addRow({
         group: index === 0 ? group.group : '',
-        column: index === 0 ? headerByKey[group.columnKey] || group.columnKey : '',
+        column:
+          index === 0 ? headerByKey[group.columnKey] || group.columnKey : '',
         code: item.code,
         name: item.name,
         required: index === 0 ? (group.required ? 'Có' : 'Không') : '',
@@ -662,7 +673,12 @@ export function assembleCanvasPresetFromRow(
   const canvasHeight = parseIntValue(record.canvasHeight);
   const opacityRaw = parseIntValue(record.canvasOpacity);
   const backgroundImageUrl = cellToString(record.canvasBackgroundImage);
-  if (!canvasBackground && canvasHeight == null && opacityRaw == null && !backgroundImageUrl) {
+  if (
+    !canvasBackground &&
+    canvasHeight == null &&
+    opacityRaw == null &&
+    !backgroundImageUrl
+  ) {
     return undefined;
   }
   const backgroundOpacity =
@@ -713,7 +729,7 @@ export function flattenCanvasPreset(preset?: Record<string, any> | null) {
   const opacity = Number(preset?.backgroundOpacity);
   return {
     canvasBackground: preset?.canvasBackground || '',
-    canvasOpacity:     Number.isFinite(opacity)
+    canvasOpacity: Number.isFinite(opacity)
       ? Math.round(opacity > 1 ? opacity : opacity * 100)
       : '',
     canvasHeight: preset?.canvasHeight || '',

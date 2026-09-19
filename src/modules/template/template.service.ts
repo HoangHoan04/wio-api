@@ -6,7 +6,11 @@ import {
   TemplateCategoryRepository,
   TemplateRepository,
 } from '@/repositories';
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import * as ExcelJS from 'exceljs';
 import { FindOptionsWhere, ILike } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
@@ -541,9 +545,7 @@ export class TemplateService {
         const entity = this.repo.create({
           id: uuidv4(),
           name,
-          slug: await this.ensureUniqueSlug(
-            cellToString(record.slug) || name,
-          ),
+          slug: await this.ensureUniqueSlug(cellToString(record.slug) || name),
           description: cellToString(record.description) || undefined,
           weddingTheme,
           themeCode,
